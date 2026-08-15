@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Myriedesign | Bisutería personalizada bañada en oro y grabado láser</title>
+<meta name="description" content="Myriedesign: cadenas con nombres personalizados bañadas en oro, dijes bañados en oro, fotograbados en láser, pulseras y esclavas grabadas en láser. Pide la tuya por WhatsApp.">
+<meta name="keywords" content="bisuteria, cadenas personalizadas, dijes bañados en oro, fotograbado laser, pulseras grabadas, esclavas grabadas, joyeria de fantasia, Myriedesign">
+<meta property="og:title" content="Myriedesign | Bisutería personalizada">
+<meta property="og:description" content="Cadenas, dijes, fotograbados y pulseras personalizadas bañadas en oro y grabadas en láser. Pide la tuya por WhatsApp.">
+<meta property="og:type" content="website">
+<style>
+  :root {
+    --black: #14100f;
+    --pink: #f2b8c6;
+    --pink-deep: #e394a8;
+    --gold: #c9a24b;
+    --white: #ffffff;
+    --gray: #6f6f6f;
+    --bg-soft: #f4f1ee;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--white);
+    color: var(--black);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* FLOATING HEADER */
+  .header-wrap { padding: 18px 24px 0; }
+  header {
+    max-width: 1160px;
+    margin: 0 auto;
+    background: var(--white);
+    border-radius: 60px;
+    padding: 14px 14px 14px 26px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 8px 30px rgba(20,16,15,0.08);
+  }
+  .logo {
+    font-size: 18px;
+    letter-spacing: 3px;
+    font-weight: 700;
+    color: var(--black);
+    text-transform: uppercase;
+  }
+  .logo span { color: var(--gold); }
+  nav { display: flex; align-items: center; }
+  nav a {
+    position: relative;
+    color: var(--black);
+    text-decoration: none;
+    margin-left: 30px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  nav a.active { color: var(--pink-deep); }
+  nav a.active::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -6px;
+    height: 2px;
+    background: var(--pink-deep);
+    border-radius: 2px;
+  }
+
+  /* HERO - light chic */
+  .hero {
+    background: var(--bg-soft);
+    padding: 70px 24px 90px;
+  }
+  .hero-grid {
+    max-width: 1160px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: center;
+  }
+  .hero-text h1 {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1.15;
+    color: var(--black);
+    margin-bottom: 22px;
+    letter-spacing: -1px;
+  }
+  .hero-text h1 span { color: var(--pink-deep); }
+  .hero-text p {
+    font-size: 15px;
+    color: var(--gray);
+    max-width: 420px;
+    margin-bottom: 32px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--gold);
+    color: var(--black);
+    padding: 16px 36px;
+    border-radius: 100px;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    border: none;
+    transition: opacity 0.15s ease;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-outline {
+    background: transparent;
+    color: var(--black);
+    border: 1.5px solid var(--black);
+    padding: 14px 32px;
+  }
+  .btn-outline:hover { background: var(--black); color: var(--white); opacity: 1; }
+
+  .hero-art { position: relative; display: flex; align-items: center; justify-content: center; min-height: 440px; }
+  .hero-photo-frame {
+    position: relative;
+    width: 300px;
+    max-width: 88%;
+  }
+  .hero-photo-frame img {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    display: block;
+    border-radius: 26px;
+    box-shadow: 0 25px 55px rgba(20,16,15,0.35);
+  }
+
+  /* Painterly brush strokes, à la reference: irregular tapered swipes behind
+     the photo, plus a couple of pale streaks crossing over its edges */
+  .stroke {
+    position: absolute;
+    z-index: 1;
+  }
+  .shape-a { clip-path: polygon(2% 45%, 25% 4%, 78% 0%, 100% 35%, 85% 78%, 45% 100%, 10% 82%); }
+  .shape-b { clip-path: polygon(0% 30%, 30% 0%, 100% 20%, 90% 60%, 55% 100%, 15% 75%); }
+  .shape-c { clip-path: polygon(0% 50%, 40% 0%, 100% 15%, 95% 55%, 60% 100%, 5% 85%); }
+
+  .stroke-1 { width: 220px; height: 110px; background: var(--pink); top: -70px; left: -80px; transform: rotate(-28deg); opacity: 0.9; }
+  .stroke-2 { width: 160px; height: 90px; background: var(--gold); top: -30px; left: -110px; transform: rotate(-12deg); opacity: 0.85; }
+  .stroke-3 { width: 130px; height: 70px; background: var(--pink-deep); top: 40px; left: -120px; transform: rotate(20deg); opacity: 0.8; }
+  .stroke-4 { width: 230px; height: 115px; background: var(--gold); bottom: -75px; right: -85px; transform: rotate(152deg); opacity: 0.92; }
+  .stroke-5 { width: 150px; height: 80px; background: var(--pink); bottom: -20px; right: -110px; transform: rotate(165deg); opacity: 0.8; }
+  .stroke-6 { width: 120px; height: 60px; background: var(--black); bottom: 60px; right: -90px; transform: rotate(200deg); opacity: 0.12; }
+
+  /* pale streaks that cross OVER the photo edges, like the reference */
+  .stroke-front {
+    position: absolute;
+    z-index: 3;
+    background: linear-gradient(120deg, rgba(255,255,255,0.85), rgba(255,255,255,0.05));
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+  .stroke-7 { width: 180px; height: 46px; top: -18px; left: 6px; transform: rotate(-16deg); clip-path: polygon(0% 40%, 30% 0%, 100% 15%, 92% 60%, 55% 100%, 8% 80%); opacity: 0.7; }
+  .stroke-8 { width: 150px; height: 40px; bottom: 10px; right: -10px; transform: rotate(-18deg); clip-path: polygon(2% 45%, 25% 4%, 78% 0%, 100% 35%, 85% 78%, 45% 100%, 10% 82%); opacity: 0.55; }
+
+  /* PRODUCTOS */
+  .features {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 80px 24px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 30px 20px;
+    text-align: center;
+  }
+  .icon-circle {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: var(--bg-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 18px;
+  }
+  .icon-circle svg { width: 34px; height: 34px; stroke: var(--black); fill: none; stroke-width: 1.6; }
+  .grid h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+  .grid p { font-size: 13px; color: var(--gray); padding: 0 8px; }
+
+  .product-category { margin-top: 64px; }
+  .product-category:first-child { margin-top: 44px; }
+  .category-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .category-head .icon-circle {
+    width: 46px;
+    height: 46px;
+    margin: 0;
+    flex-shrink: 0;
+  }
+  .category-head .icon-circle svg { width: 20px; height: 20px; }
+  .category-head h3 {
+    font-size: 17px;
+    font-weight: 700;
+    text-align: left;
+  }
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 20px;
+  }
+  .product-card {
+    background: var(--white);
+    border: 1px solid #ececec;
+    border-radius: 18px;
+    overflow: hidden;
+    text-align: left;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+  }
+  .product-card:hover { box-shadow: 0 14px 30px rgba(20,16,15,0.10); transform: translateY(-2px); }
+  .product-thumb {
+    aspect-ratio: 1 / 1;
+    background: var(--bg-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray);
+    font-size: 12px;
+    text-align: center;
+    padding: 12px;
+  }
+  .product-thumb svg { width: 30px; height: 30px; stroke: var(--gold); fill: none; stroke-width: 1.4; margin-bottom: 6px; display: block; margin-left: auto; margin-right: auto; }
+  .product-info { padding: 16px; }
+  .product-info h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; color: var(--black); }
+  .product-info .product-price { font-size: 13px; color: var(--gold); font-weight: 700; margin-bottom: 12px; }
+  .mini-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    background: var(--black);
+    color: var(--white);
+    text-decoration: none;
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 10px;
+    border-radius: 40px;
+  }
+  .mini-btn:hover { background: var(--gold); color: var(--black); }
+
+  section {
+    padding: 60px 24px;
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+  .section-head { text-align: center; margin-bottom: 40px; }
+  .section-head .eyebrow {
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    display: block;
+    margin-bottom: 10px;
+  }
+  .section-head h2 { font-size: 26px; font-weight: 700; }
+
+  /* SPLIT ABOUT SECTION */
+  .split-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+  }
+  .split-text { text-align: left; }
+  .eyebrow-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--pink-deep);
+    font-weight: 700;
+    margin-bottom: 18px;
+  }
+  .eyebrow-line .line { width: 34px; height: 1.5px; background: var(--gold); display: inline-block; }
+  .split-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 34px;
+    line-height: 1.25;
+    margin-bottom: 20px;
+    color: var(--black);
+  }
+  .split-title em { color: var(--pink-deep); font-style: italic; }
+  .split-text p {
+    font-size: 15px;
+    color: var(--gray);
+    max-width: 420px;
+    margin-bottom: 28px;
+  }
+  .split-art { display: flex; justify-content: center; }
+  .split-art svg { width: 100%; max-width: 340px; height: auto; }
+
+  .cta {
+    text-align: center;
+    padding: 90px 24px;
+    background: linear-gradient(to right, rgba(244,241,238,0) 0%, var(--bg-soft) 15%, var(--bg-soft) 85%, rgba(244,241,238,0) 100%);
+    border-radius: 24px;
+  }
+  .cta .eyebrow { color: var(--gold); }
+  .cta h2 { font-size: 28px; font-weight: 700; margin-bottom: 12px; }
+  .cta p { color: var(--gray); margin-bottom: 32px; font-size: 15px; }
+  .cta .btn { background: var(--pink-deep); color: var(--black); }
+  .cta .btn:hover { opacity: 0.9; }
+  .cta-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .cta-actions .btn-outline {
+    border-color: var(--black);
+    padding: 14.5px 30px;
+  }
+
+  footer {
+    text-align: center;
+    padding: 40px 20px 90px;
+    color: var(--gray);
+    font-size: 13px;
+  }
+  footer .logo { display: block; margin-bottom: 10px; font-size: 15px; }
+  footer a { color: var(--black); text-decoration: none; font-weight: 600; }
+  footer a:hover { color: var(--gold); }
+  footer .footer-links { display: inline-flex; align-items: center; gap: 8px; }
+  footer .dot { color: var(--gray); }
+
+  /* Floating WhatsApp button */
+  .float-wa {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: var(--black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    z-index: 200;
+  }
+  .float-wa svg { width: 26px; height: 26px; fill: var(--gold); }
+
+  @media (max-width: 760px) {
+    nav { display: none; }
+    header { border-radius: 30px; padding: 14px 18px; }
+    .hero-grid { grid-template-columns: 1fr; text-align: center; }
+    .hero-text p { margin-left: auto; margin-right: auto; }
+    .hero-text h1 { font-size: 32px; }
+    .hero-photo-frame { width: 220px; margin-top: 40px; }
+    .cta { border-radius: 16px; padding: 50px 20px; }
+    .split-grid { grid-template-columns: 1fr; gap: 40px; text-align: center; }
+    .split-text { text-align: center; }
+    .eyebrow-line { justify-content: center; }
+    .split-text p { margin-left: auto; margin-right: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header-wrap">
+  <header>
+    <div class="logo">MYRIE<span>DESIGN</span></div>
+    <nav>
+      <a href="#" class="active">Inicio</a>
+      <a href="#productos">Productos</a>
+      <a href="#nosotros">Nosotros</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+  </header>
+</div>
+
+<div class="hero">
+  <div class="hero-grid">
+    <div class="hero-text">
+      <h1>Bisutería con estilo,<br>hecha <span>para ti</span></h1>
+      <p>Lleva tu historia siempre contigo. Joyas únicas bañadas en oro, diseñadas exclusivamente para ti.</p>
+      <a class="btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20informaci%C3%B3n%20sobre%20sus%20piezas" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+    </div>
+    <div class="hero-art">
+      <div class="hero-photo-frame">
+        <span class="stroke shape-a stroke-1"></span>
+        <span class="stroke shape-b stroke-2"></span>
+        <span class="stroke shape-c stroke-3"></span>
+        <span class="stroke shape-a stroke-4"></span>
+        <span class="stroke shape-b stroke-5"></span>
+        <span class="stroke shape-c stroke-6"></span>
+        <img src="necklace-hero.jpg" alt="Dije personalizado Myriedesign bañado en oro">
+        <span class="stroke-front stroke-7"></span>
+        <span class="stroke-front stroke-8"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="features" id="productos">
+  <div class="section-head">
+    <span class="eyebrow">Catálogo</span>
+    <h2>Nuestros productos</h2>
+  </div>
+
+  <!-- CADENAS PERSONALIZADAS -->
+  <div class="product-category">
+    <div class="category-head">
+      <div class="icon-circle">
+        <svg viewBox="0 0 24 24"><path d="M8 12a4 4 0 1 1 4-4"/><path d="M16 12a4 4 0 1 1-4 4"/></svg>
+      </div>
+      <h3>Cadenas personalizadas</h3>
+    </div>
+    <div class="product-grid">
+      <div class="product-card">
+        <div class="product-thumb">
+          <svg viewBox="0 0 24 24"><path d="M8 12a4 4 0 1 1 4-4"/><path d="M16 12a4 4 0 1 1-4 4"/></svg>
+          Foto próximamente
+        </div>
+        <div class="product-info">
+          <h4>Nombre del producto</h4>
+          <div class="product-price">Precio a definir</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20esta%20cadena" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb">
+          <svg viewBox="0 0 24 24"><path d="M8 12a4 4 0 1 1 4-4"/><path d="M16 12a4 4 0 1 1-4 4"/></svg>
+          Foto próximamente
+        </div>
+        <div class="product-info">
+          <h4>Nombre del producto</h4>
+          <div class="product-price">Precio a definir</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20esta%20cadena" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb">
+          <svg viewBox="0 0 24 24"><path d="M8 12a4 4 0 1 1 4-4"/><path d="M16 12a4 4 0 1 1-4 4"/></svg>
+          Foto próximamente
+        </div>
+        <div class="product-info">
+          <h4>Nombre del producto</h4>
+          <div class="product-price">Precio a definir</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20esta%20cadena" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIJES BAÑADOS EN ORO -->
+  <div class="product-category">
+    <div class="category-head">
+      <div class="icon-circle">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"/><path d="M12 13v8"/><path d="M9 21h6"/></svg>
+      </div>
+      <h3>Dijes bañados en oro</h3>
+    </div>
+    <div class="product-grid">
+      <div class="product-card">
+        <div class="product-thumb">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"/><path d="M12 13v8"/><path d="M9 21h6"/></svg>
+          Foto próximamente
+        </div>
+        <div class="product-info">
+          <h4>Nombre del producto</h4>
+          <div class="product-price">Precio a definir</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20este%20dije" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"/><path d="M12 13v8"/><path d="M9 21h6"/></svg>
+          Foto próximamente
+        </div>
+        <div class="product-info">
+          <h4>Nombre del producto</h4>
+          <div class="product-price">Precio a definir</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20este%20dije" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"/><path d="M12 13v8"/><path d="M9 21h6"/></svg>
+          Foto próximamente
+        </div>
+        <div class="product-info">
+          <h4>Nombre del producto</h4>
+          <div class="product-price">Precio a definir</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20este%20dije" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOTOGRABADOS EN LÁSER -->
+  <div class="product-category">
+    <div class="category-head">
+      <div class="icon-circle">
+        <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 7l1.5-3h5L16 7"/></svg>
+      </div>
+      <h3>Fotograbados en láser</h3>
+    </div>
+    <div class="product-grid">
+      <div class="product-card">
+        <div class="product-thumb">
+          <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 7l1.5-3h5L16 7"/></svg>
+          Foto próximamente
+        </div>
+        <div class="product-info">
+          <h4>Nombre del producto</h4>
+          <div class="product-price">Precio a definir</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20un%20fotograbado" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb">
+          <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 7l1.5-3h5L16 7"/></svg>
+          Foto próximamente
+        </div>
+        <div class="product-info">
+          <h4>Nombre del producto</h4>
+          <div class="product-price">Precio a definir</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20un%20fotograbado" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb">
+          <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 7l1.5-3h5L16 7"/></svg>
+          Foto próximamente
+        </div>
+        <div class="product-info">
+          <h4>Nombre del producto</h4>
+          <div class="product-price">Precio a definir</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20un%20fotograbado" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PULSERAS Y ESCLAVAS -->
+  <div class="product-category">
+    <div class="category-head">
+      <div class="icon-circle">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/></svg>
+      </div>
+      <h3>Pulseras y esclavas grabadas</h3>
+    </div>
+    <div class="product-grid">
+      <div class="product-card">
+        <div class="product-thumb">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/></svg>
+          Foto próximamente
+        </div>
+        <div class="product-info">
+          <h4>Nombre del producto</h4>
+          <div class="product-price">Precio a definir</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20esta%20pulsera" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/></svg>
+          Foto próximamente
+        </div>
+        <div class="product-info">
+          <h4>Nombre del producto</h4>
+          <div class="product-price">Precio a definir</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20esta%20pulsera" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/></svg>
+          Foto próximamente
+        </div>
+        <div class="product-info">
+          <h4>Nombre del producto</h4>
+          <div class="product-price">Precio a definir</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20esta%20pulsera" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section id="nosotros">
+  <div class="split-grid">
+    <div class="split-text">
+      <div class="eyebrow-line"><span class="line"></span> Sobre nosotros</div>
+      <h2 class="split-title">Tu brillo, <em>hecho a mano</em></h2>
+      <p>Negocio venezolano de bisutería personalizada, hecho desde casa con dedicación. Cada pieza se trabaja a pedido, con acabado en baño de oro y grabado láser de calidad.</p>
+      <a class="btn btn-outline" href="#contacto">Conócenos</a>
+    </div>
+    <div class="split-art">
+      <svg viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg">
+        <path d="M40 60 C 140 10, 260 30, 340 90 C 300 160, 320 250, 260 320 C 200 390, 100 400, 60 340 C 20 280, 60 220, 30 150 C 10 110, 10 80, 40 60 Z" fill="var(--pink)" opacity="0.55"/>
+        <path d="M80 380 C 160 420, 280 410, 340 350 C 380 310, 360 250, 330 210 C 300 250, 250 260, 220 300 C 180 350, 130 360, 80 380 Z" fill="var(--gold)" opacity="0.5"/>
+        <path d="M60 120 C 130 70, 250 60, 320 130 C 260 140, 200 120, 150 160 C 110 190, 100 240, 60 260 C 30 220, 30 160, 60 120 Z" fill="var(--black)" opacity="0.08"/>
+
+        <g transform="translate(200,220)">
+          <ellipse cx="0" cy="-60" rx="46" ry="46" fill="none" stroke="var(--gold)" stroke-width="2.5"/>
+          <path d="M -46 -20 C -30 20, 30 20, 46 -20" fill="none" stroke="var(--gold)" stroke-width="2.5"/>
+          <circle cx="0" cy="-14" r="4" fill="var(--black)"/>
+          <line x1="0" y1="-10" x2="0" y2="20" stroke="var(--gold)" stroke-width="2"/>
+          <g fill="var(--gold)" opacity="0.9">
+            <circle cx="0" cy="20" r="14"/>
+            <circle cx="-13" cy="32" r="14"/>
+            <circle cx="13" cy="32" r="14"/>
+            <circle cx="0" cy="44" r="14"/>
+          </g>
+          <g fill="none" stroke="var(--black)" stroke-width="1.2" opacity="0.35">
+            <circle cx="0" cy="20" r="14"/>
+            <circle cx="-13" cy="32" r="14"/>
+            <circle cx="13" cy="32" r="14"/>
+            <circle cx="0" cy="44" r="14"/>
+          </g>
+          <line x1="0" y1="52" x2="0" y2="68" stroke="var(--gold)" stroke-width="2.5"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section id="contacto">
+  <div class="cta">
+    <span class="eyebrow">Contacto</span>
+    <h2>¿Lista para tu pieza personalizada?</h2>
+    <p>Escríbenos por WhatsApp o síguenos en Instagram para ver nuestras piezas.</p>
+    <div class="cta-actions">
+      <a class="btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20informaci%C3%B3n%20sobre%20sus%20piezas" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+      <a class="btn btn-outline" href="https://instagram.com/Myriedesign_" target="_blank" rel="noopener">@Myriedesign_</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="logo">MYRIE<span style="color:var(--gold)">DESIGN</span></div>
+  <div class="footer-links">
+    <a href="https://wa.me/584143939905" target="_blank" rel="noopener">WhatsApp</a>
+    <span class="dot">·</span>
+    <a href="https://instagram.com/Myriedesign_" target="_blank" rel="noopener">@Myriedesign_</a>
+  </div>
+</footer>
+
+<a class="float-wa" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20informaci%C3%B3n%20sobre%20sus%20piezas" target="_blank" rel="noopener" aria-label="WhatsApp">
+  <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.9.5 3.6 1.4 5.1L2 22l5.1-1.3C8.6 21.5 10.3 22 12 22c5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18c-1.5 0-2.9-.4-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3C4.4 14.9 4 13.5 4 12c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8z"/></svg>
+</a>
+
+</body>
+</html>
