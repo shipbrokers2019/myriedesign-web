@@ -1,0 +1,8 @@
+.impeccable/
+
+# raw/unprocessed photo library — only images/hero and images/productos ship on the site
+images/*
+!images/hero/
+!images/hero/**
+!images/productos/
+!images/productos/**

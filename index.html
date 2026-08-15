@@ -9,6 +9,7 @@
 <meta property="og:title" content="Myriedesign | Bisutería personalizada">
 <meta property="og:description" content="Cadenas, dijes, fotograbados y pulseras personalizadas bañadas en oro y grabadas en láser. Pide la tuya por WhatsApp.">
 <meta property="og:type" content="website">
+<meta property="og:image" content="images/hero/kimberly-aime.jpg">
 <style>
   :root {
     --black: #14100f;
@@ -68,6 +69,39 @@
     background: var(--pink-deep);
     border-radius: 2px;
   }
+
+  .header-services {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    color: var(--gray);
+    white-space: nowrap;
+    padding: 0 16px;
+  }
+  .header-services .dot { color: var(--gold); }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+
+  .nav-toggle {
+    display: none;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: var(--bg-soft);
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .nav-toggle svg { width: 18px; height: 18px; stroke: var(--black); stroke-width: 2; }
+  .nav-toggle svg .icon-close { display: none; }
+  .nav-toggle[aria-expanded="true"] svg .icon-open { display: none; }
+  .nav-toggle[aria-expanded="true"] svg .icon-close { display: block; }
 
   /* HERO - light chic */
   .hero {
@@ -137,25 +171,6 @@
     box-shadow: 0 25px 55px rgba(20,16,15,0.35);
   }
 
-  .hero-services {
-    margin-top: 22px;
-    text-align: center;
-  }
-  .hero-services .line {
-    width: 34px;
-    height: 1.5px;
-    background: var(--gold);
-    display: inline-block;
-    margin-bottom: 14px;
-  }
-  .hero-services p {
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.2px;
-    color: var(--black);
-    margin-bottom: 6px;
-  }
-  .hero-services p:last-child { margin-bottom: 0; }
 
   /* Painterly brush strokes, à la reference: irregular tapered swipes behind
      the photo, plus a couple of pale streaks crossing over its edges */
@@ -178,24 +193,18 @@
   .stroke-front {
     position: absolute;
     z-index: 3;
-    background: linear-gradient(120deg, rgba(255,255,255,0.85), rgba(255,255,255,0.05));
+    background: linear-gradient(120deg, rgba(255,255,255,0.98) 0%, rgba(249,214,150,0.55) 60%, rgba(249,214,150,0) 100%);
     mix-blend-mode: screen;
     pointer-events: none;
   }
-  .stroke-7 { width: 180px; height: 46px; top: -18px; left: 6px; transform: rotate(-16deg); clip-path: polygon(0% 40%, 30% 0%, 100% 15%, 92% 60%, 55% 100%, 8% 80%); opacity: 0.7; }
-  .stroke-8 { width: 150px; height: 40px; bottom: 10px; right: -10px; transform: rotate(-18deg); clip-path: polygon(2% 45%, 25% 4%, 78% 0%, 100% 35%, 85% 78%, 45% 100%, 10% 82%); opacity: 0.55; }
+  .stroke-7 { width: 230px; height: 62px; top: -24px; left: -4px; transform: rotate(-16deg); clip-path: polygon(0% 40%, 30% 0%, 100% 15%, 92% 60%, 55% 100%, 8% 80%); opacity: 0.95; }
+  .stroke-8 { width: 190px; height: 54px; bottom: 4px; right: -18px; transform: rotate(-18deg); clip-path: polygon(2% 45%, 25% 4%, 78% 0%, 100% 35%, 85% 78%, 45% 100%, 10% 82%); opacity: 0.85; }
 
   /* PRODUCTOS */
   .features {
     max-width: 1080px;
     margin: 0 auto;
     padding: 80px 24px;
-  }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-    gap: 30px 20px;
-    text-align: center;
   }
   .icon-circle {
     width: 88px;
@@ -208,8 +217,6 @@
     margin: 0 auto 18px;
   }
   .icon-circle svg { width: 34px; height: 34px; stroke: var(--black); fill: none; stroke-width: 1.6; }
-  .grid h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
-  .grid p { font-size: 13px; color: var(--gray); padding: 0 8px; }
 
   .product-category { margin-top: 64px; }
   .product-category:first-child { margin-top: 44px; }
@@ -257,6 +264,9 @@
     padding: 12px;
   }
   .product-thumb svg { width: 30px; height: 30px; stroke: var(--gold); fill: none; stroke-width: 1.4; margin-bottom: 6px; display: block; margin-left: auto; margin-right: auto; }
+  .product-thumb.has-photo { padding: 0; }
+  .product-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .product-thumb img.pos-bottom { object-position: center bottom; }
   .product-info { padding: 16px; }
   .product-info h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; color: var(--black); }
   .product-info .product-price { font-size: 13px; color: var(--gold); font-weight: 700; margin-bottom: 12px; }
@@ -382,9 +392,35 @@
   }
   .float-wa svg { width: 26px; height: 26px; fill: var(--gold); }
 
+  @media (max-width: 980px) {
+    .header-services { display: none; }
+  }
+
   @media (max-width: 760px) {
-    nav { display: none; }
-    header { border-radius: 30px; padding: 14px 18px; }
+    .nav-toggle { display: flex; }
+    nav {
+      display: none;
+      position: absolute;
+      top: calc(100% + 10px);
+      left: 0;
+      right: 0;
+      flex-direction: column;
+      align-items: stretch;
+      background: var(--white);
+      border-radius: 24px;
+      padding: 10px;
+      box-shadow: 0 12px 30px rgba(20,16,15,0.12);
+    }
+    nav.is-open { display: flex; }
+    nav a {
+      margin-left: 0;
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-size: 14px;
+    }
+    nav a.active::after { display: none; }
+    nav a.active { background: var(--bg-soft); }
+    header { border-radius: 30px; padding: 14px 18px; position: relative; }
     .hero-grid { grid-template-columns: 1fr; text-align: center; }
     .hero-text p { margin-left: auto; margin-right: auto; }
     .hero-text h1 { font-size: 32px; }
@@ -402,12 +438,27 @@
 <div class="header-wrap">
   <header>
     <div class="logo">MYRIE<span>DESIGN</span></div>
-    <nav>
-      <a href="#" class="active">Inicio</a>
-      <a href="#productos">Productos</a>
-      <a href="#nosotros">Nosotros</a>
-      <a href="#contacto">Contacto</a>
-    </nav>
+    <div class="header-services">
+      <span>Cadenas y dijes personalizados</span>
+      <span class="dot">·</span>
+      <span>Fotograbados en láser</span>
+      <span class="dot">·</span>
+      <span>Pulseras y esclavas grabadas</span>
+    </div>
+    <div class="header-right">
+      <nav id="site-nav">
+        <a href="#" class="active">Inicio</a>
+        <a href="#productos">Productos</a>
+        <a href="#nosotros">Nosotros</a>
+        <a href="#contacto">Contacto</a>
+      </nav>
+      <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Abrir menú">
+        <svg viewBox="0 0 24 24" fill="none">
+          <g class="icon-open"><path d="M3 6h18" stroke-linecap="round"/><path d="M3 12h18" stroke-linecap="round"/><path d="M3 18h18" stroke-linecap="round"/></g>
+          <g class="icon-close"><path d="M5 5l14 14" stroke-linecap="round"/><path d="M19 5L5 19" stroke-linecap="round"/></g>
+        </svg>
+      </button>
+    </div>
   </header>
 </div>
 
@@ -426,15 +477,9 @@
         <span class="stroke shape-a stroke-4"></span>
         <span class="stroke shape-b stroke-5"></span>
         <span class="stroke shape-c stroke-6"></span>
-        <img src="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20300%20340'%3E%0A%3Crect%20width%3D'300'%20height%3D'340'%20fill%3D'%23f4f1ee'%2F%3E%0A%3Cellipse%20cx%3D'150'%20cy%3D'75'%20rx%3D'72'%20ry%3D'55'%20fill%3D'none'%20stroke%3D'%23c9a24b'%20stroke-width%3D'7'%2F%3E%0A%3Cpath%20d%3D'M88%20118%20C108%20158%20192%20158%20212%20118'%20fill%3D'none'%20stroke%3D'%23c9a24b'%20stroke-width%3D'7'%2F%3E%0A%3C%2Fsvg%3E" alt="Dije personalizado Myriedesign bañado en oro">
+        <img src="images/hero/kimberly-aime.jpg" alt="Cadena personalizada bañada en oro, Myriedesign">
         <span class="stroke-front stroke-7"></span>
         <span class="stroke-front stroke-8"></span>
-      </div>
-      <div class="hero-services">
-        <span class="line"></span>
-        <p>Nombres y Dijes Personalizados</p>
-        <p>Fotograbados en láser</p>
-        <p>Grabados</p>
       </div>
     </div>
   </div>
@@ -456,36 +501,43 @@
     </div>
     <div class="product-grid">
       <div class="product-card">
-        <div class="product-thumb">
-          <svg viewBox="0 0 24 24"><path d="M8 12a4 4 0 1 1 4-4"/><path d="M16 12a4 4 0 1 1-4 4"/></svg>
-          Foto próximamente
+        <div class="product-thumb has-photo">
+          <img src="images/productos/cadena-gucci-lesbia-del-valle-corona.jpg" alt="Cadena Gucci doble nombre bañada en oro con dije corona" loading="lazy">
         </div>
         <div class="product-info">
-          <h4>Nombre del producto</h4>
-          <div class="product-price">Precio a definir</div>
-          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20esta%20cadena" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+          <h4>Cadena Gucci doble nombre + dije corona</h4>
+          <div class="product-price">$42</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20la%20cadena%20Gucci%20doble%20nombre%20con%20dije%20corona" target="_blank" rel="noopener">Pedir por WhatsApp</a>
         </div>
       </div>
       <div class="product-card">
-        <div class="product-thumb">
-          <svg viewBox="0 0 24 24"><path d="M8 12a4 4 0 1 1 4-4"/><path d="M16 12a4 4 0 1 1-4 4"/></svg>
-          Foto próximamente
+        <div class="product-thumb has-photo">
+          <img src="images/productos/cadena-cubana-corona-danicha.jpg" alt="Cadena cubana 4mm bañada en oro con nombre y corona" loading="lazy">
         </div>
         <div class="product-info">
-          <h4>Nombre del producto</h4>
-          <div class="product-price">Precio a definir</div>
-          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20esta%20cadena" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+          <h4>Cubana 4mm con nombre y corona</h4>
+          <div class="product-price">$29</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20la%20cadena%20cubana%20con%20nombre%20y%20corona" target="_blank" rel="noopener">Pedir por WhatsApp</a>
         </div>
       </div>
       <div class="product-card">
-        <div class="product-thumb">
-          <svg viewBox="0 0 24 24"><path d="M8 12a4 4 0 1 1 4-4"/><path d="M16 12a4 4 0 1 1-4 4"/></svg>
-          Foto próximamente
+        <div class="product-thumb has-photo">
+          <img src="images/productos/cadena-balines-dylan.jpg" alt="Cadena de balines intercalados con nombre y dije, bañada en oro" loading="lazy">
         </div>
         <div class="product-info">
-          <h4>Nombre del producto</h4>
-          <div class="product-price">Precio a definir</div>
-          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20esta%20cadena" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+          <h4>Balines intercalados + 1 dije</h4>
+          <div class="product-price">$29</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20la%20cadena%20de%20balines%20intercalados%20con%20dije" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/cadena-balines-jemmy.jpg" alt="Cadena de balines intercalados con nombre, bañada en oro" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Cadena balines intercalados</h4>
+          <div class="product-price">$25</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20la%20cadena%20de%20balines%20intercalados" target="_blank" rel="noopener">Pedir por WhatsApp</a>
         </div>
       </div>
     </div>
@@ -501,36 +553,53 @@
     </div>
     <div class="product-grid">
       <div class="product-card">
-        <div class="product-thumb">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"/><path d="M12 13v8"/><path d="M9 21h6"/></svg>
-          Foto próximamente
+        <div class="product-thumb has-photo">
+          <img src="images/productos/cadena-infinito-balines-2-nombres.jpg" alt="Cadena de balines con infinito y 2 nombres, bañada en oro" loading="lazy">
         </div>
         <div class="product-info">
-          <h4>Nombre del producto</h4>
-          <div class="product-price">Precio a definir</div>
-          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20este%20dije" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+          <h4>Balines intercalados con infinito, 2 nombres</h4>
+          <div class="product-price">$35</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20la%20cadena%20de%20infinito%20con%202%20nombres" target="_blank" rel="noopener">Pedir por WhatsApp</a>
         </div>
       </div>
       <div class="product-card">
-        <div class="product-thumb">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"/><path d="M12 13v8"/><path d="M9 21h6"/></svg>
-          Foto próximamente
+        <div class="product-thumb has-photo">
+          <img src="images/productos/colgante-corazon-calado-yeli.jpg" alt="Dije corazón calado con nombre grabado en láser, bañado en oro" loading="lazy">
         </div>
         <div class="product-info">
-          <h4>Nombre del producto</h4>
-          <div class="product-price">Precio a definir</div>
-          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20este%20dije" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+          <h4>Corazón calado interno con nombre grabado láser</h4>
+          <div class="product-price">$22</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20el%20dije%20de%20coraz%C3%B3n%20calado" target="_blank" rel="noopener">Pedir por WhatsApp</a>
         </div>
       </div>
       <div class="product-card">
-        <div class="product-thumb">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"/><path d="M12 13v8"/><path d="M9 21h6"/></svg>
-          Foto próximamente
+        <div class="product-thumb has-photo">
+          <img src="images/productos/colgante-corazon-javier-gabriel.jpg" alt="Dije corazón de corazones con 2 nombres, bañado en oro" loading="lazy">
         </div>
         <div class="product-info">
-          <h4>Nombre del producto</h4>
-          <div class="product-price">Precio a definir</div>
-          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20este%20dije" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+          <h4>Corazón de corazones, 2 nombres</h4>
+          <div class="product-price">$28</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20el%20dije%20coraz%C3%B3n%20de%20corazones" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/colgante-estetoscopio-enfermera.jpg" alt="Dije corazón con estetoscopio y nombre, bañado en oro" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Corazón con estetoscopio y nombre</h4>
+          <div class="product-price">$26</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20el%20dije%20de%20estetoscopio" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/dije-profesion-peluqueria-tania.jpg" alt="Dije de profesión peluquería con nombre grabado, bañado en oro" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Dije de profesión con nombre grabado</h4>
+          <div class="product-price">$26</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20el%20dije%20de%20profesi%C3%B3n" target="_blank" rel="noopener">Pedir por WhatsApp</a>
         </div>
       </div>
     </div>
@@ -546,36 +615,53 @@
     </div>
     <div class="product-grid">
       <div class="product-card">
-        <div class="product-thumb">
-          <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 7l1.5-3h5L16 7"/></svg>
-          Foto próximamente
+        <div class="product-thumb has-photo">
+          <img src="images/productos/colgante-fotograbado-corazon-nina.jpg" alt="Dije corazón con fotograbado láser en cadena convencional" loading="lazy">
         </div>
         <div class="product-info">
-          <h4>Nombre del producto</h4>
-          <div class="product-price">Precio a definir</div>
-          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20un%20fotograbado" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+          <h4>Corazón fotograbado, cadena convencional</h4>
+          <div class="product-price">$25 · con mensaje $28</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20un%20fotograbado%20de%20coraz%C3%B3n" target="_blank" rel="noopener">Pedir por WhatsApp</a>
         </div>
       </div>
       <div class="product-card">
-        <div class="product-thumb">
-          <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 7l1.5-3h5L16 7"/></svg>
-          Foto próximamente
+        <div class="product-thumb has-photo">
+          <img src="images/productos/colgante-fotograbado-familia-cadena-redonda.jpg" alt="Fotograbado rectangular con cadena redonda, bañado en oro" loading="lazy">
         </div>
         <div class="product-info">
-          <h4>Nombre del producto</h4>
-          <div class="product-price">Precio a definir</div>
-          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20un%20fotograbado" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+          <h4>Fotograbado con cadena redonda</h4>
+          <div class="product-price">$30 · con mensaje $33</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20un%20fotograbado%20con%20cadena%20redonda" target="_blank" rel="noopener">Pedir por WhatsApp</a>
         </div>
       </div>
       <div class="product-card">
-        <div class="product-thumb">
-          <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 7l1.5-3h5L16 7"/></svg>
-          Foto próximamente
+        <div class="product-thumb has-photo">
+          <img src="images/productos/colgante-medalla-fotograbada-joven.jpg" alt="Medalla fotograbada en acero, bañada en oro" loading="lazy">
         </div>
         <div class="product-info">
-          <h4>Nombre del producto</h4>
-          <div class="product-price">Precio a definir</div>
-          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20un%20fotograbado" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+          <h4>Medalla fotograbada</h4>
+          <div class="product-price">$30 · con mensaje $33</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20una%20medalla%20fotograbada" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/colgante-medalla-rectangular-fotograbada.jpg" alt="Medalla rectangular fotograbada con cadena tejido redondo, bañada en oro" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Medalla rectangular, cadena tejido redondo</h4>
+          <div class="product-price">$30 · con mensaje $33</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20la%20medalla%20rectangular%20con%20cadena%20tejido%20redondo" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/colgante-rectangular-fotomirada-mano.jpg" alt="Dije rectangular fotomirada, bañado en oro" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Fotograbado rectangular fotomirada</h4>
+          <div class="product-price">$26</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20un%20fotograbado%20rectangular%20fotomirada" target="_blank" rel="noopener">Pedir por WhatsApp</a>
         </div>
       </div>
     </div>
@@ -591,36 +677,33 @@
     </div>
     <div class="product-grid">
       <div class="product-card">
-        <div class="product-thumb">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/></svg>
-          Foto próximamente
+        <div class="product-thumb has-photo">
+          <img src="images/productos/esclavas-nicolas-jenny.jpg" alt="Esclavas de acero con nombre grabado, bañadas en oro" loading="lazy">
         </div>
         <div class="product-info">
-          <h4>Nombre del producto</h4>
-          <div class="product-price">Precio a definir</div>
-          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20esta%20pulsera" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+          <h4>Esclava con nombre grabado</h4>
+          <div class="product-price">Caballero $25 · Dama $22</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20la%20esclava%20con%20nombre%20grabado" target="_blank" rel="noopener">Pedir por WhatsApp</a>
         </div>
       </div>
       <div class="product-card">
-        <div class="product-thumb">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/></svg>
-          Foto próximamente
+        <div class="product-thumb has-photo">
+          <img src="images/productos/pulsera-esclava-fotomirada-ojos.jpg" alt="Esclava con fotomirada grabada, bañada en oro" loading="lazy">
         </div>
         <div class="product-info">
-          <h4>Nombre del producto</h4>
-          <div class="product-price">Precio a definir</div>
-          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20esta%20pulsera" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+          <h4>Esclava con fotomirada</h4>
+          <div class="product-price">Dama $25 · Caballero $28</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20la%20esclava%20con%20fotomirada" target="_blank" rel="noopener">Pedir por WhatsApp</a>
         </div>
       </div>
       <div class="product-card">
-        <div class="product-thumb">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/></svg>
-          Foto próximamente
+        <div class="product-thumb has-photo">
+          <img src="images/productos/pulsera-grabada-tesoro-familia.jpg" alt="Pulsera de cuero grabada con foto y mensaje" loading="lazy">
         </div>
         <div class="product-info">
-          <h4>Nombre del producto</h4>
-          <div class="product-price">Precio a definir</div>
-          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20esta%20pulsera" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+          <h4>Pulsera de cuero grabada con foto y mensaje</h4>
+          <div class="product-price">$30</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20la%20pulsera%20de%20cuero%20grabada" target="_blank" rel="noopener">Pedir por WhatsApp</a>
         </div>
       </div>
     </div>
@@ -680,7 +763,7 @@
 <footer>
   <div class="logo">MYRIE<span style="color:var(--gold)">DESIGN</span></div>
   <div class="footer-links">
-    <a href="https://wa.me/584143939905" target="_blank" rel="noopener">WhatsApp</a>
+    <a href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20informaci%C3%B3n%20sobre%20sus%20piezas" target="_blank" rel="noopener">WhatsApp</a>
     <span class="dot">·</span>
     <a href="https://instagram.com/Myriedesign_" target="_blank" rel="noopener">@Myriedesign_</a>
   </div>
@@ -689,6 +772,35 @@
 <a class="float-wa" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20informaci%C3%B3n%20sobre%20sus%20piezas" target="_blank" rel="noopener" aria-label="WhatsApp">
   <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.9.5 3.6 1.4 5.1L2 22l5.1-1.3C8.6 21.5 10.3 22 12 22c5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18c-1.5 0-2.9-.4-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3C4.4 14.9 4 13.5 4 12c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8z"/></svg>
 </a>
+
+<script>
+  (function () {
+    var toggle = document.getElementById('nav-toggle');
+    var nav = document.getElementById('site-nav');
+
+    function closeNav() {
+      nav.classList.remove('is-open');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+
+    toggle.addEventListener('click', function () {
+      var open = nav.classList.toggle('is-open');
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+
+    nav.addEventListener('click', function (e) {
+      if (e.target.tagName === 'A') closeNav();
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!nav.contains(e.target) && !toggle.contains(e.target)) closeNav();
+    });
+
+    window.addEventListener('resize', function () {
+      if (window.innerWidth > 760) closeNav();
+    });
+  })();
+</script>
 
 </body>
 </html>
