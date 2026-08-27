@@ -21,7 +21,7 @@
         📋 Pegar texto extraído de la guía (Google Lens)
       </label>
       <textarea id="rawText" rows="3" placeholder="Pega aquí todo el texto copiado..." class="w-full p-2 border border-blue-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-400 outline-none"></textarea>
-      <button type="button" onclick="procesarTextoGuia()" class="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 rounded-lg text-xs transition">
+      <button type="button" id="btnProcesar" onclick="procesarTextoGuia()" class="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs transition active:bg-blue-800">
         ⚡ Procesar Texto Copiado
       </button>
     </div>
@@ -79,105 +79,103 @@
     document.getElementById("fecha").valueAsDate = new Date();
 
     function procesarTextoGuia() {
-      var text = document.getElementById("rawText").value;
-      if (!text.trim()) {
-        alert("Primero pega el texto en el recuadro.");
-        return;
-      }
-
-      var lineas = text.split("\n");
-
-      // 1. EXTRAER TRACKING
-      var matchTrack = text.match(/\b\d{7,20}\b/);
-      if (matchTrack) {
-        document.getElementById("tracking").value = matchTrack[0];
-      }
-
-      // 2. EXTRAER NOMBRE DEL DESTINATARIO (LÓGICA MEJORADA)
-      var nombreEncontrado = "";
-      
-      for (var i = 0; i < lineas.length; i++) {
-        var l = lineas[i].trim();
-        var lUpper = l.toUpperCase();
-
-        // Ignorar líneas del remitente o de la oficina
-        if (lUpper.includes("REMITENTE") || lUpper.includes("ORIGEN") || lUpper.includes("AGENCIA") || lUpper.includes("ENSACADO")) {
-          continue;
+      try {
+        var text = document.getElementById("rawText").value;
+        if (!text || !text.trim()) {
+          alert("Primero pega el texto en el recuadro.");
+          return;
         }
 
-        // Buscar palabras clave habituales de las 4 empresas
-        if (lUpper.includes("DEST") || lUpper.includes("NOMBRE") || lUpper.includes("CLIENTE") || lUpper.includes("CONSIGNA") || lUpper.includes("RECEPTOR")) {
-          var limpio = l.replace(/DESTINATARIO/gi, "")
-                        .replace(/DESTINO/gi, "")
-                        .replace(/DEST/gi, "")
-                        .replace(/NOMBRE/gi, "")
-                        .replace(/CLIENTE/gi, "")
-                        .replace(/CONSIGNATARIO/gi, "")
-                        .replace(/RECEPTOR/gi, "")
-                        .replace(/RAZON SOCIAL/gi, "")
-                        .replace(/[:\-]/g, "")
-                        .trim();
+        var lineas = text.split("\n");
 
-          // Limpiar Cédula/RIF si viene en la misma línea (Ej: V-12345678 o V12345678)
-          limpio = limpio.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "").trim();
+        // 1. EXTRAER TRACKING
+        var matchTrack = text.match(/\b\d{7,20}\b/);
+        if (matchTrack) {
+          document.getElementById("tracking").value = matchTrack[0];
+        }
 
-          if (limpio.length > 2) {
-            nombreEncontrado = limpio;
-            break;
+        // 2. EXTRAER NOMBRE DEL DESTINATARIO
+        var nombreEncontrado = "";
+        for (var i = 0; i < lineas.length; i++) {
+          var l = lineas[i].trim();
+          var lUpper = l.toUpperCase();
+
+          if (lUpper.indexOf("REMITENTE") !== -1 || lUpper.indexOf("ORIGEN") !== -1 || lUpper.indexOf("AGENCIA") !== -1 || lUpper.indexOf("ENSACADO") !== -1) {
+            continue;
           }
-        }
-      }
 
-      // Respaldos inteligentes si la etiqueta no decía "Destinatario":
-      if (!nombreEncontrado) {
-        for (var j = 0; j < lineas.length; j++) {
-          var lj = lineas[j].trim();
-          var ljUpper = lj.toUpperCase();
+          if (lUpper.indexOf("DEST") !== -1 || lUpper.indexOf("NOMBRE") !== -1 || lUpper.indexOf("CLIENTE") !== -1 || lUpper.indexOf("CONSIGNA") !== -1 || lUpper.indexOf("RECEPTOR") !== -1) {
+            var limpio = l.replace(/DESTINATARIO/gi, "")
+                          .replace(/DESTINO/gi, "")
+                          .replace(/DEST/gi, "")
+                          .replace(/NOMBRE/gi, "")
+                          .replace(/CLIENTE/gi, "")
+                          .replace(/CONSIGNATARIO/gi, "")
+                          .replace(/RECEPTOR/gi, "")
+                          .replace(/RAZON SOCIAL/gi, "")
+                          .replace(/[:\-]/g, "")
+                          .trim();
 
-          // Si una línea tiene una cédula (V-XXXXX) y no es el tracking, asumimos que es la línea del cliente
-          if (/\b[V][\-\s]?\d{6,8}\b/i.test(ljUpper) && !ljUpper.includes("TRACKING") && !ljUpper.includes("GUIA")) {
-            var limpioFallback = lj.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "")
-                                   .replace(/DEST/gi, "")
-                                   .replace(/[:\-]/g, "")
-                                   .trim();
-            if (limpioFallback.length > 2) {
-              nombreEncontrado = limpioFallback;
+            limpio = limpio.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "").trim();
+
+            if (limpio.length > 2) {
+              nombreEncontrado = limpio;
               break;
             }
           }
         }
-      }
 
-      if (nombreEncontrado) {
-        document.getElementById("nombre").value = nombreEncontrado;
-      }
+        if (!nombreEncontrado) {
+          for (var j = 0; j < lineas.length; j++) {
+            var lj = lineas[j].trim();
+            var ljUpper = lj.toUpperCase();
 
-      // 3. EXTRAER TELÉFONO
-      var matchTelf = text.match(/\b0?(412|424|414|416|426)\d{7}\b/);
-      if (matchTelf) {
-        var num = matchTelf[0];
-        if (num.indexOf("0") === 0) {
-          num = "58" + num.substring(1);
-        } else if (num.indexOf("58") !== 0) {
-          num = "58" + num;
+            if (/\b[V][\-\s]?\d{6,8}\b/i.test(ljUpper) && ljUpper.indexOf("TRACKING") === -1 && ljUpper.indexOf("GUIA") === -1) {
+              var limpioFallback = lj.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "")
+                                     .replace(/DEST/gi, "")
+                                     .replace(/[:\-]/g, "")
+                                     .trim();
+              if (limpioFallback.length > 2) {
+                nombreEncontrado = limpioFallback;
+                break;
+              }
+            }
+          }
         }
-        document.getElementById("telefono").value = num;
-      }
 
-      // 4. DETECTAR EMPRESA
-      var tUpper = text.toUpperCase();
-      if (tUpper.includes("TEALCA")) document.getElementById("empresa").value = "Tealca";
-      else if (tUpper.includes("ZOOM")) document.getElementById("empresa").value = "Zoom";
-      else if (tUpper.includes("MRW")) document.getElementById("empresa").value = "MRW";
-      else if (tUpper.includes("LIBERTY")) document.getElementById("empresa").value = "Liberty Express";
-
-      // 5. EXTRAER DESTINO
-      var ciudades = ["SOCOPO", "BARCELONA", "PUERTO LA CRUZ", "LECHERIA", "CARACAS", "VALENCIA", "MARACAIBO", "BARQUISIMETO", "MATURIN", "MARACAY", "MERIDA", "SAN CRISTOBAL", "CUMANA", "PORLAMAR", "PUERTO ORDAZ", "CORO", "PUNTO FIJO", "GUATIRE", "GUARENAS", "CHARALLAVE", "CUA", "LOS TEQUES"];
-      for (var c = 0; c < ciudades.length; c++) {
-        if (tUpper.includes(ciudades[c])) {
-          document.getElementById("destino").value = ciudades[c];
-          break;
+        if (nombreEncontrado) {
+          document.getElementById("nombre").value = nombreEncontrado;
         }
+
+        // 3. EXTRAER TELÉFONO
+        var matchTelf = text.match(/\b0?(412|424|414|416|426)\d{7}\b/);
+        if (matchTelf) {
+          var num = matchTelf[0];
+          if (num.indexOf("0") === 0) {
+            num = "58" + num.substring(1);
+          } else if (num.indexOf("58") !== 0) {
+            num = "58" + num;
+          }
+          document.getElementById("telefono").value = num;
+        }
+
+        // 4. DETECTAR EMPRESA
+        var tUpper = text.toUpperCase();
+        if (tUpper.indexOf("TEALCA") !== -1) document.getElementById("empresa").value = "Tealca";
+        else if (tUpper.indexOf("ZOOM") !== -1) document.getElementById("empresa").value = "Zoom";
+        else if (tUpper.indexOf("MRW") !== -1) document.getElementById("empresa").value = "MRW";
+        else if (tUpper.indexOf("LIBERTY") !== -1) document.getElementById("empresa").value = "Liberty Express";
+
+        // 5. EXTRAER DESTINO
+        var ciudades = ["SOCOPO", "BARCELONA", "PUERTO LA CRUZ", "LECHERIA", "CARACAS", "VALENCIA", "MARACAIBO", "BARQUISIMETO", "MATURIN", "MARACAY", "MERIDA", "SAN CRISTOBAL", "CUMANA", "PORLAMAR", "PUERTO ORDAZ", "CORO", "PUNTO FIJO", "GUATIRE", "GUARENAS", "CHARALLAVE", "CUA", "LOS TEQUES"];
+        for (var c = 0; c < ciudades.length; c++) {
+          if (tUpper.indexOf(ciudades[c]) !== -1) {
+            document.getElementById("destino").value = ciudades[c];
+            break;
+          }
+        }
+      } catch (e) {
+        alert("Error al procesar: " + e.message);
       }
     }
 
