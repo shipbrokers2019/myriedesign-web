@@ -13,13 +13,13 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V51</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V53</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
         📋 Pegar texto extraído de la guía (Google Lens)
       </label>
-      <textarea id="rawText" rows="3" placeholder="Pega aquí todo el texto copiado..." class="w-full p-2 border border-blue-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-400 outline-none"></textarea>
+      <textarea id="rawText" rows="3" placeholder="Pega aquí todo el texto copiado de la guía..." class="w-full p-2 border border-blue-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-400 outline-none"></textarea>
       <button type="button" id="btnProcesar" onclick="procesarTextoGuia()" class="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs transition active:bg-blue-800">
         ⚡ Procesar Texto Copiado
       </button>
@@ -125,7 +125,6 @@
 
         var tUpper = text.toUpperCase();
 
-        // Detección blindada de empresa
         var empresaDetectada = "MRW";
         if (tUpper.indexOf("TEALCA") !== -1) {
           empresaDetectada = "Tealca";
@@ -249,28 +248,33 @@
         }
 
         // ========================================================
-        // BLOQUE 3: TEALCA (Nuevo y Optimizado)
+        // BLOQUE 3: TEALCA (Validado y Robusto)
         // ========================================================
         if (empresaDetectada === "Tealca") {
           var lineasTealca = text.split("\n");
 
-          // 1. Tracking Tealca (usualmente tras la palabra GUIA:)
+          // 1. Tracking Tealca
           var trackTealca = "";
           for (var t = 0; t < lineasTealca.length; t++) {
             var lt = lineasTealca[t].toUpperCase();
             if (lt.indexOf("GUIA") !== -1 || lt.indexOf("GUÍA") !== -1) {
-              var mT = lineasTealca[t].match(/\b\d{6,10}\b/);
+              var mT = lineasTealca[t].match(/\b\d{7,8}\b/);
               if (mT) { trackTealca = mT[0]; break; }
-              // Si el número está en la línea siguiente
               if (t + 1 < lineasTealca.length) {
-                var mTNext = lineasTealca[t + 1].match(/\b\d{6,10}\b/);
+                var mTNext = lineasTealca[t + 1].match(/\b\d{7,8}\b/);
                 if (mTNext) { trackTealca = mTNext[0]; break; }
               }
             }
           }
           if (!trackTealca) {
-            var mGenT = text.match(/\b\d{7,8}\b/);
-            if (mGenT) trackTealca = mGenT[0];
+            var matchAllNums = text.match(/\b\d{7,8}\b/g) || [];
+            for (var an = 0; an < matchAllNums.length; an++) {
+              var candidato = matchAllNums[an];
+              if (!candidato.startsWith("412") && !candidato.startsWith("424") && !candidato.startsWith("414") && !candidato.startsWith("416") && !candidato.startsWith("426")) {
+                trackTealca = candidato;
+                break;
+              }
+            }
           }
           if (trackTealca) document.getElementById("tracking").value = trackTealca;
 
@@ -298,12 +302,14 @@
           }
           document.getElementById("telefono").value = tlfTealca;
 
-          // 3. Nombre / Destinatario Tealca (busca la línea NOMBRE)
+          // 3. Nombre Tealca
           var nombreTealca = "";
           for (var tn = 0; tn < lineasTealca.length; tn++) {
-            var ltnUp = lineasTealca[tn].toUpperCase();
+            var ltn = lineasTealca[tn].trim();
+            var ltnUp = ltn.toUpperCase();
+            
             if (ltnUp.indexOf("NOMBRE") !== -1) {
-              var limpiaN = lineasTealca[tn].replace(/NOMBRE[:\s]*/gi, "").trim();
+              var limpiaN = ltn.replace(/NOMBRE[:\s]*/gi, "").trim();
               if (limpiaN.length > 2) {
                 nombreTealca = limpiaN;
                 break;
@@ -312,9 +318,34 @@
                 break;
               }
             }
+            
+            if (ltnUp.indexOf("CEDULA") !== -1 || ltnUp.indexOf("CÉDULA") !== -1 || ltnUp.indexOf("V-") !== -1 || ltnUp.indexOf("E-") !== -1) {
+              if (tn + 1 < lineasTealca.length) {
+                var siguienteLinea = lineasTealca[tn + 1].trim();
+                var sigUp = siguienteLinea.toUpperCase();
+                if (sigUp.indexOf("CIUDAD") === -1 && sigUp.indexOf("DIRECCION") === -1 && sigUp.indexOf("ENTREGA") === -1 && sigUp.length > 3) {
+                  nombreTealca = siguienteLinea;
+                  break;
+                }
+              }
+            }
           }
+
+          if (!nombreTealca) {
+            for (var fx = 0; fx < lineasTealca.length; fx++) {
+              var lfx = lineasTealca[fx].trim();
+              var lfxUp = lfx.toUpperCase();
+              if (lfxUp.indexOf("TEALCA") !== -1 || lfxUp.indexOf("GUIA") !== -1 || lfxUp.indexOf("FECHA") !== -1 || lfxUp.indexOf("ESTANDAR") !== -1 || lfxUp.indexOf("COD") !== -1 || lfxUp.indexOf("ORIGEN") !== -1 || lfxUp.indexOf("REMITENTE") !== -1 || lfxUp.indexOf("PIEZA") !== -1 || lfxUp.indexOf("PESO") !== -1 || lfxUp.indexOf("MEDIDAS") !== -1 || lfxUp.indexOf("CEDULA") !== -1 || lfxUp.indexOf("TELEFONO") !== -1 || lfxUp.indexOf("ENTREGA") !== -1 || lfxUp.indexOf("CIUDAD") !== -1 || lfxUp.indexOf("DIRECCION") !== -1 || lfx.length < 3) continue;
+              
+              nombreTealca = lfx;
+              break;
+            }
+          }
+
           if (nombreTealca) {
             document.getElementById("nombre").value = limpiarNombreFinal(nombreTealca);
+          } else {
+            alert("⚠️ Atención: El texto copiado de Tealca está incompleto (falta la parte superior con el nombre o la guía). Asegúrate de seleccionar la etiqueta completa con Google Lens.");
           }
           return;
         }
