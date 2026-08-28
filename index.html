@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V42</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V43</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -81,13 +81,14 @@
       return "";
     }
 
-    // Función definitiva y universal de limpieza de nombres
+    // Limpieza radical por expresiones regulares múltiples
     function limpiarNombreFinal(txt) {
       if (!txt) return "";
       var limpio = txt.replace(/destinatalio[:\s]*/gi, "")
                         .replace(/destinatario[:\s]*/gi, "")
                         .replace(/destinatio[:\s]*/gi, "")
-                        .replace(/destinat[:\s]*/gi, "");
+                        .replace(/destinat[:\s]*/gi, "")
+                        .replace(/destin[:\s]*/gi, "");
       if (limpio.indexOf("-") !== -1) {
         limpio = limpio.split("-")[0].trim();
       }
@@ -104,7 +105,6 @@
 
         var tUpper = text.toUpperCase();
 
-        // 1. DETECCIÓN INTELIGENTE DE EMPRESA
         var empresaDetectada = "MRW";
         if (tUpper.indexOf("TEALCA") !== -1) {
           empresaDetectada = "Tealca";
@@ -212,7 +212,7 @@
         }
 
         // ========================================================
-        // BLOQUE 2: ZOOM (CON PASO OBLIGATORIO POR LIMPIEZA)
+        // BLOQUE 2: ZOOM
         // ========================================================
         if (empresaDetectada === "Zoom") {
           var lineasZoom = text.split("\n");
@@ -248,7 +248,7 @@
             }
           }
 
-          // APLICACIÓN FORZADA AQUÍ TAMBIÉN:
+          // ASIGNACIÓN ULTRA LIMPIA DIRECTA
           if (nombreZoom) {
             document.getElementById("nombre").value = limpiarNombreFinal(nombreZoom);
           }
