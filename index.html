@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V41</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V42</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -81,7 +81,7 @@
       return "";
     }
 
-    // Función definitiva para limpiar cualquier rastro de la palabra destinatario o errores ortográficos
+    // Función definitiva y universal de limpieza de nombres
     function limpiarNombreFinal(txt) {
       if (!txt) return "";
       var limpio = txt.replace(/destinatalio[:\s]*/gi, "")
@@ -119,11 +119,10 @@
         document.getElementById("empresa").value = empresaDetectada;
 
         // ========================================================
-        // BLOQUE 1: MRW (AISLADO E INTOCABLE)
+        // BLOQUE 1: MRW
         // ========================================================
         if (empresaDetectada === "MRW") {
           var lineas = text.split("\n");
-          
           var nombreEncontrado = "";
           var lineaDelNombre = "";
           var indiceLineaNombre = -1;
@@ -184,13 +183,9 @@
             var matchT = lineasAEvaluar[ev].match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
             if (matchT) {
               var tVal = formatearTelefonoStrict(matchT[0]);
-              if (tVal) {
-                tlfEncontrado = tVal;
-                break;
-              }
+              if (tVal) { tlfEncontrado = tVal; break; }
             }
           }
-
           document.getElementById("telefono").value = tlfEncontrado;
 
           var trackingEncontrado = "";
@@ -217,12 +212,11 @@
         }
 
         // ========================================================
-        // BLOQUE 2: ZOOM (CON LIMPIEZA FORZADA DE ETIQUETAS)
+        // BLOQUE 2: ZOOM (CON PASO OBLIGATORIO POR LIMPIEZA)
         // ========================================================
         if (empresaDetectada === "Zoom") {
           var lineasZoom = text.split("\n");
           
-          // 1. Tracking Zoom (10 dígitos)
           var trackZoom = "";
           for (var z = 0; z < lineasZoom.length; z++) {
             var mZ = lineasZoom[z].match(/\b\d{10}\b/);
@@ -234,7 +228,6 @@
           }
           if (trackZoom) document.getElementById("tracking").value = trackZoom;
 
-          // 2. Destinatario Zoom
           var nombreZoom = "";
           for (var iz = 0; iz < lineasZoom.length; iz++) {
             var lzUp = lineasZoom[iz].toUpperCase();
@@ -250,17 +243,16 @@
               var lRxUp = lRx.toUpperCase();
               if (lRxUp.indexOf("REMITENTE") !== -1 || lRxUp.indexOf("ZOOM") !== -1 || lRxUp.indexOf("MER") !== -1 || lRxUp.indexOf("BISUTERIA") !== -1 || lRxUp.indexOf("COD") !== -1 || lRxUp.indexOf("BFA") !== -1 || lRxUp.length < 4) continue;
               if (/\d/.test(lRx)) continue;
-              
               nombreZoom = lRx;
               break;
             }
           }
 
+          // APLICACIÓN FORZADA AQUÍ TAMBIÉN:
           if (nombreZoom) {
             document.getElementById("nombre").value = limpiarNombreFinal(nombreZoom);
           }
 
-          // 3. Teléfono Zoom
           var tlfZoom = "";
           for (var tz = 0; tz < lineasZoom.length; tz++) {
             var ltzUp = lineasZoom[tz].toUpperCase();
@@ -268,10 +260,7 @@
               var matchTz = lineasZoom[tz].match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
               if (matchTz) {
                 var tValZ = formatearTelefonoStrict(matchTz[0]);
-                if (tValZ) {
-                  tlfZoom = tValZ;
-                  break;
-                }
+                if (tValZ) { tlfZoom = tValZ; break; }
               }
             }
           }
