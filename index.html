@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V32</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V33</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -91,38 +91,54 @@
 
         var tUpper = text.toUpperCase();
 
-        // 1. DETECCIÓN INTELIGENTE DE EMPRESA (Incluyendo MRW sin membrete explícito)
-        var empresaDetectada = "MRW"; // Por defecto si cumple con estructura MRW o no tiene otra marca
+        // 1. DETECCIÓN INTELIGENTE DE EMPRESA
+        var empresaDetectada = "MRW";
         if (tUpper.indexOf("TEALCA") !== -1) {
           empresaDetectada = "Tealca";
         } else if (tUpper.indexOf("ZOOM") !== -1 || tUpper.indexOf("GRUPO ZOOM") !== -1) {
           empresaDetectada = "Zoom";
         } else if (tUpper.indexOf("LAE") !== -1 || tUpper.indexOf("EL DORADO") !== -1) {
           empresaDetectada = "LAE";
-        } else if (tUpper.indexOf("NUEVA BARCELONA") !== -1 || tUpper.indexOf("SOCOPO") !== -1 || tUpper.indexOf("CANT. CUPONES") !== -1 || tUpper.indexOf("ENSACADO") !== -1) {
-          empresaDetectada = "MRW"; // Identifica MRW por sus campos típicos aunque no diga la palabra MRW
+        } else if (tUpper.indexOf("NUEVA BARCELONA") !== -1 || tUpper.indexOf("SOCOPO") !== -1 || tUpper.indexOf("CANT. CUPONES") !== -1 || tUpper.indexOf("ENSACADO") !== -1 || tUpper.indexOf("MACHIQUES") !== -1) {
+          empresaDetectada = "MRW";
         }
 
         document.getElementById("empresa").value = empresaDetectada;
 
         // ========================================================
-        // BLOQUE 1: MRW (CORREGIDO Y OPTIMIZADO)
+        // BLOQUE 1: MRW (CORREGIDO: TELÉFONO DESTINATARIO Y TRACKING)
         // ========================================================
         if (empresaDetectada === "MRW") {
           var lineas = text.split("\n");
           
-          // Teléfono MRW
+          // Teléfono MRW (Busca específicamente en la línea de DEST: o donde aparezca TLF al lado del destino)
           var tlfEncontrado = "";
-          var matchTelf = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/g);
-          if (matchTelf && matchTelf.length > 0) {
-            for (var m = 0; m < matchTelf.length; m++) {
-              var tValido = formatearTelefonoStrict(matchTelf[m]);
-              if (tValido) { tlfEncontrado = tValido; break; }
+          for (var idx = 0; idx < lineas.length; idx++) {
+            var lLine = lineas[idx];
+            var lLineUp = lLine.toUpperCase();
+            if (lLineUp.indexOf("DEST") !== -1 || lLineUp.indexOf("TLF") !== -1) {
+              var matchLineaTlf = lLine.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
+              if (matchLineaTlf) {
+                var tVal = formatearTelefonoStrict(matchLineaTlf[0]);
+                if (tVal) {
+                  tlfEncontrado = tVal;
+                  break;
+                }
+              }
+            }
+          }
+          // Si no lo encontró cerca de DEST, busca el segundo teléfono del texto (descartando el primero)
+          if (!tlfEncontrado) {
+            var todosT = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/g);
+            if (todosT && todosT.length > 1) {
+              tlfEncontrado = formatearTelefonoStrict(todosT[1]); // Toma el segundo, descarta el primero
+            } else if (todosT && todosT.length === 1) {
+              tlfEncontrado = formatearTelefonoStrict(todosT[0]);
             }
           }
           document.getElementById("telefono").value = tlfEncontrado;
 
-          // Destinatario MRW (Limpia cédula y RIF adjuntos)
+          // Destinatario MRW
           var nombreEncontrado = "";
           for (var i = 0; i < lineas.length; i++) {
             var l = lineas[i].trim();
@@ -160,18 +176,18 @@
           }
           if (nombreEncontrado) document.getElementById("nombre").value = nombreEncontrado;
 
-          // Tracking MRW (Evita montos con decimales y busca el número de guía exacto)
+          // Tracking MRW (Busca de 11 a 15 dígitos para evitar números cortos o montos)
           var trackingEncontrado = "";
           for (var k = 0; k < lineas.length; k++) {
             var lk = lineas[k].toUpperCase();
             if (lk.indexOf("TRACKING") !== -1 || lk.indexOf("GUIA") !== -1 || lk.indexOf("GUÍA") !== -1 || lk.indexOf("DOC") !== -1 || lk.indexOf("NRO") !== -1) {
-              var mTrackL = lineas[k].match(/\b\d{8,14}\b/);
+              var mTrackL = lineas[k].match(/\b\d{11,15}\b/);
               if (mTrackL) { trackingEncontrado = mTrackL[0]; break; }
             }
           }
           if (!trackingEncontrado) {
             var numTelfPuro = tlfEncontrado ? tlfEncontrado.replace("58", "") : "";
-            var todosNumeros = text.match(/\b\d{8,14}\b/g) || [];
+            var todosNumeros = text.match(/\b\d{11,15}\b/g) || [];
             for (var n = 0; n < todosNumeros.length; n++) {
               var candidate = todosNumeros[n];
               if (numTelfPuro && candidate.indexOf(numTelfPuro) !== -1) continue;
@@ -312,7 +328,6 @@
       }
     }
 
-    // Funciones de limpieza exclusivas para MRW
     function esBasuraMRW(texto) {
       var t = texto.toUpperCase().trim();
       if (!t) return true;
@@ -327,7 +342,6 @@
     function depurarNombreMRW(txt) {
       var resultado = txt.replace(/^[\|\/\\\,\.\-_\:\;\s\d]+/g, "");
       resultado = resultado.replace(/destinatario[\s:]*/gi, "").replace(/\bDESTINO\b[:]?/gi, "").replace(/\bDEST\b[\s:]*/gi, "");
-      // Limpia la cédula que suele venir pegada al nombre (ej: V-8142710)
       resultado = resultado.replace(/\b[VvEeJjGg][-\s]?\d{6,9}\b/g, "");
       resultado = resultado.replace(/TLF[\s:\.]*\d+/gi, "").replace(/\b(?:0)?(412|424|414|416|426)\d{7}\b/g, "").replace(/[:\.\-]/g, " ");
       return resultado.trim();
