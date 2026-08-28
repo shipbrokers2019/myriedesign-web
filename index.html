@@ -9,7 +9,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos (MRW Perfecto)</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V24</h2>
     
     <!-- Selector de Empresa -->
     <div>
@@ -99,7 +99,7 @@
         var nombreEncontrado = "";
 
         // ========================================================
-        // 1. LÓGICA DE MRW (La que funcionaba perfecto)
+        // 1. LÓGICA INTELIGENTE PARA MRW
         // ========================================================
         if (empresa === "MRW") {
           // A. Tracking: Buscar número de 8 a 20 dígitos
@@ -121,19 +121,25 @@
             tlfEncontrado = formatearTelefonoStrict(matchTelfGeneral[0]);
           }
 
-          // C. Destinatario exacto con la etiqueta DEST o DESTINO
+          // C. Destinatario inteligente para MRW:
+          // Busca la primera línea que NO sea basura (cobro, tracking, números puros, ensacado)
           for (var i = 0; i < lineas.length; i++) {
-            var lUp = lineas[i].toUpperCase();
-            if (lUp.indexOf("DEST") !== -1 || lUp.indexOf("DESTINO") !== -1) {
-              var limpio = lineas[i].replace(/DESTINO[\s\:\-\.]*/i, "");
-              limpio = limpio.replace(/DEST[\s\:\-\.]*/i, "");
-              limpio = limpio.replace(/DESt[\s\:\-\.]*INO[\s\:\-\.]*/i, "");
-              limpio = limpio.replace(/[\s\-\,\.\_\/]+$/, "").trim();
+            var l = lineas[i];
+            var lUp = l.toUpperCase();
 
-              if (limpio.length > 2) {
-                nombreEncontrado = limpio;
-                break;
-              }
+            var esBasura = 
+              lUp.indexOf("COBRO") !== -1 ||
+              lUp.indexOf("TRACKING") !== -1 ||
+              lUp.indexOf("ENSACADO") !== -1 ||
+              lUp.indexOf("CANT") !== -1 ||
+              lUp.indexOf("CUPONES") !== -1 ||
+              lUp.indexOf("B8.") !== -1 ||
+              /^\d+$/.test(l) || // Si es solo un número
+              l.length < 3;
+
+            if (!esBasura) {
+              nombreEncontrado = l;
+              break;
             }
           }
         }
