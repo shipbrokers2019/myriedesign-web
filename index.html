@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos v2</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -28,7 +28,7 @@
     <form id="guiaForm" class="space-y-3">
       <div>
         <label class="block text-xs font-bold text-gray-700">Destinatario</label>
-        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium">
+        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium" placeholder="Escribe o saldrá en blanco si no se detecta etiqueta">
       </div>
       
       <div>
@@ -79,31 +79,6 @@
       if (/^0(412|424|414|416|426)\d{7}$/.test(num)) return "58" + num.substring(1);
       if (/^(412|424|414|416|426)\d{7}$/.test(num)) return "58" + num;
       return "";
-    }
-
-    function esBasuraOInvalido(txt) {
-      var t = txt.toUpperCase();
-      if (/\d/.test(t)) return true;
-      if (t.indexOf("S.") !== -1 || t.indexOf("$") !== -1 || t.indexOf("CANT") !== -1) return true;
-
-      var palabrasClave = ["CALLE", "CARRERA", "AVENIDA", "AV", "URB", "URBANIZACION", "SECTOR", "LOCAL", "LOCALIDAD", "EDIF", "EDIFICIO", "PISO", "APTO", "APARTAMENTO", "CRUCE", "VEREDA", "ZONA", "ESQUINA", "FRENTE", "TRAS", "DETRAS", "CC", "CENTRO COMERCIAL", "CUPONES", "ENEACADO", "ENSACADO", "CARACAD", "SOCOPO", "VALENCIA", "CARACAS", "BARCELONA", "TRACKING", "DESTINATARIO"];
-      for (var i = 0; i < palabrasClave.length; i++) {
-        if (t.indexOf(palabrasClave[i]) !== -1) return true;
-      }
-      return false;
-    }
-
-    function limpiarNombreComun(txt) {
-      var res = txt.toUpperCase();
-      var basuras = ["DESTINATARIO", "DESTINALARIO", "CLIENTE", "NOMBRE", "DIRECCION", "DIR", "VALENCIA", "CARACAS", "SOCOPO", "BARCELONA", "ZOOM", "MRW", "TEALCA", "ENSACADO", "ENEACADO", "CANT", "CUPONES", "TRACKING"];
-      for (var i = 0; i < basuras.length; i++) {
-        res = res.split(basuras[i]).join("");
-      }
-      res = res.replace(/^[\|\/\\\,\.\-_\:\;\s\d]+/g, "").trim();
-      if (res.indexOf(":") !== -1) {
-        res = res.split(":").pop().trim();
-      }
-      return res;
     }
 
     function buscarTrackingGeneral(text, lineas) {
@@ -158,37 +133,25 @@
           document.getElementById("tracking").value = trackingEncontrado;
         }
 
-        // Extracción de Destinatario
+        // REGLA NUEVA Y ABSOLUTA PARA EL DESTINATARIO:
+        // Solo buscará un nombre si la etiqueta exacta "DESTINATARIO" o "DEST" aparece en el texto.
+        // Si no aparece, el campo se quedará en blanco para que lo escribas manualmente sin arrastrar basura previa.
         var nombreEncontrado = "";
         for (var i = 0; i < lineas.length; i++) {
           var l = lineas[i].toUpperCase();
           if (l.indexOf("DESTINATARIO") !== -1 || l.indexOf("DEST") !== -1) {
             if (i + 1 < lineas.length) {
-              var candidato = limpiarNombreComun(lineas[i + 1]);
-              if (candidato.length > 3 && !esBasuraOInvalido(candidato)) { 
-                nombreEncontrado = candidato; 
-                break; 
+              var candidato = lineas[i + 1].toUpperCase();
+              candidato = candidato.replace(/DESTINATARIO|DESTINALARIO|CLIENTE|NOMBRE/g, "").replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "").trim();
+              if (candidato.length > 2) {
+                nombreEncontrado = candidato;
+                break;
               }
             }
           }
         }
 
-        if (!nombreEncontrado) {
-          for (var j = 0; j < lineas.length; j++) {
-            var lj = lineas[j];
-            var limpio = limpiarNombreComun(lj);
-            if (limpio.length > 3 && /[a-zA-Z]/.test(limpio) && !esBasuraOInvalido(limpio)) {
-              nombreEncontrado = limpio;
-              break;
-            }
-          }
-        }
-
-        if (nombreEncontrado && !esBasuraOInvalido(nombreEncontrado)) {
-          document.getElementById("nombre").value = nombreEncontrado;
-        } else {
-          document.getElementById("nombre").value = ""; 
-        }
+        document.getElementById("nombre").value = nombreEncontrado;
 
       } catch (e) {
         alert("Error al procesar: " + e.message);
