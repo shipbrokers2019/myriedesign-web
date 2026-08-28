@@ -81,13 +81,13 @@
       return "";
     }
 
-    function esDireccionOBasura(txt) {
+    function esBasuraOInvalido(txt) {
       var t = txt.toUpperCase();
-      
-      // Si la línea parece un precio, tarifa o código numérico con puntos (ej: "3S. 2763.99")
-      if (/^\d+\s*[A-Z]?\.?\s*\d+[\.,]?\d*/.test(t)) return true;
+      // Si contiene números, símbolos de precio, puntos extraños o palabras técnicas, se rechaza de inmediato
+      if (/\d/.test(t)) return true;
+      if (t.indexOf("S.") !== -1 || t.indexOf("$") !== -1 || t.indexOf("CANT") !== -1) return true;
 
-      var palabrasClave = ["CALLE", "CARRERA", "AVENIDA", "AV", "URB", "URBANIZACION", "SECTOR", "LOCAL", "LOCALIDAD", "EDIF", "EDIFICIO", "PISO", "APTO", "APARTAMENTO", "CRUCE", "VEREDA", "ZONA", "ESQUINA", "FRENTE", "TRAS", "DETRAS", "CC", "CENTRO COMERCIAL", "CUPONES", "ENEACADO", "ENSACADO", "CARACAD", "SOCOPO", "VALENCIA", "CARACAS", "BARCELONA", "TRACKING", "REWENTE", "RENTENTE", "REMITENTE", "CANT"];
+      var palabrasClave = ["CALLE", "CARRERA", "AVENIDA", "AV", "URB", "URBANIZACION", "SECTOR", "LOCAL", "LOCALIDAD", "EDIF", "EDIFICIO", "PISO", "APTO", "APARTAMENTO", "CRUCE", "VEREDA", "ZONA", "ESQUINA", "FRENTE", "TRAS", "DETRAS", "CC", "CENTRO COMERCIAL", "CUPONES", "ENEACADO", "ENSACADO", "CARACAD", "SOCOPO", "VALENCIA", "CARACAS", "BARCELONA", "TRACKING", "REWENTE", "RENTENTE", "REMITENTE", "DESTINATARIO"];
       for (var i = 0; i < palabrasClave.length; i++) {
         if (t.indexOf(palabrasClave[i]) !== -1) return true;
       }
@@ -159,14 +159,14 @@
           document.getElementById("tracking").value = trackingEncontrado;
         }
 
-        // Extracción de Nombre de Destinatario con doble validación estricta
+        // Extracción estricta de Destinatario (Solo si hay etiqueta explícita o una línea de puro texto sin números)
         var nombreEncontrado = "";
         for (var i = 0; i < lineas.length; i++) {
           var l = lineas[i].toUpperCase();
           if (l.indexOf("DESTINATARIO") !== -1 || l.indexOf("DEST") !== -1) {
             if (i + 1 < lineas.length) {
               var candidato = limpiarNombreComun(lineas[i + 1]);
-              if (candidato.length > 3 && !esDireccionOBasura(candidato)) { 
+              if (candidato.length > 3 && !esBasuraOInvalido(candidato)) { 
                 nombreEncontrado = candidato; 
                 break; 
               }
@@ -174,20 +174,20 @@
           }
         }
 
+        // Si no hay etiqueta explícita, se evalúan las líneas pero con la regla estricta de NO aceptar números
         if (!nombreEncontrado) {
           for (var j = 0; j < lineas.length; j++) {
             var lj = lineas[j];
-            if (esDireccionOBasura(lj) || /\d/.test(lj)) continue;
             var limpio = limpiarNombreComun(lj);
-            if (limpio.length > 3 && /[a-zA-Z]/.test(limpio) && !esDireccionOBasura(limpio)) {
+            if (limpio.length > 3 && /[a-zA-Z]/.test(limpio) && !esBasuraOInvalido(limpio)) {
               nombreEncontrado = limpio;
               break;
             }
           }
         }
 
-        // Asignación final segura: Si el texto extraído es una tarifa o basura, deja el campo limpio
-        if (nombreEncontrado && !esDireccionOBasura(nombreEncontrado)) {
+        // Asignación final limpia
+        if (nombreEncontrado && !esBasuraOInvalido(nombreEncontrado)) {
           document.getElementById("nombre").value = nombreEncontrado;
         } else {
           document.getElementById("nombre").value = ""; 
