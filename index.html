@@ -28,18 +28,18 @@
     <form id="guiaForm" class="space-y-3">
       <div>
         <label class="block text-xs font-bold text-gray-700">Destinatario</label>
-        <input type="text" id="nombre" placeholder="Ej: INGRID CAMPOS" required class="w-full mt-1 p-2 border rounded-lg text-sm">
+        <input type="text" id="nombre" placeholder="Ej: VERYGIONETT LOAIZA" required class="w-full mt-1 p-2 border rounded-lg text-sm">
       </div>
       
       <div>
         <label class="block text-xs font-bold text-gray-700">Teléfono (WhatsApp)</label>
-        <input type="text" id="telefono" placeholder="Ej: 584145714707" required class="w-full mt-1 p-2 border rounded-lg text-sm">
+        <input type="text" id="telefono" placeholder="Ej: 584241511750" required class="w-full mt-1 p-2 border rounded-lg text-sm">
       </div>
 
       <div class="grid grid-cols-2 gap-2">
         <div>
           <label class="block text-xs font-bold text-gray-700">N° Tracking / Guía</label>
-          <input type="text" id="tracking" placeholder="Ej: 031000601000211" required class="w-full mt-1 p-2 border rounded-lg text-sm">
+          <input type="text" id="tracking" placeholder="Ej: 1684716148" required class="w-full mt-1 p-2 border rounded-lg text-sm">
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-700">Empresa</label>
@@ -85,14 +85,15 @@
       if (t.indexOf("COBRO EN DESTINO") !== -1) return true;
       if (t.indexOf("CONTRA REEMBOLSO") !== -1) return true;
       if (t.indexOf("DESTINO:") !== -1) return true;
+      if (t.indexOf("RIF") !== -1 || t.indexOf("R.I.F") !== -1 || t.indexOf("RLFICI") !== -1) return true;
       return false;
     }
 
     function depurarNombre(txt) {
       var resultado = txt;
-      resultado = resultado.replace(/DESTINATARIO/gi, "");
+      resultado = resultado.replace(/DESTINATARIO[\s:]*/gi, "");
       resultado = resultado.replace(/DESTINO:/gi, "");
-      resultado = resultado.replace(/\bDEST\b[\s:]*/gi, ""); // Elimina DEST, DEST: o DEST. 
+      resultado = resultado.replace(/\bDEST\b[\s:]*/gi, "");
       resultado = resultado.replace(/DATOS DEL/gi, "");
       resultado = resultado.replace(/CONSIGNA A/gi, "");
       resultado = resultado.replace(/RECEPTOR/gi, "");
@@ -100,12 +101,26 @@
       resultado = resultado.replace(/CLIENTE/gi, "");
       resultado = resultado.replace(/AGENCIA/gi, "");
       resultado = resultado.replace(/OFICINA/gi, "");
+      resultado = resultado.replace(/R\.?I\.?F\.?\/C\.?I\.?[\s:]*/gi, "");
+      resultado = resultado.replace(/RLFICI[\s:]*/gi, "");
 
       resultado = resultado.replace(/TLF[\s:\.]*\d+/gi, "");
       resultado = resultado.replace(/\b(?:0)?(412|424|414|416|426)\d{7}\b/g, "");
       resultado = resultado.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "");
       resultado = resultado.replace(/\b\d+\b/g, "");
       resultado = resultado.replace(/[:\.\-]/g, "");
+
+      // Si Zoom repite el nombre dos veces ("NOMBRE - NOMBRE"), dejamos solo uno
+      var partes = resultado.split(/\s+/);
+      if (partes.length >= 4) {
+        var mitad = Math.floor(partes.length / 2);
+        var p1 = partes.slice(0, mitad).join(" ");
+        var p2 = partes.slice(mitad).join(" ");
+        if (p1.toUpperCase() === p2.toUpperCase()) {
+          resultado = p1;
+        }
+      }
+
       return resultado.trim();
     }
 
@@ -150,6 +165,7 @@
 
           if (esLineaBasura(l)) continue;
 
+          // Regla para Zoom, MRW y otras
           if (lUpper.indexOf("DEST") !== -1 || lUpper.indexOf("DESTINATARIO") !== -1 || lUpper.indexOf("CLIENTE") !== -1 || lUpper.indexOf("CONSIGNA") !== -1) {
             
             var matchTelfLinea = l.match(/(?:TLF[\s:\.]*)?((?:0)?(?:412|424|414|416|426)\d{7})/i);
@@ -299,7 +315,7 @@
       lista.prepend(card);
       form.reset();
       document.getElementById("rawText").value = "";
-      document.getElementById("fecha").valueAsDate = new Date();
+      document.getElementById("fechaDespacho").valueAsDate = new Date();
     });
   </script>
 </body>
