@@ -92,19 +92,19 @@
       var resultado = txt;
       resultado = resultado.replace(/DESTINATARIO/gi, "");
       resultado = resultado.replace(/DESTINO:/gi, "");
+      resultado = resultado.replace(/\bDEST\b[\s:]*/gi, ""); // Elimina DEST, DEST: o DEST. 
       resultado = resultado.replace(/DATOS DEL/gi, "");
       resultado = resultado.replace(/CONSIGNA A/gi, "");
       resultado = resultado.replace(/RECEPTOR/gi, "");
       resultado = resultado.replace(/NOMBRE/gi, "");
       resultado = resultado.replace(/CLIENTE/gi, "");
-      resultado = resultado.replace(/DEST:/gi, "");
       resultado = resultado.replace(/AGENCIA/gi, "");
       resultado = resultado.replace(/OFICINA/gi, "");
 
       resultado = resultado.replace(/TLF[\s:\.]*\d+/gi, "");
       resultado = resultado.replace(/\b(?:0)?(412|424|414|416|426)\d{7}\b/g, "");
       resultado = resultado.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "");
-      resultado = resultado.replace(/\b\d+\b/g, ""); // Elimina números sueltos sobrantes (ej: 2041)
+      resultado = resultado.replace(/\b\d+\b/g, "");
       resultado = resultado.replace(/[:\.\-]/g, "");
       return resultado.trim();
     }
@@ -140,7 +140,7 @@
         else if (tUpper.indexOf("MRW") !== -1) document.getElementById("empresa").value = "MRW";
         else if (tUpper.indexOf("LIBERTY") !== -1) document.getElementById("empresa").value = "Liberty Express";
 
-        // 2. EXTRAER DESTINATARIO Y SU TELÉFONO (Especial MRW)
+        // 2. EXTRAER DESTINATARIO Y SU TELÉFONO
         var nombreEncontrado = "";
         var tlfDestinatario = "";
 
@@ -150,7 +150,7 @@
 
           if (esLineaBasura(l)) continue;
 
-          if (lUpper.indexOf("DEST:") !== -1 || lUpper.indexOf("DESTINATARIO") !== -1 || lUpper.indexOf("CLIENTE") !== -1 || lUpper.indexOf("CONSIGNA") !== -1) {
+          if (lUpper.indexOf("DEST") !== -1 || lUpper.indexOf("DESTINATARIO") !== -1 || lUpper.indexOf("CLIENTE") !== -1 || lUpper.indexOf("CONSIGNA") !== -1) {
             
             var matchTelfLinea = l.match(/(?:TLF[\s:\.]*)?((?:0)?(?:412|424|414|416|426)\d{7})/i);
             if (matchTelfLinea) {
