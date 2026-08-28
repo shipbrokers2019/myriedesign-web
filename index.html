@@ -28,18 +28,18 @@
     <form id="guiaForm" class="space-y-3">
       <div>
         <label class="block text-xs font-bold text-gray-700">Destinatario</label>
-        <input type="text" id="nombre" placeholder="Ej: VERYGIONETT LOAIZA" required class="w-full mt-1 p-2 border rounded-lg text-sm">
+        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm">
       </div>
       
       <div>
         <label class="block text-xs font-bold text-gray-700">Teléfono (WhatsApp)</label>
-        <input type="text" id="telefono" placeholder="Ej: 584241511750" class="w-full mt-1 p-2 border rounded-lg text-sm">
+        <input type="text" id="telefono" class="w-full mt-1 p-2 border rounded-lg text-sm">
       </div>
 
       <div class="grid grid-cols-2 gap-2">
         <div>
           <label class="block text-xs font-bold text-gray-700">N° Tracking / Guía</label>
-          <input type="text" id="tracking" placeholder="Ej: 1684716148" required class="w-full mt-1 p-2 border rounded-lg text-sm">
+          <input type="text" id="tracking" required class="w-full mt-1 p-2 border rounded-lg text-sm">
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-700">Empresa</label>
@@ -136,7 +136,6 @@
           for (var j = 0; j < palabras.length; j++) {
             if (i !== j) {
               var pOtro = palabras[j].toUpperCase();
-              // Si 'DRICARDO' contiene 'RICARDO' y es más larga, la descartamos porque es un error de lectura
               if (pOtro.length >= 4 && pCur.indexOf(pOtro) !== -1 && pCur.length > pOtro.length) {
                 esSombra = true;
                 break;
