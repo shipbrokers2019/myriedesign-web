@@ -28,18 +28,18 @@
     <form id="guiaForm" class="space-y-3">
       <div>
         <label class="block text-xs font-bold text-gray-700">Destinatario</label>
-        <input type="text" id="nombre" placeholder="Ej: VERYGIONETT LOAIZA" required class="w-full mt-1 p-2 border rounded-lg text-sm">
+        <input type="text" id="nombre" placeholder="" required class="w-full mt-1 p-2 border rounded-lg text-sm">
       </div>
       
       <div>
         <label class="block text-xs font-bold text-gray-700">Teléfono (WhatsApp)</label>
-        <input type="text" id="telefono" placeholder="Ej: 584241511750" class="w-full mt-1 p-2 border rounded-lg text-sm">
+        <input type="text" id="telefono" placeholder="" class="w-full mt-1 p-2 border rounded-lg text-sm">
       </div>
 
       <div class="grid grid-cols-2 gap-2">
         <div>
           <label class="block text-xs font-bold text-gray-700">N° Tracking / Guía</label>
-          <input type="text" id="tracking" placeholder="Ej: 1684716148" required class="w-full mt-1 p-2 border rounded-lg text-sm">
+          <input type="text" id="tracking" placeholder="" required class="w-full mt-1 p-2 border rounded-lg text-sm">
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-700">Empresa</label>
@@ -96,15 +96,15 @@
     function depurarNombre(txt) {
       var resultado = txt;
 
-      // Quitar basura de símbolos iniciales
+      // Quitar símbolos de bordes
       resultado = resultado.replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "");
 
-      // Quitar etiquetas de guías y prefijos habituales de OCR
+      // Quitar etiquetas de guías y palabras de sistema
       resultado = resultado.replace(/\bZOOM\b/gi, "");
       resultado = resultado.replace(/b?estinatario[\s:]*/gi, "");
       resultado = resultado.replace(/DESTINO:/gi, "");
       resultado = resultado.replace(/\bDEST\b[\s:]*/gi, "");
-      resultado = resultado.replace(/\bD[\.\s:]+/gi, ""); // Quita "D " o "D." al inicio
+      resultado = resultado.replace(/\bD[\.\s:]+/gi, "");
       resultado = resultado.replace(/DATOS DEL/gi, "");
       resultado = resultado.replace(/CONSIGNA A/gi, "");
       resultado = resultado.replace(/RECEPTOR/gi, "");
@@ -125,52 +125,23 @@
       resultado = resultado.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "");
       resultado = resultado.replace(/[:\.\-]/g, " ");
 
-      resultado = resultado.trim().replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "");
-
       var palabras = resultado.trim().split(/\s+/).filter(Boolean);
 
-      // Si la primera palabra arranca con basura (ej: "DRICARDO"), limpiarla si existe la misma palabra correcta después
-      if (palabras.length > 2) {
-        var primera = palabras[0].toUpperCase();
-        var segunda = palabras[1].toUpperCase();
-        var tercera = palabras[2].toUpperCase();
+      // Eliminar palabras repetidas e imperfectas de OCR
+      var palabrasUnicas = [];
+      var vist = new Set();
 
-        // Ejemplo: DRICARDO SUCRE RICARDO SUCRE -> si la 3ra palabra está contenida en la 1ra
-        if (primera.indexOf(tercera) !== -1 && primera !== tercera) {
-          palabras.shift(); // Elimina "DRICARDO"
+      for (var i = 0; i < palabras.length; i++) {
+        var pUpper = palabras[i].toUpperCase();
+        // Filtrar basura de 1 caracter o palabras repetidas
+        if (pUpper.length > 1 && !vist.has(pUpper)) {
+          vist.add(pUpper);
+          palabrasUnicas.push(palabras[i]);
         }
       }
 
-      // Deduplicar repeticiones (ej. RICARDO SUCRE RICARDO SUCRE -> RICARDO SUCRE)
-      if (palabras.length >= 2) {
-        var num = palabras.length;
-        if (num % 2 === 0) {
-          var mitad = num / 2;
-          var p1 = palabras.slice(0, mitad).join(" ").toUpperCase();
-          var p2 = palabras.slice(mitad).join(" ").toUpperCase();
-          if (p1 === p2) {
-            palabras = palabras.slice(0, mitad);
-          }
-        } else {
-          var pUnicas = [];
-          for (var i = 0; i < palabras.length; i++) {
-            if (i === 0 || palabras[i].toUpperCase() !== palabras[i - 1].toUpperCase()) {
-              pUnicas.push(palabras[i]);
-            }
-          }
-          if (pUnicas.length >= 4) {
-            var m = Math.floor(pUnicas.length / 2);
-            var h1 = pUnicas.slice(0, m).join(" ").toUpperCase();
-            var h2 = pUnicas.slice(m, m * 2).join(" ").toUpperCase();
-            if (h1 === h2) {
-              pUnicas = pUnicas.slice(0, m);
-            }
-          }
-          palabras = pUnicas;
-        }
-      }
-
-      return palabras.join(" ").trim();
+      // Si el orden vino invertido como (APELLIDO NOMBRE), reordenar si aplica
+      return palabrasUnicas.join(" ").trim();
     }
 
     function formatearTelefono(numBruto) {
@@ -276,7 +247,7 @@
           if (matchTelfs.length > 0) {
             document.getElementById("telefono").value = formatearTelefono(matchTelfs[0]);
           } else {
-            document.getElementById("telefono").value = ""; // Dejar vacío si no hay teléfono
+            document.getElementById("telefono").value = "";
           }
         }
 
