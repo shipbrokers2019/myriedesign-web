@@ -5,53 +5,57 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Despacho de Envíos - Myriedesign</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#2563eb">
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V28</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos</h2>
     
-    <!-- Selector de Empresa -->
-    <div>
-      <label class="block text-xs font-bold text-gray-700 mb-1">🏢 Seleccionar Empresa de Envío</label>
-      <select id="empresa" onchange="cambiarEmpresa()" class="w-full p-2 border rounded-lg text-sm bg-blue-50 text-blue-900 font-bold border-blue-300">
-        <option value="MRW">MRW (Sin nombre impreso)</option>
-        <option value="Zoom">Zoom (Con nombre impreso)</option>
-        <option value="Tealca">Tealca (Con nombre impreso)</option>
-        <option value="LAE">LAE (Con nombre impreso)</option>
-      </select>
-    </div>
-
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
-      <label class="block text-xs font-bold text-blue-800 mb-1" id="labelInstruccion">
-        📋 Pegar texto de Guía MRW (Google Lens)
+      <label class="block text-xs font-bold text-blue-800 mb-1">
+        📋 Pegar texto extraído de la guía (Google Lens)
       </label>
-      <textarea id="rawText" rows="4" placeholder="Pega aquí el texto de la guía..." class="w-full p-2 border border-blue-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-400 outline-none"></textarea>
+      <textarea id="rawText" rows="3" placeholder="Pega aquí todo el texto copiado..." class="w-full p-2 border border-blue-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-400 outline-none"></textarea>
       <button type="button" id="btnProcesar" onclick="procesarTextoGuia()" class="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs transition active:bg-blue-800">
-        ⚡ Procesar Texto Específico
+        ⚡ Procesar Texto Copiado
       </button>
     </div>
 
     <form id="guiaForm" class="space-y-3">
       <div>
         <label class="block text-xs font-bold text-gray-700">Destinatario</label>
-        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium" placeholder="Nombre del cliente">
+        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium">
       </div>
       
       <div>
         <label class="block text-xs font-bold text-gray-700">Teléfono (WhatsApp)</label>
-        <input type="text" id="telefono" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium" placeholder="Teléfono del cliente">
+        <input type="text" id="telefono" class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium">
       </div>
 
       <div class="grid grid-cols-2 gap-2">
         <div>
           <label class="block text-xs font-bold text-gray-700">N° Tracking / Guía</label>
-          <input type="text" id="tracking" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium" placeholder="Solo números">
+          <input type="text" id="tracking" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium">
         </div>
         <div>
-          <label class="block text-xs font-bold text-gray-700">Fecha de Envío</label>
-          <input type="date" id="fecha" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium">
+          <label class="block text-xs font-bold text-gray-700">Empresa</label>
+          <select id="empresa" class="w-full mt-1 p-2 border rounded-lg text-sm bg-white text-gray-900 font-medium">
+            <option value="MRW">MRW</option>
+            <option value="Tealca">Tealca</option>
+            <option value="Zoom">Zoom</option>
+            <option value="LAE">LAE</option>
+            <option value="Liberty Express">Liberty Express</option>
+          </select>
         </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-gray-700">Fecha de Envío</label>
+        <input type="date" id="fecha" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium">
       </div>
 
       <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-sm transition">
@@ -68,112 +72,231 @@
   <script>
     document.getElementById("fecha").valueAsDate = new Date();
 
-    function cambiarEmpresa() {
-      var empresaSeleccionada = document.getElementById("empresa").value;
-      document.getElementById("labelInstruccion").innerText = "📋 Pegar texto de Guía " + empresaSeleccionada + " (Google Lens)";
+    function esLineaBasura(texto) {
+      var t = texto.toUpperCase().trim();
+      if (!t) return true;
+      if (t === "ZOOM" || t === "GRUPO ZOOM" || t === "MRW" || t === "TEALCA") return true;
+      if (t.indexOf("RETIRAR POR") !== -1) return true;
+      if (t.indexOf("OFICIN") !== -1) return true;
+      if (t.indexOf("ENTREGAR EN AGENCIA") !== -1) return true;
+      if (t.indexOf("ENSACADO") !== -1) return true;
+      if (t.indexOf("CUPONES") !== -1) return true;
+      if (t.indexOf("DIRECCION") !== -1 || t.indexOf("DIRECCIÓN") !== -1) return true;
+      if (t.indexOf("REMITENTE") !== -1) return true;
+      if (t.indexOf("ORIGEN") !== -1 || t.indexOf("BRIGEN") !== -1) return true;
+      if (t.indexOf("BARCELONA") !== -1 || t.indexOf("XPRESS") !== -1 || t.indexOf("BIP") !== -1) return true;
+      if (t.indexOf("COBRO EN DESTINO") !== -1) return true;
+      if (t.indexOf("CONTRA REEMBOLSO") !== -1) return true;
+      if (t.indexOf("DESTINO:") !== -1) return true;
+      if (t.indexOf("RIF") !== -1 || t.indexOf("R.I.F") !== -1 || t.indexOf("RLFICI") !== -1 || t.indexOf("R.L.F.I.C.I") !== -1) return true;
+      if (t.indexOf("COD.SEG") !== -1 || t.indexOf("CAD.SEY") !== -1 || t.indexOf("CAD.8NY") !== -1 || t.indexOf("BISUTERIA") !== -1 || t.indexOf("1/1") !== -1 || t.indexOf("MER") !== -1) return true;
+      return false;
+    }
+
+    function depurarNombre(txt) {
+      var resultado = txt;
+
+      resultado = resultado.replace(/^[\|\/\\\,\.\-_\:\;\s\d]+/g, "");
+
+      resultado = resultado.replace(/\bZOOM\b/gi, "");
+      resultado = resultado.replace(/b?estinatario[\s:]*/gi, "");
+      resultado = resultado.replace(/DESTINO:/gi, "");
+      resultado = resultado.replace(/\bDEST\b[\s:]*/gi, "");
+      resultado = resultado.replace(/DATOS DEL/gi, "");
+      resultado = resultado.replace(/CONSIGNA A/gi, "");
+      resultado = resultado.replace(/RECEPTOR/gi, "");
+      resultado = resultado.replace(/NOMBRE/gi, "");
+      resultado = resultado.replace(/CLIENTE/gi, "");
+      resultado = resultado.replace(/AGENCIA/gi, "");
+      resultado = resultado.replace(/OFICINA/gi, "");
+      resultado = resultado.replace(/ORIGEN/gi, "");
+      resultado = resultado.replace(/BRIGEN/gi, "");
+      resultado = resultado.replace(/BARCELONA/gi, "");
+      resultado = resultado.replace(/XPRESS/gi, "");
+      resultado = resultado.replace(/R\.?I\.?F\.?\/C\.?I\.?[\s:]*/gi, "");
+      resultado = resultado.replace(/RLFICI[\s:]*/gi, "");
+
+      resultado = resultado.replace(/TLF[\s:\.]*\d+/gi, "");
+      resultado = resultado.replace(/\b(?:0)?(412|424|414|416|426)\d{7}\b/g, "");
+      resultado = resultado.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "");
+      resultado = resultado.replace(/[:\.\-]/g, " ");
+
+      var palabras = resultado.trim().split(/\s+/).filter(Boolean);
+
+      if (palabras.length > 1) {
+        var depuradas = [];
+        for (var i = 0; i < palabras.length; i++) {
+          var pCur = palabras[i].toUpperCase();
+          var esSombra = false;
+          for (var j = 0; j < palabras.length; j++) {
+            if (i !== j) {
+              var pOtro = palabras[j].toUpperCase();
+              if (pOtro.length >= 4 && pCur.indexOf(pOtro) !== -1 && pCur.length > pOtro.length) {
+                esSombra = true;
+                break;
+              }
+            }
+          }
+          if (!esSombra) {
+            depuradas.push(palabras[i]);
+          }
+        }
+        palabras = depuradas;
+      }
+
+      var unicas = [];
+      var vistas = new Set();
+      for (var k = 0; k < palabras.length; k++) {
+        var pUpper = palabras[k].toUpperCase();
+        if (pUpper.length > 1 && !vistas.has(pUpper)) {
+          vistas.add(pUpper);
+          unicas.push(palabras[k]);
+        }
+      }
+
+      if (unicas.length === 2) {
+        var p0 = unicas[0].toUpperCase();
+        var p1 = unicas[1].toUpperCase();
+        var nombresComunes = ["ANDREINA", "RICARDO", "CARLOS", "MARIA", "JOSE", "LUIS", "ANA", "PEDRO", "JUAN", "SOFIA"];
+        if (nombresComunes.indexOf(p1) !== -1 && nombresComunes.indexOf(p0) === -1) {
+          unicas = [unicas[1], unicas[0]];
+        }
+      }
+
+      return unicas.join(" ").trim();
     }
 
     function formatearTelefonoStrict(numBruto) {
       if (!numBruto) return "";
       var num = numBruto.replace(/\D/g, "");
-      if (/^58(412|424|414|416|426)\d{7}$/.test(num)) return num;
-      if (/^0(412|424|414|416|426)\d{7}$/.test(num)) return "58" + num.substring(1);
-      if (/^(412|424|414|416|426)\d{7}$/.test(num)) return "58" + num;
+      
+      // Si empieza con 58 y luego un prefijo válido
+      if (/^58(412|424|414|416|426)\d{7}$/.test(num)) {
+        return num;
+      }
+      // Si empieza con 0412/0424...
+      if (/^0(412|424|414|416|426)\d{7}$/.test(num)) {
+        return "58" + num.substring(1);
+      }
+      // Si empieza directamente con 412/424...
+      if (/^(412|424|414|416|426)\d{7}$/.test(num)) {
+        return "58" + num;
+      }
       return "";
     }
 
     function procesarTextoGuia() {
       try {
         var text = document.getElementById("rawText").value;
-        var empresa = document.getElementById("empresa").value;
-
         if (!text || !text.trim()) {
           alert("Primero pega el texto en el recuadro.");
           return;
         }
 
-        var lineas = text.split("\n").map(function(l) { return l.trim(); }).filter(Boolean);
+        var lineas = text.split("\n");
+        var tUpper = text.toUpperCase();
 
-        var trackingEncontrado = "";
+        // 1. EMPRESA
+        var empresaDetectada = "MRW";
+        if (tUpper.indexOf("TEALCA") !== -1) empresaDetectada = "Tealca";
+        else if (tUpper.indexOf("ZOOM") !== -1 || tUpper.indexOf("GRUPO ZOOM") !== -1) empresaDetectada = "Zoom";
+        else if (tUpper.indexOf("MRW") !== -1) empresaDetectada = "MRW";
+        else if (tUpper.indexOf("LIBERTY") !== -1) empresaDetectada = "Liberty Express";
+
+        document.getElementById("empresa").value = empresaDetectada;
+
+        // 2. EXTRAER TELÉFONO ESTRICTO (Sólo 0412/0424/0414/0416/0426)
         var tlfEncontrado = "";
+        var matchTelf = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/g);
+        if (matchTelf && matchTelf.length > 0) {
+          for (var m = 0; m < matchTelf.length; m++) {
+            var tValido = formatearTelefonoStrict(matchTelf[m]);
+            if (tValido) {
+              tlfEncontrado = tValido;
+              break;
+            }
+          }
+        }
+        document.getElementById("telefono").value = tlfEncontrado;
+
+        // 3. EXTRAER DESTINATARIO
         var nombreEncontrado = "";
 
-        // ========================================================
-        // 1. LÓGICA MRW V28 (Extracción inteligente de nombre)
-        // ========================================================
-        if (empresa === "MRW") {
-          // A. Tracking: Buscar número de 8 a 20 dígitos
-          for (var k = 0; k < lineas.length; k++) {
-            var lk = lineas[k].toUpperCase();
-            if (lk.indexOf("TRACKING") !== -1 || lk.indexOf("GUIA") !== -1 || lk.indexOf("N°") !== -1) {
-              var m = lineas[k].match(/\b\d{8,20}\b/);
-              if (m) { trackingEncontrado = m[0]; break; }
-            }
-          }
-          if (!trackingEncontrado) {
-            var matchGen = text.match(/\b\d{8,20}\b/);
-            if (matchGen) trackingEncontrado = matchGen[0];
-          }
+        for (var i = 0; i < lineas.length; i++) {
+          var l = lineas[i].trim();
+          var lUpper = l.toUpperCase();
 
-          // B. Teléfono
-          var matchTelfGeneral = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
-          if (matchTelfGeneral) {
-            tlfEncontrado = formatearTelefonoStrict(matchTelfGeneral[0]);
-          }
-
-          // C. Nombre: Buscar la primera línea que parezca un nombre de persona (letras, sin palabras clave del sistema)
-          for (var i = 0; i < lineas.length; i++) {
-            var l = lineas[i];
-            var lUp = l.toUpperCase();
-
-            // Descartar líneas técnicas o de sistema
-            var esSistema = 
-              lUp.indexOf("COBRO") !== -1 ||
-              lUp.indexOf("DESTINO") !== -1 ||
-              lUp.indexOf("TRACKING") !== -1 ||
-              lUp.indexOf("ENSACADO") !== -1 ||
-              lUp.indexOf("CANT") !== -1 ||
-              lUp.indexOf("CUPONES") !== -1 ||
-              lUp.indexOf("TLF") !== -1 ||
-              lUp.indexOf("TELEFONO") !== -1 ||
-              lUp.indexOf("B8.") !== -1 ||
-              /^\d+$/.test(l) || // Solo números
-              /\d{5,}/.test(l);   // Contiene números largos (como montos o cédulas/tracking)
-
-            if (!esSistema && l.length >= 3) {
-              nombreEncontrado = l;
-              break;
-            }
-          }
-        }
-
-        // ========================================================
-        // 2, 3, 4. BLOQUES PARA ZOOM, TEALCA, LAE
-        // ========================================================
-        else {
-          var matchGen = text.match(/\b\d{8,20}\b/);
-          if (matchGen) trackingEncontrado = matchGen[0];
-
-          for (var i = 0; i < lineas.length; i++) {
-            var lineaActual = lineas[i];
-            var matchTelf = lineaActual.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
-            if (matchTelf) {
-              tlfEncontrado = formatearTelefonoStrict(matchTelf[0]);
-              var partes = lineaActual.split(matchTelf[0]);
-              if (partes.length > 0) {
-                nombreEncontrado = partes[0].replace(/[\s\-\,\.\_\/]+$/, "").trim();
+          if (lUpper.indexOf("ESTINATARIO") !== -1 || lUpper.indexOf("DEST:") !== -1) {
+            var limpioMisma = depurarNombre(l);
+            if (limpioMisma.length > 2 && !esLineaBasura(limpioMisma)) {
+              nombreEncontrado = limpioMisma;
+            } else {
+              for (var sub = 1; sub <= 2; sub++) {
+                if (i + sub < lineas.length) {
+                  var sigLinea = lineas[i + sub].trim();
+                  if (esLineaBasura(sigLinea)) continue;
+                  var limpioSig = depurarNombre(sigLinea);
+                  if (limpioSig.length > 2 && !esLineaBasura(limpioSig)) {
+                    nombreEncontrado = limpioSig;
+                    break;
+                  }
+                }
               }
-              break;
             }
+            if (nombreEncontrado) break;
           }
         }
-
-        document.getElementById("tracking").value = trackingEncontrado;
-        document.getElementById("telefono").value = tlfEncontrado;
-        document.getElementById("nombre").value = nombreEncontrado;
 
         if (!nombreEncontrado) {
-          document.getElementById("nombre").focus();
+          for (var j = 0; j < lineas.length; j++) {
+            var lj = lineas[j].trim();
+            if (esLineaBasura(lj)) continue;
+            var limpioFallback = depurarNombre(lj);
+            if (limpioFallback.length > 3 && /[a-zA-Z]/.test(limpioFallback) && !esLineaBasura(limpioFallback)) {
+              nombreEncontrado = limpioFallback;
+              break;
+            }
+          }
+        }
+
+        if (nombreEncontrado) {
+          document.getElementById("nombre").value = nombreEncontrado;
+        }
+
+        // 4. EXTRAER TRACKING / GUÍA (Lógica mejorada)
+        var trackingEncontrado = "";
+
+        // Buscar línea que explícitamente diga TRACKING, GUIA, NRO, DOC
+        for (var k = 0; k < lineas.length; k++) {
+          var lk = lineas[k].toUpperCase();
+          if (lk.indexOf("TRACKING") !== -1 || lk.indexOf("GUIA") !== -1 || lk.indexOf("GUÍA") !== -1 || lk.indexOf("DOC") !== -1 || lk.indexOf("NRO") !== -1) {
+            var mTrackL = lineas[k].match(/\b\d{7,14}\b/);
+            if (mTrackL) {
+              trackingEncontrado = mTrackL[0];
+              break;
+            }
+          }
+        }
+
+        // Fallback: Si no lo halló en línea clave, buscar números de 9-12 dígitos en todo el texto descartando teléfonos y cédulas
+        if (!trackingEncontrado) {
+          var numTelfPuro = tlfEncontrado ? tlfEncontrado.replace("58", "") : "";
+          var todosNumeros = text.match(/\b\d{8,14}\b/g) || [];
+
+          for (var n = 0; n < todosNumeros.length; n++) {
+            var candidate = todosNumeros[n];
+            // Ignorar si coincide con el teléfono encontrado
+            if (numTelfPuro && candidate.indexOf(numTelfPuro) !== -1) continue;
+            // Ignorar si parece un prefijo de celular
+            if (/^(0?412|0?424|0?414|0?416|0?426)/.test(candidate)) continue;
+
+            trackingEncontrado = candidate;
+            break;
+          }
+        }
+
+        if (trackingEncontrado) {
+          document.getElementById("tracking").value = trackingEncontrado;
         }
 
       } catch (e) {
