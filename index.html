@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V40</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V41</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -81,7 +81,7 @@
       return "";
     }
 
-    // Función auxiliar unificada para limpiar nombres de cualquier etiqueta o basura
+    // Función definitiva para limpiar cualquier rastro de la palabra destinatario o errores ortográficos
     function limpiarNombreFinal(txt) {
       if (!txt) return "";
       var limpio = txt.replace(/destinatalio[:\s]*/gi, "")
@@ -217,7 +217,7 @@
         }
 
         // ========================================================
-        // BLOQUE 2: ZOOM (LIMPIEZA DE ETIQUETAS Y ERGRATAS)
+        // BLOQUE 2: ZOOM (CON LIMPIEZA FORZADA DE ETIQUETAS)
         // ========================================================
         if (empresaDetectada === "Zoom") {
           var lineasZoom = text.split("\n");
@@ -239,17 +239,8 @@
           for (var iz = 0; iz < lineasZoom.length; iz++) {
             var lzUp = lineasZoom[iz].toUpperCase();
             if (lzUp.indexOf("DESTINAT") !== -1 || lzUp.indexOf("DESTINATALIO") !== -1 || lzUp.indexOf("DESTINATIO") !== -1) {
-              var limpioZ = lineasZoom[iz];
-              if (limpioZ.length > 2) {
-                nombreZoom = limpioZ;
-                break;
-              } else if (iz + 1 < lineasZoom.length) {
-                var sigZ = lineasZoom[iz + 1].trim();
-                if (sigZ.length > 2) {
-                  nombreZoom = sigZ;
-                  break;
-                }
-              }
+              nombreZoom = lineasZoom[iz];
+              break;
             }
           }
 
@@ -260,12 +251,11 @@
               if (lRxUp.indexOf("REMITENTE") !== -1 || lRxUp.indexOf("ZOOM") !== -1 || lRxUp.indexOf("MER") !== -1 || lRxUp.indexOf("BISUTERIA") !== -1 || lRxUp.indexOf("COD") !== -1 || lRxUp.indexOf("BFA") !== -1 || lRxUp.length < 4) continue;
               if (/\d/.test(lRx)) continue;
               
-              if (lRx.length > 2) {
-                nombreZoom = lRx;
-                break;
-              }
+              nombreZoom = lRx;
+              break;
             }
           }
+
           if (nombreZoom) {
             document.getElementById("nombre").value = limpiarNombreFinal(nombreZoom);
           }
