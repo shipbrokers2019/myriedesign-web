@@ -9,7 +9,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V20</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V21</h2>
     
     <!-- Selector de Empresa -->
     <div>
@@ -115,43 +115,24 @@
             if (matchGen) trackingEncontrado = matchGen[0];
           }
 
-          // B. Teléfono y Destinatario basados en DEST: o la línea con el número móvil
-          for (var i = 0; i < lineas.length; i++) {
-            var lineaActual = lineas[i];
-            var matchTelf = lineaActual.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
-            
-            if (matchTelf || lineaActual.toUpperCase().indexOf("DEST") !== -1) {
-              if (matchTelf && !tlfEncontrado) {
-                tlfEncontrado = formatearTelefonoStrict(matchTelf[0]);
-              }
-
-              // Extraer texto a la izquierda del teléfono o después de DEST:
-              var textoLimpio = lineaActual;
-              if (matchTelf) {
-                textoLimpio = lineaActual.split(matchTelf[0])[0];
-              }
-
-              // Quitar prefijos y etiquetas de control
-              textoLimpio = textoLimpio.replace(/^(DEST[\s\:\-\.]*|DESTINATARIO[\s\:\-\.]*)/i, "");
-              textoLimpio = textoLimpio.replace(/[\s\-\,\.\_\/]+$/, "").trim();
-
-              if (textoLimpio.length > 2 && textoLimpio.toUpperCase().indexOf("TLF") === -1) {
-                nombreEncontrado = textoLimpio;
-                break;
-              }
-            }
+          // B. Teléfono (Busca el número móvil en todo el texto)
+          var matchTelfGeneral = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
+          if (matchTelfGeneral) {
+            tlfEncontrado = formatearTelefonoStrict(matchTelfGeneral[0]);
           }
 
-          // Si el nombre quedó en blanco, revisar la línea anterior o siguiente a DEST:
-          if (!nombreEncontrado) {
-            for (var x = 0; x < lineas.length; x++) {
-              if (lineas[x].toUpperCase().indexOf("DEST") !== -1) {
-                // Si la etiqueta DEST está sola, mirar la siguiente línea
-                if (lineas[x].replace(/DEST[\s\:\-\.]*/i, "").trim().length < 2 && lineas[x+1]) {
-                  nombreEncontrado = lineas[x+1].replace(/[\s\-\,\.\_\/]+$/, "").trim();
-                } else {
-                  nombreEncontrado = lineas[x].replace(/DEST[\s\:\-\.]*/i, "").trim();
-                }
+          // C. Destinatario (Busca la línea que tenga DEST o DESTINO y toma lo que está después)
+          for (var i = 0; i < lineas.length; i++) {
+            var lUp = lineas[i].toUpperCase();
+            if (lUp.indexOf("DEST") !== -1 || lUp.indexOf("DESTINO") !== -1) {
+              // Limpiar todo lo que sea la etiqueta DEST / DESTINO / DESt INO
+              var limpio = lineas[i].replace(/DEST[\s\:\-\.]*/i, "");
+              limpio = limpio.replace(/DESTINO[\s\:\-\.]*/i, "");
+              limpio = limpio.replace(/DESt[\s\:\-\.]*INO[\s\:\-\.]*/i, "");
+              limpio = limpio.replace(/[\s\-\,\.\_\/]+$/, "").trim();
+
+              if (limpio.length > 2) {
+                nombreEncontrado = limpio;
                 break;
               }
             }
