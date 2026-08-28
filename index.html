@@ -87,32 +87,44 @@
         }
 
         var lineas = text.split("\n");
+        var tUpper = text.toUpperCase();
 
-        // 1. EXTRAER TRACKING
+        // 1. DETECTAR EMPRESA
+        if (tUpper.indexOf("TEALCA") !== -1) document.getElementById("empresa").value = "Tealca";
+        else if (tUpper.indexOf("ZOOM") !== -1) document.getElementById("empresa").value = "Zoom";
+        else if (tUpper.indexOf("MRW") !== -1) document.getElementById("empresa").value = "MRW";
+        else if (tUpper.indexOf("LIBERTY") !== -1) document.getElementById("empresa").value = "Liberty Express";
+
+        var esMRW = (document.getElementById("empresa").value === "MRW");
+
+        // 2. EXTRAER TRACKING
         var matchTrack = text.match(/\b\d{7,20}\b/);
         if (matchTrack) {
           document.getElementById("tracking").value = matchTrack[0];
         }
 
-        // 2. EXTRAER NOMBRE DEL DESTINATARIO
+        // 3. EXTRAER NOMBRE DEL DESTINATARIO (LÓGICA ESPECIALIZADA MRW)
         var nombreEncontrado = "";
+
         for (var i = 0; i < lineas.length; i++) {
           var l = lineas[i].trim();
           var lUpper = l.toUpperCase();
 
-          if (lUpper.indexOf("REMITENTE") !== -1 || lUpper.indexOf("ORIGEN") !== -1 || lUpper.indexOf("AGENCIA") !== -1 || lUpper.indexOf("ENSACADO") !== -1) {
+          // Saltar encabezados y remitente
+          if (lUpper.indexOf("REMITENTE") !== -1 || lUpper.indexOf("ORIGEN") !== -1 || lUpper.indexOf("AGENCIA ORIGEN") !== -1 || lUpper.indexOf("ENSACADO") !== -1) {
             continue;
           }
 
-          if (lUpper.indexOf("DEST") !== -1 || lUpper.indexOf("NOMBRE") !== -1 || lUpper.indexOf("CLIENTE") !== -1 || lUpper.indexOf("CONSIGNA") !== -1 || lUpper.indexOf("RECEPTOR") !== -1) {
+          // Si es MRW y encontramos la sección DESTINATARIO
+          if (lUpper.indexOf("DESTINATARIO") !== -1 || lUpper.indexOf("CONSIGNA A") !== -1 || lUpper.indexOf("DESTINO:") !== -1 || lUpper.indexOf("RECEPTOR") !== -1) {
+            
+            // Intentar limpiar la misma línea
             var limpio = l.replace(/DESTINATARIO/gi, "")
+                          .replace(/DATOS DEL/gi, "")
                           .replace(/DESTINO/gi, "")
-                          .replace(/DEST/gi, "")
-                          .replace(/NOMBRE/gi, "")
-                          .replace(/CLIENTE/gi, "")
-                          .replace(/CONSIGNATARIO/gi, "")
+                          .replace(/CONSIGNA A/gi, "")
                           .replace(/RECEPTOR/gi, "")
-                          .replace(/RAZON SOCIAL/gi, "")
+                          .replace(/NOMBRE/gi, "")
                           .replace(/[:\-]/g, "")
                           .trim();
 
@@ -121,23 +133,36 @@
             if (limpio.length > 2) {
               nombreEncontrado = limpio;
               break;
+            } else if (i + 1 < lineas.length) {
+              // Si la palabra DESTINATARIO estaba sola, tomamos la línea siguiente
+              var siguienteLinea = lineas[i + 1].trim();
+              siguienteLinea = siguienteLinea.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "").replace(/[:\-]/g, "").trim();
+              if (siguienteLinea.length > 2 && siguienteLinea.toUpperCase().indexOf("TEL") === -1 && siguienteLinea.toUpperCase().indexOf("DIRECCION") === -1) {
+                nombreEncontrado = siguienteLinea;
+                break;
+              }
             }
           }
         }
 
+        // Respaldo general si el formato es atípico
         if (!nombreEncontrado) {
-          for (var j = 0; j < lineas.length; j++) {
+          for (var j = lineas.length - 1; j >= 0; j--) {
             var lj = lineas[j].trim();
             var ljUpper = lj.toUpperCase();
 
-            if (/\b[V][\-\s]?\d{6,8}\b/i.test(ljUpper) && ljUpper.indexOf("TRACKING") === -1 && ljUpper.indexOf("GUIA") === -1) {
-              var limpioFallback = lj.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "")
-                                     .replace(/DEST/gi, "")
-                                     .replace(/[:\-]/g, "")
-                                     .trim();
-              if (limpioFallback.length > 2) {
-                nombreEncontrado = limpioFallback;
-                break;
+            if (ljUpper.indexOf("CLIENTE") !== -1 || ljUpper.indexOf("DEST") !== -1 || /\b[V][\-\s]?\d{6,8}\b/i.test(ljUpper)) {
+              if (ljUpper.indexOf("REMITENTE") === -1 && ljUpper.indexOf("ORIGEN") === -1) {
+                var limpioFallback = lj.replace(/DESTINATARIO/gi, "")
+                                       .replace(/DESTINO/gi, "")
+                                       .replace(/CLIENTE/gi, "")
+                                       .replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "")
+                                       .replace(/[:\-]/g, "")
+                                       .trim();
+                if (limpioFallback.length > 2) {
+                  nombreEncontrado = limpioFallback;
+                  break;
+                }
               }
             }
           }
@@ -147,7 +172,7 @@
           document.getElementById("nombre").value = nombreEncontrado;
         }
 
-        // 3. EXTRAER TELÉFONO
+        // 4. EXTRAER TELÉFONO
         var matchTelf = text.match(/\b0?(412|424|414|416|426)\d{7}\b/);
         if (matchTelf) {
           var num = matchTelf[0];
@@ -158,13 +183,6 @@
           }
           document.getElementById("telefono").value = num;
         }
-
-        // 4. DETECTAR EMPRESA
-        var tUpper = text.toUpperCase();
-        if (tUpper.indexOf("TEALCA") !== -1) document.getElementById("empresa").value = "Tealca";
-        else if (tUpper.indexOf("ZOOM") !== -1) document.getElementById("empresa").value = "Zoom";
-        else if (tUpper.indexOf("MRW") !== -1) document.getElementById("empresa").value = "MRW";
-        else if (tUpper.indexOf("LIBERTY") !== -1) document.getElementById("empresa").value = "Liberty Express";
 
         // 5. EXTRAER DESTINO
         var ciudades = ["SOCOPO", "BARCELONA", "PUERTO LA CRUZ", "LECHERIA", "CARACAS", "VALENCIA", "MARACAIBO", "BARQUISIMETO", "MATURIN", "MARACAY", "MERIDA", "SAN CRISTOBAL", "CUMANA", "PORLAMAR", "PUERTO ORDAZ", "CORO", "PUNTO FIJO", "GUATIRE", "GUARENAS", "CHARALLAVE", "CUA", "LOS TEQUES"];
