@@ -9,7 +9,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V27</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V28</h2>
     
     <!-- Selector de Empresa -->
     <div>
@@ -35,7 +35,7 @@
     <form id="guiaForm" class="space-y-3">
       <div>
         <label class="block text-xs font-bold text-gray-700">Destinatario</label>
-        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium" placeholder="Escribe el nombre del cliente aquí">
+        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium" placeholder="Nombre del cliente">
       </div>
       
       <div>
@@ -99,7 +99,7 @@
         var nombreEncontrado = "";
 
         // ========================================================
-        // 1. LÓGICA MRW V27 (Segura: Tracking y Teléfono automáticos, Nombre manual)
+        // 1. LÓGICA MRW V28 (Extracción inteligente de nombre)
         // ========================================================
         if (empresa === "MRW") {
           // A. Tracking: Buscar número de 8 a 20 dígitos
@@ -121,12 +121,34 @@
             tlfEncontrado = formatearTelefonoStrict(matchTelfGeneral[0]);
           }
 
-          // Para MRW como seleccionaste "Sin nombre impreso", no intentamos adivinar texto extraño en el nombre
-          nombreEncontrado = ""; 
+          // C. Nombre: Buscar la primera línea que parezca un nombre de persona (letras, sin palabras clave del sistema)
+          for (var i = 0; i < lineas.length; i++) {
+            var l = lineas[i];
+            var lUp = l.toUpperCase();
+
+            // Descartar líneas técnicas o de sistema
+            var esSistema = 
+              lUp.indexOf("COBRO") !== -1 ||
+              lUp.indexOf("DESTINO") !== -1 ||
+              lUp.indexOf("TRACKING") !== -1 ||
+              lUp.indexOf("ENSACADO") !== -1 ||
+              lUp.indexOf("CANT") !== -1 ||
+              lUp.indexOf("CUPONES") !== -1 ||
+              lUp.indexOf("TLF") !== -1 ||
+              lUp.indexOf("TELEFONO") !== -1 ||
+              lUp.indexOf("B8.") !== -1 ||
+              /^\d+$/.test(l) || // Solo números
+              /\d{5,}/.test(l);   // Contiene números largos (como montos o cédulas/tracking)
+
+            if (!esSistema && l.length >= 3) {
+              nombreEncontrado = l;
+              break;
+            }
+          }
         }
 
         // ========================================================
-        // 2, 3, 4. BLOQUES PARA ZOOM, TEALCA, LAE (Sí traen nombre)
+        // 2, 3, 4. BLOQUES PARA ZOOM, TEALCA, LAE
         // ========================================================
         else {
           var matchGen = text.match(/\b\d{8,20}\b/);
@@ -148,9 +170,8 @@
 
         document.getElementById("tracking").value = trackingEncontrado;
         document.getElementById("telefono").value = tlfEncontrado;
-        
-        // Asignamos el nombre (vacío en MRW para llenarlo a mano, o automático en las demás)
         document.getElementById("nombre").value = nombreEncontrado;
+
         if (!nombreEncontrado) {
           document.getElementById("nombre").focus();
         }
