@@ -83,7 +83,6 @@
 
     function limpiarNombreComun(txt) {
       var res = txt.toUpperCase();
-      // Eliminar palabras basura comunes
       var basuras = ["REMITENTE", "RENTENTE", "DESTINATARIO", "DESTINALARIO", "CLIENTE", "NOMBRE", "DIRECCION", "DIR", "VALENCIA", "CARACAS", "SOCOPO", "BARCELONA", "ZOOM", "MRW", "TEALCA", "ENSACADO"];
       for (var i = 0; i < basuras.length; i++) {
         res = res.split(basuras[i]).join("");
@@ -96,15 +95,9 @@
     }
 
     // --- MÓDULO INDEPENDIENTE ZOOM ---
-    gisZoom(text, lineas) {
-      // Lógica exclusiva de Zoom
-    }
-
     function procesarZoom(text, lineas) {
-      // Empresa
       document.getElementById("empresa").value = "Zoom";
 
-      // Tracking para Zoom (Busca explícitamente la palabra TRACKING o números de 12 dígitos que empiezan por 03)
       var trackingEncontrado = "";
       for (var k = 0; k < lineas.length; k++) {
         var lk = lineas[k].toUpperCase();
@@ -119,7 +112,6 @@
       }
       if (trackingEncontrado) document.getElementById("tracking").value = trackingEncontrado;
 
-      // Nombre para Zoom
       var nombreEncontrado = "";
       for (var i = 0; i < lineas.length; i++) {
         var l = lineas[i].toUpperCase();
@@ -137,7 +129,6 @@
     function procesarMRW(text, lineas) {
       document.getElementById("empresa").value = "MRW";
 
-      // Tracking MRW
       var trackingEncontrado = "";
       var matchMrw = text.match(/TRACKING[\s:]*(\d{10,20})/i);
       if (matchMrw && matchMrw[1]) {
@@ -148,7 +139,6 @@
       }
       if (trackingEncontrado) document.getElementById("tracking").value = trackingEncontrado;
 
-      // Nombre MRW
       var nombreEncontrado = "";
       for (var i = 0; i < lineas.length; i++) {
         var l = lineas[i].toUpperCase();
@@ -174,7 +164,6 @@
         var lineas = text.split("\n").map(function(l) { return l.trim(); }).filter(Boolean);
         var tUpper = text.toUpperCase();
 
-        // Extracción general de Teléfono (sirve para todos)
         var tlfEncontrado = "";
         var matchTelf = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/g);
         if (matchTelf && matchTelf.length > 0) {
@@ -185,14 +174,12 @@
         }
         document.getElementById("telefono").value = tlfEncontrado;
 
-        // ENRUTADOR POR EMPRESA (Aisla completamente la lógica para que no se afecten)
         if (tUpper.indexOf("MRW") !== -1) {
           procesarMRW(text, lineas);
         } else if (tUpper.indexOf("TEALCA") !== -1) {
           document.getElementById("empresa").value = "Tealca";
-          procesarZoom(text, lineas); // Tealca comparte estructura similar a Zoom
+          procesarZoom(text, lineas);
         } else {
-          // Por defecto o Zoom
           procesarZoom(text, lineas);
         }
 
