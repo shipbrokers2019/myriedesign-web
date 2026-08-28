@@ -83,7 +83,7 @@
 
     function limpiarNombreComun(txt) {
       var res = txt.toUpperCase();
-      var basuras = ["REMITENTE", "RENTENTE", "DESTINATARIO", "DESTINALARIO", "CLIENTE", "NOMBRE", "DIRECCION", "DIR", "VALENCIA", "CARACAS", "SOCOPO", "BARCELONA", "ZOOM", "MRW", "TEALCA", "ENSACADO"];
+      var basuras = ["REMITENTE", "RENTENTE", "DESTINATARIO", "DESTINALARIO", "CLIENTE", "NOMBRE", "DIRECCION", "DIR", "VALENCIA", "CARACAS", "SOCOPO", "BARCELONA", "ZOOM", "MRW", "TEALCA", "ENSACADO", "CANT", "CUPONES", "TRACKING"];
       for (var i = 0; i < basuras.length; i++) {
         res = res.split(basuras[i]).join("");
       }
@@ -122,23 +122,45 @@
           }
         }
       }
+
+      if (!nombreEncontrado) {
+        for (var j = 0; j < lineas.length; j++) {
+          var lj = lineas[j];
+          var ljUp = lj.toUpperCase();
+          if (ljUp.indexOf("TRACKING") !== -1 || ljUp.indexOf("CUPONES") !== -1 || ljUp.indexOf("ENSACADO") !== -1 || ljUp.indexOf("SOCOPO") !== -1 || ljUp.indexOf("CARACAS") !== -1 || ljUp.indexOf("VALENCIA") !== -1 || /\d/.test(lj)) {
+            continue;
+          }
+          var limpio = limpiarNombreComun(lj);
+          if (limpio.length > 3 && /[a-zA-Z]/.test(limpio)) {
+            nombreEncontrado = limpio;
+            break;
+          }
+        }
+      }
+
       if (nombreEncontrado) document.getElementById("nombre").value = nombreEncontrado;
     }
 
-    // --- MÓDULO INDEPENDIENTE MRW ---
+    // --- MÓDULO INDEPENDIENTE MRW (Actualizado para este formato) ---
     function procesarMRW(text, lineas) {
       document.getElementById("empresa").value = "MRW";
 
+      // 1. Tracking MRW (Busca la línea con TRACKING o extrae el número largo de 11+ dígitos)
       var trackingEncontrado = "";
-      var matchMrw = text.match(/TRACKING[\s:]*(\d{10,20})/i);
-      if (matchMrw && matchMrw[1]) {
-        trackingEncontrado = matchMrw[1];
-      } else {
-        var nums = text.match(/\b\d{10,18}\b/g);
-        if (nums && nums.length > 0) trackingEncontrado = nums[0];
+      for (var k = 0; k < lineas.length; k++) {
+        var lk = lineas[k].toUpperCase();
+        if (lk.indexOf("TRACKING") !== -1) {
+          var m = lineas[k].match(/\b\d{10,20}\b/);
+          if (m) { trackingEncontrado = m[0]; break; }
+        }
+      }
+      if (!trackingEncontrado) {
+        var matchNums = text.match(/\b\d{11,18}\b/g);
+        if (matchNums && matchNums.length > 0) trackingEncontrado = matchNums[0];
       }
       if (trackingEncontrado) document.getElementById("tracking").value = trackingEncontrado;
 
+      // 2. Nombre MRW (Busca etiqueta Destinatario o busca la línea de nombre típica ignorando cupones/ensacados)
       var nombreEncontrado = "";
       for (var i = 0; i < lineas.length; i++) {
         var l = lineas[i].toUpperCase();
@@ -149,6 +171,24 @@
           }
         }
       }
+
+      // Si no hay etiqueta explícita de destinatario, busca la línea que contiene el nombre real de la persona
+      if (!nombreEncontrado) {
+        for (var j = 0; j < lineas.length; j++) {
+          var lj = lineas[j];
+          var ljUp = lj.toUpperCase();
+          // Ignorar líneas técnicas de este formato de MRW
+          if (ljUp.indexOf("TRACKING") !== -1 || ljUp.indexOf("CUPONES") !== -1 || ljUp.indexOf("ENSACADO") !== -1 || ljUp.indexOf("SOCOPO") !== -1 || ljUp.indexOf("VALENCIA") !== -1 || ljUp.indexOf("CARACAS") !== -1 || ljUp.indexOf(".") !== -1 && /\d/.test(lj)) {
+            continue;
+          }
+          var limpio = limpiarNombreComun(lj);
+          if (limpio.length > 3 && /[a-zA-Z]/.test(limpio) && !/\d/.test(limpio)) {
+            nombreEncontrado = limpio;
+            break;
+          }
+        }
+      }
+
       if (nombreEncontrado) document.getElementById("nombre").value = nombreEncontrado;
     }
 
@@ -174,7 +214,8 @@
         }
         document.getElementById("telefono").value = tlfEncontrado;
 
-        if (tUpper.indexOf("MRW") !== -1) {
+        // Detección de empresa por contenido característico
+        if (tUpper.indexOf("MRW") !== -1 || tUpper.indexOf("CUPONES") !== -1 || tUpper.indexOf("ENSACADO") !== -1) {
           procesarMRW(text, lineas);
         } else if (tUpper.indexOf("TEALCA") !== -1) {
           document.getElementById("empresa").value = "Tealca";
