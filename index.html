@@ -89,14 +89,17 @@
       if (t.indexOf("CONTRA REEMBOLSO") !== -1) return true;
       if (t.indexOf("DESTINO:") !== -1) return true;
       if (t.indexOf("RIF") !== -1 || t.indexOf("R.I.F") !== -1 || t.indexOf("RLFICI") !== -1 || t.indexOf("R.L.F.I.C.I") !== -1) return true;
-      if (t.indexOf("COD.SEG") !== -1 || t.indexOf("BISUTERIA") !== -1 || t.indexOf("1/1") !== -1 || t.indexOf("MER") !== -1) return true;
+      if (t.indexOf("COD.SEG") !== -1 || t.indexOf("CAD.SEY") !== -1 || t.indexOf("BISUTERIA") !== -1 || t.indexOf("1/1") !== -1 || t.indexOf("MER") !== -1) return true;
       return false;
     }
 
     function depurarNombre(txt) {
       var resultado = txt;
 
-      // Eliminar palabras clave y errores de OCR (como 'bestinatario')
+      // Símbolos raros que extrae Lens al inicio
+      resultado = resultado.replace(/^[\|\/\\\,\.\-_\:\;]+/g, "");
+
+      // Palabras clave de etiquetas de guías
       resultado = resultado.replace(/\bZOOM\b/gi, "");
       resultado = resultado.replace(/b?estinatario[\s:]*/gi, "");
       resultado = resultado.replace(/DESTINO:/gi, "");
@@ -115,29 +118,50 @@
       resultado = resultado.replace(/R\.?I\.?F\.?\/C\.?I\.?[\s:]*/gi, "");
       resultado = resultado.replace(/RLFICI[\s:]*/gi, "");
 
-      // Quitar teléfonos, cédulas y caracteres especiales
+      // Quitar teléfonos y cédulas
       resultado = resultado.replace(/TLF[\s:\.]*\d+/gi, "");
       resultado = resultado.replace(/\b(?:0)?(412|424|414|416|426)\d{7}\b/g, "");
       resultado = resultado.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "");
       resultado = resultado.replace(/[:\.\-]/g, " ");
 
-      // Deduplicar palabras si el nombre viene repetido (ej: "VERYGIONETT LOAIZA VERYGIONETT LOAIZA")
+      // Limpieza de caracteres raros iniciales otra vez
+      resultado = resultado.trim().replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "");
+
+      // Deduplicar frase repetida ("RICARDO SUCRE RICARDO SUCRE" -> "RICARDO SUCRE")
       var palabras = resultado.trim().split(/\s+/).filter(Boolean);
+
+      // Si empieza con una letra o basura pegada de 1 caracter sola antes del nombre (ej: "D RICARDO"), la quitamos
+      if (palabras.length > 1 && palabras[0].length === 1) {
+        palabras.shift();
+      }
+
       if (palabras.length >= 2) {
-        var mitad = Math.floor(palabras.length / 2);
-        var p1 = palabras.slice(0, mitad).join(" ");
-        var p2 = palabras.slice(mitad, mitad * 2).join(" ");
-        if (p1.toUpperCase() === p2.toUpperCase()) {
-          palabras = palabras.slice(0, mitad);
+        var num = palabras.length;
+        if (num % 2 === 0) {
+          var mitad = num / 2;
+          var p1 = palabras.slice(0, mitad).join(" ").toUpperCase();
+          var p2 = palabras.slice(mitad).join(" ").toUpperCase();
+          if (p1 === p2) {
+            palabras = palabras.slice(0, mitad);
+          }
         } else {
-          // Remover palabras consecutivas idénticas
-          var unicas = [];
+          // Intentar coincidencia parcial
+          var pUnicas = [];
           for (var i = 0; i < palabras.length; i++) {
             if (i === 0 || palabras[i].toUpperCase() !== palabras[i - 1].toUpperCase()) {
-              unicas.push(palabras[i]);
+              pUnicas.push(palabras[i]);
             }
           }
-          palabras = unicas;
+          // Verificar si aún hay repetición completa en pUnicas
+          if (pUnicas.length >= 4) {
+            var m = Math.floor(pUnicas.length / 2);
+            var h1 = pUnicas.slice(0, m).join(" ").toUpperCase();
+            var h2 = pUnicas.slice(m, m * 2).join(" ").toUpperCase();
+            if (h1 === h2) {
+              pUnicas = pUnicas.slice(0, m);
+            }
+          }
+          palabras = pUnicas;
         }
       }
 
@@ -224,7 +248,7 @@
           }
         }
 
-        // Respaldo secundario si no encuentra etiqueta de destinatario
+        // Respaldo secundario por si la guía no tiene la palabra "DESTINATARIO"
         if (!nombreEncontrado) {
           for (var j = 0; j < lineas.length; j++) {
             var lj = lineas[j].trim();
