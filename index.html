@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V64</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V65</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -79,39 +79,6 @@
       if (/^0(412|424|414|416|426)\d{7}$/.test(num)) return "58" + num.substring(1);
       if (/^(412|424|414|416|426)\d{7}$/.test(num)) return "58" + num;
       return "";
-    }
-
-    // Validador ultra preciso para nombres humanos
-    function esNombreHumanoValido(txt) {
-      if (!txt || txt.length < 5) return false;
-      var tUp = txt.toUpperCase();
-
-      // Descartar si contiene números o símbolos extraños
-      if (/\d/.test(txt)) return false;
-      if (tUp.indexOf("http") !== -1 || tUp.indexOf("WWW") !== -1 || tUp.indexOf("@") !== -1) return false;
-
-      // Palabras prohibidas que anulan el texto completo si aparecen
-      var prohibidas = [
-        "TRACKING", "GUIA", "GUÍA", "TELEFONO", "TLF", "DIRECCION", "DIR", 
-        "VOLUM", "PIEZA", "PESO", "CIUDAD", "ENTREGA", "TEALCA", "MRW", 
-        "ZOOM", "RETIRO", "TIENDA", "ESTANDAR", "COD", "FECHA", "ORIGEN", 
-        "MEDIDAS", "ANACO", "TURMERO", "AGENCIA", "SUCURSAL", "OFICINA", 
-        "PAGAR", "ENVIO", "CLIENTE", "PAGO", "NOMBRE", "DESTINATARIO", "DEST",
-        "MER", "CUPONES", "ENSACADO", "DE:", "PARA:"
-      ];
-
-      for (var i = 0; i < prohibidas.length; i++) {
-        if (tUp === prohibidas[i] || tUp.indexOf(prohibidas[i] + " ") === 0 || tUp.indexOf(" " + prohibidas[i]) !== -1) {
-          // Si la palabra prohibida es parte central del texto, descartar
-          if (prohibidas[i].length > 3) return false;
-        }
-      }
-
-      // Debe tener al menos dos palabras (ej: Nombre Apellido)
-      var palabras = tUp.trim().split(/\s+/);
-      if (palabras.length < 2) return false;
-
-      return true;
     }
 
     function procesarTextoGuia() {
@@ -207,55 +174,54 @@
         }
 
         // ========================================================
-        // 3. DESTINATARIO (Algoritmo Blindado V64)
+        // 3. DESTINATARIO (Nuevo motor de exclusión V65)
         // ========================================================
         var nombreFinal = "";
+        var palabrasBasura = [
+          "TRACKING", "GUIA", "GUÍA", "TELEFONO", "TLF", "DIRECCION", "DIR", 
+          "VOLUM", "PIEZA", "PESO", "CIUDAD", "ENTREGA", "TEALCA", "MRW", 
+          "ZOOM", "RETIRO", "TIENDA", "ESTANDAR", "COD", "FECHA", "ORIGEN", 
+          "MEDIDAS", "ANACO", "TURMERO", "AGENCIA", "SUCURSAL", "OFICINA", 
+          "PAGAR", "ENVIO", "CLIENTE", "PAGO", "NOMBRE", "DESTINATARIO", "DEST",
+          "MER", "CUPONES", "ENSACADO", "DE:", "PARA:", "V-", "E-", "J-", "G-"
+        ];
 
-        // PASO A: Buscar líneas que tengan etiquetas directas y limpiar la basura alrededor
         for (var i = 0; i < lineas.length; i++) {
-          var lineaCruda = lineas[i].trim();
-          var lUp = lineaCruda.toUpperCase();
+          var linea = lineas[i].trim();
+          var lineaUp = linea.toUpperCase();
 
-          if (lUp.indexOf("DESTINATARIO") !== -1 || lUp.indexOf("DEST.") !== -1 || lUp.indexOf("CLIENTE") !== -1 || lUp.indexOf("NOMBRE") !== -1) {
-            // Limpiar la etiqueta de la línea
-            var limpio = lineaCruda
-              .replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "")
-              .replace(/(?:DESTINATARIO|DEST\.|CLIENTE|NOMBRE)[:\s]*/gi, "")
-              .trim();
-            
-            // Si tras quitar la etiqueta queda un guion doble (ej: Nombre - Apodo), recortarlo
-            if (limpio.indexOf(" - ") !== -1) {
-              limpio = limpio.split(" - ")[0].trim();
-            }
+          // Ignorar líneas muy cortas o que contengan números / cédulas / símbolos extraños
+          if (linea.length < 5) continue;
+          if (/\d/.test(linea)) continue; // Los nombres no llevan números
+          if (lineaUp.indexOf("http") !== -1 || lineaUp.indexOf("WWW") !== -1) continue;
 
-            if (esNombreHumanoValido(limpio)) {
-              nombreFinal = limpio;
+          // Verificar si contiene alguna palabra prohibida o etiqueta
+          var esBasura = false;
+          for (var p = 0; p < palabrasBasura.length; p++) {
+            if (lineaUp.indexOf(palabrasBasura[p]) !== -1) {
+              esBasura = true;
               break;
-            } else if (i + 1 < lineas.length) {
-              // Probar la línea inmediatamente siguiente
-              var lineaSiguiente = lineas[i + 1].trim();
-              if (lineaSiguiente.indexOf(" - ") !== -1) {
-                lineaSiguiente = lineaSiguiente.split(" - ")[0].trim();
-              }
-              if (esNombreHumanoValido(lineaSiguiente)) {
-                nombreFinal = lineaSiguiente;
-                break;
-              }
             }
           }
-        }
 
-        // PASO B: Si no se encontró por etiqueta, buscar de manera independiente la línea que luzca exactamente como un nombre completo válido
-        if (!nombreFinal) {
-          for (var j = 0; j < lineas.length; j++) {
-            var cand = lineas[j].trim();
-            if (cand.indexOf(" - ") !== -1) {
-              cand = cand.split(" - ")[0].trim();
-            }
-            if (esNombreHumanoValido(cand)) {
-              nombreFinal = cand;
-              break;
-            }
+          if (esBasura) continue;
+
+          // Limpiar caracteres extraños que arrastre Google Lens al inicio/final
+          var candidatoLimpio = linea
+            .replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "")
+            .replace(/[\|\/\\\,\.\-_]+$/g, "")
+            .trim();
+
+          // Si viene con guiones dobles (ej: GLORIANA FLORES - GLORIA...), recortar la primera parte limpia
+          if (candidatoLimpio.indexOf(" - ") !== -1) {
+            candidatoLimpio = candidatoLimpio.split(" - ")[0].trim();
+          }
+
+          // Un nombre válido tiene al menos 2 palabras (Nombre y Apellido)
+          var palabras = candidatoLimpio.split(/\s+/);
+          if (palabras.length >= 2) {
+            nombreFinal = candidatoLimpio;
+            break; // Encontrado el primer candidato genuino
           }
         }
 
