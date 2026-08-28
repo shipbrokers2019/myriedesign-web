@@ -9,7 +9,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V9</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V10</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -77,21 +77,6 @@
       return "";
     }
 
-    function buscarTrackingGeneral(text, lineas) {
-      for (var k = 0; k < lineas.length; k++) {
-        var lk = lineas[k].toUpperCase();
-        if (lk.indexOf("TRACKING") !== -1 || lk.indexOf("GUIA") !== -1) {
-          var m = lineas[k].match(/\b\d{10}\b/) || lineas[k].match(/\b\d{8,15}\b/);
-          if (m) return m[0];
-        }
-      }
-      var matchDiez = text.match(/\b\d{10}\b/);
-      if (matchDiez) return matchDiez[0];
-
-      var matchGen = text.match(/\b\d{8,15}\b/);
-      return matchGen ? matchGen[0] : "";
-    }
-
     function procesarTextoGuia() {
       try {
         var text = document.getElementById("rawText").value;
@@ -101,67 +86,54 @@
         }
 
         var lineas = text.split("\n").map(function(l) { return l.trim(); }).filter(Boolean);
-        var tUpper = text.toUpperCase();
 
-        // Detección de Empresa
-        if (tUpper.indexOf("TEALCA") !== -1) {
-          document.getElementById("empresa").value = "Tealca";
-        } else if (tUpper.indexOf("ZOOM") !== -1) {
-          document.getElementById("empresa").value = "Zoom";
-        } else {
-          document.getElementById("empresa").value = "MRW";
+        // 1. EXTRAER TRACKING (Buscamos la línea de tracking o cualquier número largo de 8 a 15 dígitos)
+        var trackingEncontrado = "";
+        for (var k = 0; k < lineas.length; k++) {
+          var lk = lineas[k].toUpperCase();
+          if (lk.indexOf("TRACKING") !== -1 || lk.indexOf("GUIA") !== -1) {
+            var m = lineas[k].match(/\b\d{8,15}\b/);
+            if (m) {
+              trackingEncontrado = m[0];
+              break;
+            }
+          }
         }
+        if (!trackingEncontrado) {
+          var matchGen = text.match(/\b\d{8,15}\b/);
+          if (matchGen) trackingEncontrado = matchGen[0];
+        }
+        document.getElementById("tracking").value = trackingEncontrado;
 
-        // Extracción de Teléfono
+        // 2. EXTRAER TELÉFONO Y NOMBRE DE LA MISMA LÍNEA
         var tlfEncontrado = "";
-        var matchTelf = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/g);
-        if (matchTelf && matchTelf.length > 0) {
-          for (var m = 0; m < matchTelf.length; m++) {
-            var tValido = formatearTelefonoStrict(matchTelf[m]);
-            if (tValido) { tlfEncontrado = tValido; }
-          }
-        }
-        document.getElementById("telefono").value = tlfEncontrado;
-
-        // Extracción de Tracking
-        var trackingEncontrado = buscarTrackingGeneral(text, lineas);
-        if (trackingEncontrado) {
-          document.getElementById("tracking").value = trackingEncontrado;
-        }
-
-        // --- EXTRACCIÓN Y FILTRADO ULTRA ESTRICTO DE DESTINATARIO ---
         var nombreEncontrado = "";
+
         for (var i = 0; i < lineas.length; i++) {
-          var l = lineas[i];
-          var lUp = l.toUpperCase();
+          var lineaActual = lineas[i];
+          // Verificamos si esta línea contiene un número de teléfono válido venezolano
+          var matchTelf = lineaActual.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
           
-          // Ignorar líneas técnicas, cédulas sueltas, números puros o códigos postales
-          if (
-            lUp.indexOf("TRACKING") !== -1 || 
-            lUp.indexOf("ENSACADO") !== -1 || 
-            lUp.indexOf("CANT") !== -1 || 
-            lUp.indexOf("BS.") !== -1 || 
-            lUp.indexOf("EL TIGRITO") !== -1 || 
-            lUp.indexOf("SOCOPO") !== -1 ||
-            /^[VEJG]-?\d+$/.test(lUp) || // Ignora si es solo cédula (ej: V-641337)
-            lUp.length < 4             // Ignora líneas muy cortas
-          ) {
-            continue;
-          }
-
-          // Si pasa los filtros, limpiamos prefijos y basura
-          var limpio = l;
-          limpio = limpio.replace(/^(DEST|DESTINATARIO|CLIENTE|SENOR|SR|SRA)[\s\:\-\.]*/i, "");
-          limpio = limpio.split(/TLF|TEL|0412|0424|0414|0416|0426/i)[0].trim();
-          limpio = limpio.replace(/[\s\-\,\.\_\/]+$/, "").trim();
-
-          // Validar que tenga al menos un espacio (nombre y apellido) o suficientes letras
-          if (limpio.length > 3 && /[A-Z].*\s+[A-Z]/.test(limpio)) {
-            nombreEncontrado = limpio;
+          if (matchTelf) {
+            tlfEncontrado = formatearTelefonoStrict(matchTelf[0]);
+            
+            // Todo lo que está antes del teléfono en esa misma línea es el nombre
+            var partesLinea = lineaActual.split(matchTelf[0]);
+            if (partesLinea.length > 0 && partesLinea[0].trim().length > 0) {
+              var limpio = partesLinea[0];
+              // Limpiar prefijos comunes como DEST:, CLIENTE:, SR, SRA, etc.
+              limpio = limpio.replace(/^(DEST|DESTINATARIO|CLIENTE|SENOR|SR|SRA)[\s\:\-\.]*/i, "");
+              // Limpiar guiones o símbolos sobrantes al final
+              limpio = limpio.replace(/[\s\-\,\.\_\/]+$/, "").trim();
+              if (limpio.length > 2) {
+                nombreEncontrado = limpio;
+              }
+            }
             break;
           }
         }
 
+        document.getElementById("telefono").value = tlfEncontrado;
         document.getElementById("nombre").value = nombreEncontrado;
 
       } catch (e) {
