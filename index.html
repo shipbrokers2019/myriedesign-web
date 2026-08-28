@@ -76,13 +76,14 @@
       var t = texto.toUpperCase().trim();
       if (!t) return true;
       if (t.indexOf("*") !== -1) return true;
-      if (/\d/.test(t) && (t.indexOf("TELEF") !== -1 || t.indexOf("TLF") !== -1 || t.indexOf("TEL") !== -1)) return true; // Descarta líneas con teléfono pegado
-      if (t === "ZOOM" || t === "GRUPO ZOOM" || t === "MRW" || t === "TEALCA") return true;
+      if (/\d/.test(t) && (t.indexOf("TELEF") !== -1 || t.indexOf("TLF") !== -1 || t.indexOf("TEL") !== -1)) return true;
+      if (t === "ZOOM" || t === "GRUPO ZOOM" || t === "MRW" || t === "TEALCA" || t === "TRACKING") return true;
+      if (t.indexOf("TRACKING") !== -1 || t.indexOf("TRACKING:") !== -1) return true;
+      if (t.indexOf("CANT, CUPONES") !== -1 || t.indexOf("CUPONES:") !== -1 || t.indexOf("CANT") !== -1) return true;
       if (t.indexOf("RETIRAR POR") !== -1 || t.indexOf("RETIRO POR") !== -1) return true;
       if (t.indexOf("OFICIN") !== -1) return true;
       if (t.indexOf("ENTREGAR EN AGENCIA") !== -1 || t.indexOf("ENTREGA") !== -1) return true;
       if (t.indexOf("ENSACADO") !== -1) return true;
-      if (t.indexOf("CUPONES") !== -1) return true;
       if (t.indexOf("DIRECCION") !== -1 || t.indexOf("DIRECCIÓN") !== -1) return true;
       if (t.indexOf("CIUDAD") !== -1) return true;
       if (t.indexOf("REMITENTE") !== -1) return true;
@@ -102,6 +103,7 @@
 
       resultado = resultado.replace(/^[\|\/\\\,\.\-_\:\;\s\d]+/g, "");
 
+      resultado = resultado.replace(/\bTRACKING\b/gi, "");
       resultado = resultado.replace(/\bZOOM\b/gi, "");
       resultado = resultado.replace(/b?estinatario[\s:]*/gi, "");
       resultado = resultado.replace(/DESTINO:/gi, "");
@@ -127,7 +129,6 @@
       resultado = resultado.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "");
       resultado = resultado.replace(/[:\.\-]/g, " ");
 
-      // Si aún le quedan dígitos numéricos, no es un nombre válido
       if (/\d/.test(resultado)) return "";
 
       var palabras = resultado.trim().split(/\s+/).filter(Boolean);
