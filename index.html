@@ -85,7 +85,7 @@
       if (t.indexOf("COBRO EN DESTINO") !== -1) return true;
       if (t.indexOf("CONTRA REEMBOLSO") !== -1) return true;
       if (t.indexOf("DESTINO:") !== -1) return true;
-      if (t.indexOf("RIF") !== -1 || t.indexOf("R.I.F") !== -1 || t.indexOf("RLFICI") !== -1 || t.indexOf("R.L.F.I.C.I") !== -1) return true;
+      if (t.indexOf("RIF") !== -1 || t.indexOf("R.I.F") !== -1 || t.indexOf("RLFICI") !== -1) return true;
       return false;
     }
 
@@ -110,7 +110,7 @@
       resultado = resultado.replace(/\b\d+\b/g, "");
       resultado = resultado.replace(/[:\.\-]/g, "");
 
-      // Si Zoom repite el nombre dos veces ("NOMBRE - NOMBRE"), dejamos solo uno
+      // Si Zoom repite el nombre dos veces ("VERYGIONETT LOAIZA - VERYGIONETT LOAIZA"), dejamos solo uno
       var partes = resultado.trim().split(/\s+/);
       if (partes.length >= 4) {
         var mitad = Math.floor(partes.length / 2);
@@ -166,17 +166,29 @@
         if (empresaDetectada === "Zoom") {
           for (var i = 0; i < lineas.length; i++) {
             var lUpper = lineas[i].toUpperCase();
-            if (lUpper.indexOf("DESTINATARIO:") !== -1) {
-              var lineaDest = lineas[i];
-              // Extraer solo la parte después de "Destinatario:"
-              var idx = lineaDest.toUpperCase().indexOf("DESTINATARIO:");
-              var textoDespues = lineaDest.substring(idx + 13);
-              
-              var limpioZoom = depurarNombre(textoDespues);
-              if (limpioZoom.length > 2 && !esLineaBasura(limpioZoom)) {
-                nombreEncontrado = limpioZoom;
+            if (lUpper.indexOf("DESTINATARIO") !== -1) {
+              // Intentar leer en la misma línea
+              var idx = lUpper.indexOf("DESTINATARIO");
+              var textoMismaLinea = lineas[i].substring(idx + 12);
+              var limpioMisma = depurarNombre(textoMismaLinea);
+
+              if (limpioMisma.length > 2 && !esLineaBasura(limpioMisma)) {
+                nombreEncontrado = limpioMisma;
                 break;
               }
+
+              // Si en la misma línea no había nombre, buscar en las siguientes 2 líneas
+              for (var next = 1; next <= 2; next++) {
+                if (i + next < lineas.length) {
+                  var lineaSig = lineas[i + next].trim();
+                  var limpioSig = depurarNombre(lineaSig);
+                  if (limpioSig.length > 2 && !esLineaBasura(limpioSig)) {
+                    nombreEncontrado = limpioSig;
+                    break;
+                  }
+                }
+              }
+              if (nombreEncontrado) break;
             }
           }
         }
