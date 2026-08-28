@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos v2</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos v3</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -28,7 +28,7 @@
     <form id="guiaForm" class="space-y-3">
       <div>
         <label class="block text-xs font-bold text-gray-700">Destinatario</label>
-        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium" placeholder="Escribe o saldrá en blanco si no se detecta etiqueta">
+        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium" placeholder="Escribe el nombre si no viene etiquetado">
       </div>
       
       <div>
@@ -133,9 +133,9 @@
           document.getElementById("tracking").value = trackingEncontrado;
         }
 
-        // REGLA NUEVA Y ABSOLUTA PARA EL DESTINATARIO:
-        // Solo buscará un nombre si la etiqueta exacta "DESTINATARIO" o "DEST" aparece en el texto.
-        // Si no aparece, el campo se quedará en blanco para que lo escribas manualmente sin arrastrar basura previa.
+        // --- EXTRACCIÓN ULTRA ESTRICTA DE DESTINATARIO ---
+        // Solo extraerá si encuentra la palabra clave "DESTINATARIO" o "DEST". 
+        // Si no la encuentra (como en los tickets de mostrador de MRW), dejará el campo en blanco para ti.
         var nombreEncontrado = "";
         for (var i = 0; i < lineas.length; i++) {
           var l = lineas[i].toUpperCase();
@@ -151,6 +151,7 @@
           }
         }
 
+        // Asignación final: si no hay etiqueta explícita, se queda en blanco (evita inventar ciudades o códigos)
         document.getElementById("nombre").value = nombreEncontrado;
 
       } catch (e) {
