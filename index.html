@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V35</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V37</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -106,7 +106,7 @@
         document.getElementById("empresa").value = empresaDetectada;
 
         // ========================================================
-        // BLOQUE 1: MRW (ESTRICTO: TELÉFONO EN LA MISMA LÍNEA DEL DESTINATARIO)
+        // BLOQUE 1: MRW (AISLADO E INTOCABLE)
         // ========================================================
         if (empresaDetectada === "MRW") {
           var lineas = text.split("\n");
@@ -115,7 +115,6 @@
           var lineaDelNombre = "";
           var indiceLineaNombre = -1;
 
-          // Paso 1: Encontrar el nombre y la línea exacta donde está
           for (var i = 0; i < lineas.length; i++) {
             var l = lineas[i].trim();
             var lUpper = l.toUpperCase();
@@ -162,10 +161,7 @@
             document.getElementById("nombre").value = nombreEncontrado;
           }
 
-          // Paso 2: Extraer el teléfono ESTRICTAMENTE de la misma línea del nombre o su bloque inmediato
           var tlfEncontrado = "";
-          
-          // Buscamos primero en la línea exacta del nombre o la línea de abajo inmediata si el teléfono está allí
           var lineasAEvaluar = [lineaDelNombre];
           if (indiceLineaNombre !== -1 && indiceLineaNombre + 1 < lineas.length) {
             lineasAEvaluar.push(lineas[indiceLineaNombre + 1]);
@@ -184,7 +180,6 @@
 
           document.getElementById("telefono").value = tlfEncontrado;
 
-          // Paso 3: Tracking MRW
           var trackingEncontrado = "";
           for (var k = 0; k < lineas.length; k++) {
             var lk = lineas[k].toUpperCase();
@@ -209,36 +204,74 @@
         }
 
         // ========================================================
-        // BLOQUE 2: ZOOM
+        // BLOQUE 2: ZOOM (BÚSQUEDA EXACTA DE DESTINATARIO)
         // ========================================================
         if (empresaDetectada === "Zoom") {
           var lineasZoom = text.split("\n");
+          
+          // 1. Tracking Zoom (10 dígitos)
           var trackZoom = "";
           for (var z = 0; z < lineasZoom.length; z++) {
             var mZ = lineasZoom[z].match(/\b\d{10}\b/);
             if (mZ) { trackZoom = mZ[0]; break; }
           }
+          if (!trackZoom) {
+            var mGenZ = text.match(/\b\d{10}\b/);
+            if (mGenZ) trackZoom = mGenZ[0];
+          }
           if (trackZoom) document.getElementById("tracking").value = trackZoom;
 
-          var tlfZoom = "";
-          var matchTelfZ = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/g);
-          if (matchTelfZ && matchTelfZ.length > 0) {
-            tlfZoom = formatearTelefonoStrict(matchTelfZ[0]);
-          }
-          document.getElementById("telefono").value = tlfZoom;
-
+          // 2. Destinatario Zoom (Búsqueda estricta de la palabra Destinatario o Destinatio)
           var nombreZoom = "";
           for (var iz = 0; iz < lineasZoom.length; iz++) {
-            var lz = lineasZoom[iz].toUpperCase();
-            if (lz.indexOf("DESTINATARIO:") !== -1 || lz.indexOf("DESTINATARIO") !== -1) {
-              var partesZ = lineasZoom[iz].split("-");
-              if (partesZ.length > 0) {
-                nombreZoom = partesZ[0].replace(/DESTINATARIO[:\s]*/gi, "").trim();
+            var lzUp = lineasZoom[iz].toUpperCase();
+            if (lzUp.indexOf("DESTINATARIO") !== -1 || lzUp.indexOf("DESTINATIO") !== -1 || lzUp.indexOf("DESTINAT") !== -1) {
+              // Limpiamos la etiqueta y los dos puntos
+              var limpioZ = lineasZoom[iz].replace(/destinatario[:\s]*/gi, "").replace(/destinatio[:\s]*/gi, "").replace(/destinat[:\s]*/gi, "").trim();
+              
+              // Si viene duplicado como "NOMBRE - NOMBRE", tomamos la primera parte
+              if (limpioZ.indexOf("-") !== -1) {
+                limpioZ = limpioZ.split("-")[0].trim();
               }
-              break;
+              
+              if (limpioZ.length > 2) {
+                nombreZoom = limpioZ;
+                break;
+              } else if (iz + 1 < lineasZoom.length) {
+                // Si la línea estaba vacía, revisamos la siguiente línea inmediata
+                var sigZ = lineasZoom[iz + 1].trim();
+                if (sigZ.indexOf("-") !== -1) sigZ = sigZ.split("-")[0].trim();
+                if (sigZ.length > 2) {
+                  nombreZoom = sigZ;
+                  break;
+                }
+              }
             }
           }
           if (nombreZoom) document.getElementById("nombre").value = nombreZoom;
+
+          // 3. Teléfono Zoom
+          var tlfZoom = "";
+          for (var tz = 0; tz < lineasZoom.length; tz++) {
+            var ltzUp = lineasZoom[tz].toUpperCase();
+            if (ltzUp.indexOf("TELT") !== -1 || ltzUp.indexOf("TELF") !== -1 || ltzUp.indexOf("TEL") !== -1 || ltzUp.indexOf("DESTINO:") !== -1) {
+              var matchTz = lineasZoom[tz].match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
+              if (matchTz) {
+                var tValZ = formatearTelefonoStrict(matchTz[0]);
+                if (tValZ) {
+                  tlfZoom = tValZ;
+                  break;
+                }
+              }
+            }
+          }
+          if (!tlfZoom) {
+            var matchGenTz = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/g);
+            if (matchGenTz && matchGenTz.length > 0) {
+              tlfZoom = formatearTelefonoStrict(matchGenTz[matchGenTz.length - 1]);
+            }
+          }
+          document.getElementById("telefono").value = tlfZoom;
           return;
         }
 
