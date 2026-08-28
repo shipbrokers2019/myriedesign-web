@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V33</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V34</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -106,17 +106,26 @@
         document.getElementById("empresa").value = empresaDetectada;
 
         // ========================================================
-        // BLOQUE 1: MRW (CORREGIDO: TELÉFONO DESTINATARIO Y TRACKING)
+        // BLOQUE 1: MRW (BLINDADO: IGNORA ABSOLUTAMENTE EL PRIMER TELÉFONO DE ARRIBA)
         // ========================================================
         if (empresaDetectada === "MRW") {
           var lineas = text.split("\n");
           
-          // Teléfono MRW (Busca específicamente en la línea de DEST: o donde aparezca TLF al lado del destino)
+          // Teléfono MRW: Buscar solo en líneas que contengan DEST, DESTINATARIO o TLF posterior al remitente
           var tlfEncontrado = "";
+          var seccionDestinatarioIniciada = false;
+
           for (var idx = 0; idx < lineas.length; idx++) {
             var lLine = lineas[idx];
             var lLineUp = lLine.toUpperCase();
-            if (lLineUp.indexOf("DEST") !== -1 || lLineUp.indexOf("TLF") !== -1) {
+
+            // Detectamos dónde empieza la zona del destinatario para ignorar la cabecera (remitente)
+            if (lLineUp.indexOf("DEST") !== -1 || lLineUp.indexOf("DESTINATARIO") !== -1) {
+              seccionDestinatarioIniciada = true;
+            }
+
+            // Si ya estamos en la zona del destinatario o la línea tiene explícitamente TLF
+            if (seccionDestinatarioIniciada || lLineUp.indexOf("TLF") !== -1 || lLineUp.indexOf("DEST") !== -1) {
               var matchLineaTlf = lLine.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
               if (matchLineaTlf) {
                 var tVal = formatearTelefonoStrict(matchLineaTlf[0]);
@@ -127,13 +136,22 @@
               }
             }
           }
-          // Si no lo encontró cerca de DEST, busca el segundo teléfono del texto (descartando el primero)
+
+          // Si por alguna razón no lo halló con la marca DEST, buscamos todos pero forzamos a tomar el último (el del destinatario abajo) o descartar el primero
           if (!tlfEncontrado) {
             var todosT = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/g);
             if (todosT && todosT.length > 1) {
-              tlfEncontrado = formatearTelefonoStrict(todosT[1]); // Toma el segundo, descarta el primero
+              tlfEncontrado = formatearTelefonoStrict(todosT[todosT.length - 1]); // Toma el último del bloque, ignorando el de arriba
             } else if (todosT && todosT.length === 1) {
-              tlfEncontrado = formatearTelefonoStrict(todosT[0]);
+              // Si solo hay uno en todo el texto, evaluamos si está muy arriba (remitente) o abajo. Si está arriba, lo dejamos en blanco para evitar errores.
+              // Pero por seguridad en MRW siempre hay dos (remitente y destinatario).
+              var idxRemitente = text.indexOf("REMITENTE");
+              var idxTlf = text.indexOf(todosT[0]);
+              if (idxRemitente !== -1 && idxTlf < idxRemitente + 30) {
+                tlfEncontrado = ""; // Es el del remitente, se descarta
+              } else {
+                tlfEncontrado = formatearTelefonoStrict(todosT[0]);
+              }
             }
           }
           document.getElementById("telefono").value = tlfEncontrado;
@@ -176,7 +194,7 @@
           }
           if (nombreEncontrado) document.getElementById("nombre").value = nombreEncontrado;
 
-          // Tracking MRW (Busca de 11 a 15 dígitos para evitar números cortos o montos)
+          // Tracking MRW
           var trackingEncontrado = "";
           for (var k = 0; k < lineas.length; k++) {
             var lk = lineas[k].toUpperCase();
