@@ -75,6 +75,7 @@
     function esLineaBasura(texto) {
       var t = texto.toUpperCase().trim();
       if (!t) return true;
+      if (t === "ZOOM" || t === "GRUPO ZOOM" || t === "MRW" || t === "TEALCA") return true;
       if (t.indexOf("RETIRAR POR") !== -1) return true;
       if (t.indexOf("OFICIN") !== -1) return true;
       if (t.indexOf("ENTREGAR EN AGENCIA") !== -1) return true;
@@ -93,6 +94,7 @@
 
     function depurarNombre(txt) {
       var resultado = txt;
+      resultado = resultado.replace(/\bZOOM\b/gi, "");
       resultado = resultado.replace(/DESTINATARIO[\s:]*/gi, "");
       resultado = resultado.replace(/DESTINO:/gi, "");
       resultado = resultado.replace(/\bDEST\b[\s:]*/gi, "");
@@ -106,7 +108,7 @@
       resultado = resultado.replace(/R\.?I\.?F\.?\/C\.?I\.?[\s:]*/gi, "");
       resultado = resultado.replace(/RLFICI[\s:]*/gi, "");
 
-      // Quitar números telefónicos y cédulas
+      // Quitar teléfonos y cédulas
       resultado = resultado.replace(/TLF[\s:\.]*\d+/gi, "");
       resultado = resultado.replace(/\b(?:0)?(412|424|414|416|426)\d{7}\b/g, "");
       resultado = resultado.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "");
@@ -185,7 +187,7 @@
                   if (esLineaBasura(sigLinea)) continue;
                   
                   var limpioSig = depurarNombre(sigLinea);
-                  if (limpioSig.length > 2) {
+                  if (limpioSig.length > 2 && !esLineaBasura(limpioSig)) {
                     nombreEncontrado = limpioSig;
                     break;
                   }
@@ -215,7 +217,7 @@
             if (esLineaBasura(lj)) continue;
 
             var limpioFallback = depurarNombre(lj);
-            if (limpioFallback.length > 3 && /[a-zA-Z]/.test(limpioFallback)) {
+            if (limpioFallback.length > 3 && /[a-zA-Z]/.test(limpioFallback) && !esLineaBasura(limpioFallback)) {
               nombreEncontrado = limpioFallback;
               break;
             }
