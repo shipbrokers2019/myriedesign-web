@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V66</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V67</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -102,7 +102,7 @@
 
         document.getElementById("empresa").value = empresaDetectada;
 
-        // Limpiar campos antes de procesar
+        // Limpiar campos
         document.getElementById("nombre").value = "";
         document.getElementById("telefono").value = "";
         document.getElementById("tracking").value = "";
@@ -118,110 +118,69 @@
         }
 
         // ========================================================
-        // 2. TRACKING / GUÍA
+        // 2. TRACKING (Buscando la línea numérica pura de >= 8 caracteres)
         // ========================================================
-        if (empresaDetectada === "MRW") {
-          var trackingEncontrado = "";
-          for (var k = 0; k < lineas.length; k++) {
-            var lk = lineas[k].toUpperCase();
-            if (lk.indexOf("TRACKING") !== -1 || lk.indexOf("GUIA") !== -1 || lk.indexOf("DOC") !== -1 || lk.indexOf("NRO") !== -1) {
-              var mTrackL = lineas[k].match(/\b\d{10,15}\b/);
-              if (mTrackL) { trackingEncontrado = mTrackL[0]; break; }
-            }
-          }
-          if (!trackingEncontrado) {
-            var todosNumeros = text.match(/\b\d{10,15}\b/g) || [];
-            if (todosNumeros.length > 0) trackingEncontrado = todosNumeros[0];
-          }
-          if (trackingEncontrado) document.getElementById("tracking").value = trackingEncontrado;
-
-        } else if (empresaDetectada === "Zoom") {
-          var trackZoom = "";
-          for (var z = 0; z < lineas.length; z++) {
-            var mZ = lineas[z].match(/\b\d{10}\b/);
-            if (mZ) { trackZoom = mZ[0]; break; }
-          }
-          if (!trackZoom) {
-            var mGenZ = text.match(/\b\d{10}\b/);
-            if (mGenZ) trackZoom = mGenZ[0];
-          }
-          if (trackZoom) document.getElementById("tracking").value = trackZoom;
-
-        } else if (empresaDetectada === "Tealca") {
-          var trackTealca = "";
-          for (var t = 0; t < lineas.length; t++) {
-            var lt = lineas[t].toUpperCase();
-            if (lt.indexOf("GUIA") !== -1 || lt.indexOf("GUÍA") !== -1) {
-              var mT = lineas[t].match(/\b\d{7,8}\b/);
-              if (mT) { trackTealca = mT[0]; break; }
-              if (t + 1 < lineas.length) {
-                var mTNext = lineas[t + 1].match(/\b\d{7,8}\b/);
-                if (mTNext) { trackTealca = mTNext[0]; break; }
-              }
-            }
-          }
-          if (!trackTealca) {
-            var matchAllNums = text.match(/\b\d{7,8}\b/g) || [];
-            for (var an = 0; an < matchAllNums.length; an++) {
-              var candidato = matchAllNums[an];
-              if (!candidato.startsWith("412") && !candidato.startsWith("424") && !candidato.startsWith("414") && !candidato.startsWith("416") && !candidato.startsWith("426")) {
-                trackTealca = candidato;
-                break;
-              }
-            }
-          }
-          if (trackTealca) document.getElementById("tracking").value = trackTealca;
-        }
-
-        // ========================================================
-        // 3. DESTINATARIO (Motor Antifraude V66)
-        // ========================================================
-        var nombreFinal = "";
-        
-        // Palabras comerciales o etiquetas que NUNCA deben ser el destinatario
-        var bloqueadasComerciales = [
-          "PANADERIA", "FARMACIA", "REPUESTOS", "TIENDA", "LOCAL", "PUNTO", 
-          "AGENCIA", "SUCURSAL", "OFICINA", "CENTRO", "EXPRESS", "MRW", "TEALCA", 
-          "ZOOM", "LAE", "LIBERTY", "TRACKING", "GUIA", "GUÍA", "TELEFONO", "TLF", 
-          "DIRECCION", "DIR", "VOLUM", "PIEZA", "PESO", "CIUDAD", "ENTREGA", 
-          "RETIRO", "ESTANDAR", "COD", "FECHA", "ORIGEN", "MEDIDAS", "ANACO", 
-          "TURMERO", "PAGAR", "ENVIO", "CLIENTE", "PAGO", "NOMBRE", "DESTINATARIO", 
-          "DEST", "MER", "CUPONES", "ENSACADO", "MYRIED", "MARVAL"
-        ];
+        var indiceTracking = -1;
+        var trackingEncontrado = "";
 
         for (var i = 0; i < lineas.length; i++) {
-          var linea = lineas[i].trim();
-          var lineaUp = linea.toUpperCase();
-
-          if (linea.length < 5) continue;
-          if (/\d/.test(linea)) continue; // Los nombres no llevan números
-
-          // Comprobar si contiene alguna palabra prohibida o comercial
-          var esInvalido = false;
-          for (var b = 0; b < bloqueadasComerciales.length; b++) {
-            if (lineaUp.indexOf(bloqueadasComerciales[b]) !== -1) {
-              esInvalido = true;
+          var lineaLimpia = lineas[i].trim();
+          // Verificamos si la línea completa es solo un número de 8 o más dígitos sin letras ni símbolos extraños
+          if (/^\d{8,15}$/.test(lineaLimpia)) {
+            // Validamos que no sea un teléfono venezolano colado por error
+            if (!lineaLimpia.startsWith("412") && !lineaLimpia.startsWith("424") && !lineaLimpia.startsWith("414") && !lineaLimpia.startsWith("416") && !lineaLimpia.startsWith("426") && !lineaLimpia.startsWith("04")) {
+              trackingEncontrado = lineaLimpia;
+              indiceTracking = i;
               break;
             }
           }
+        }
 
-          if (esInvalido) continue;
+        // Si no lo halló con el filtro estricto, aplicamos respaldo por Regex general
+        if (!trackingEncontrado) {
+          var matchGen = text.match(/\b\d{8,15}\b/);
+          if (matchGen) trackingEncontrado = matchGen[0];
+        }
 
+        if (trackingEncontrado) {
+          document.getElementById("tracking").value = trackingEncontrado;
+        }
+
+        // ========================================================
+        // 3. DESTINATARIO (Basado en tu guía: ubicado en la línea previa al tracking o buscando nombres limpios)
+        // ========================================================
+        var nombreFinal = "";
+
+        // Intentar primero mirar la línea inmediatamente anterior al tracking encontrado
+        if (indiceTracking > 0) {
+          var posibleNombre = lineas[indiceTracking - 1].trim();
           // Limpiar caracteres extraños
-          var candidatoLimpio = linea
-            .replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "")
-            .replace(/[\|\/\\\,\.\-_]+$/g, "")
-            .trim();
-
-          if (candidatoLimpio.indexOf(" - ") !== -1) {
-            candidatoLimpio = candidatoLimpio.split(" - ")[0].trim();
+          posibleNombre = posibleNombre.replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "").replace(/[\|\/\\\,\.\-_]+$/g, "").trim();
+          if (posibleNombre.length >= 4 && !/\d/.test(posibleNombre)) {
+            nombreFinal = posibleNombre;
           }
+        }
 
-          // Un nombre de persona real suele tener de 2 a 4 palabras (ej: Maria Faria)
-          var palabras = candidatoLimpio.split(/\s+/);
-          if (palabras.length >= 2 && palabras.length <= 4) {
-            nombreFinal = candidatoLimpio;
-            break; 
+        // Si la línea anterior no funcionó, buscamos en todo el texto una línea que parezca un nombre de persona (2 o 3 palabras sin números)
+        if (!nombreFinal) {
+          var palabrasBasura = ["TRACKING", "GUIA", "GUÍA", "TELEFONO", "TLF", "DIRECCION", "DIR", "MRW", "TEALCA", "ZOOM", "LAE", "PAGAR", "ENVIO", "CLIENTE", "PAGO", "DESTINATARIO", "DEST", "SUCURSAL", "OFICINA", "AGENCIA"];
+          
+          for (var j = 0; j < lineas.length; j++) {
+            var l = lineas[j].trim();
+            var lUp = l.toUpperCase();
+            if (l.length < 5 || /\d/.test(l)) continue;
+            
+            var esBasura = false;
+            for (var b = 0; b < palabrasBasura.length; b++) {
+              if (lUp.indexOf(palabrasBasura[b]) !== -1) { esBasura = true; break; }
+            }
+            if (esBasura) continue;
+
+            var palabras = l.split(/\s+/);
+            if (palabras.length >= 2 && palabras.length <= 4) {
+              nombreFinal = l;
+              break;
+            }
           }
         }
 
