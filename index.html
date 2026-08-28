@@ -9,7 +9,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V21</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V22</h2>
     
     <!-- Selector de Empresa -->
     <div>
@@ -115,19 +115,19 @@
             if (matchGen) trackingEncontrado = matchGen[0];
           }
 
-          // B. Teléfono (Busca el número móvil en todo el texto)
+          // B. Teléfono
           var matchTelfGeneral = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
           if (matchTelfGeneral) {
             tlfEncontrado = formatearTelefonoStrict(matchTelfGeneral[0]);
           }
 
-          // C. Destinatario (Busca la línea que tenga DEST o DESTINO y toma lo que está después)
+          // C. Destinatario (Busca de forma estricta la etiqueta DEST:)
           for (var i = 0; i < lineas.length; i++) {
             var lUp = lineas[i].toUpperCase();
-            if (lUp.indexOf("DEST") !== -1 || lUp.indexOf("DESTINO") !== -1) {
-              // Limpiar todo lo que sea la etiqueta DEST / DESTINO / DESt INO
-              var limpio = lineas[i].replace(/DEST[\s\:\-\.]*/i, "");
-              limpio = limpio.replace(/DESTINO[\s\:\-\.]*/i, "");
+            // Validar que sea una línea de destino real y que NO sea "COBRO EN DESTINO"
+            if ((lUp.indexOf("DEST") !== -1 || lUp.indexOf("DESTINATARIO") !== -1) && lUp.indexOf("COBRO") === -1) {
+              var limpio = lineas[i].replace(/DESTINATARIO[\s\:\-\.]*/i, "");
+              limpio = limpio.replace(/DEST[\s\:\-\.]*/i, "");
               limpio = limpio.replace(/DESt[\s\:\-\.]*INO[\s\:\-\.]*/i, "");
               limpio = limpio.replace(/[\s\-\,\.\_\/]+$/, "").trim();
 
@@ -136,6 +136,11 @@
                 break;
               }
             }
+          }
+
+          // Si el texto pegado no contiene la línea de destino, se queda en blanco para avisar que falta texto
+          if (nombreEncontrado.toUpperCase().indexOf("RETIRAR") !== -1 || nombreEncontrado.length < 3) {
+            nombreEncontrado = "";
           }
         }
 
@@ -163,6 +168,10 @@
         document.getElementById("tracking").value = trackingEncontrado;
         document.getElementById("telefono").value = tlfEncontrado;
         document.getElementById("nombre").value = nombreEncontrado;
+
+        if (!nombreEncontrado && empresa === "MRW") {
+          alert("El texto copiado no incluye el nombre del destinatario (busca la sección donde dice DEST: en la guía).");
+        }
 
       } catch (e) {
         alert("Error al procesar: " + e.message);
