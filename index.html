@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V38</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V39</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -204,7 +204,7 @@
         }
 
         // ========================================================
-        // BLOQUE 2: ZOOM (CON DOBLE ESTRATEGIA DE NOMBRE)
+        // BLOQUE 2: ZOOM (FILTRADO Y LIMPIEZA TOTAL)
         // ========================================================
         if (empresaDetectada === "Zoom") {
           var lineasZoom = text.split("\n");
@@ -221,7 +221,7 @@
           }
           if (trackZoom) document.getElementById("tracking").value = trackZoom;
 
-          // 2. Destinatario Zoom (Búsqueda principal por etiqueta o respaldo inteligente de nombres)
+          // 2. Destinatario Zoom
           var nombreZoom = "";
           for (var iz = 0; iz < lineasZoom.length; iz++) {
             var lzUp = lineasZoom[iz].toUpperCase();
@@ -242,16 +242,23 @@
             }
           }
 
-          // Respaldo de emergencia si Google Lens no copió la etiqueta de Destinatario
+          // Respaldo de emergencia ultra limpio
           if (!nombreZoom) {
             for (var rx = 0; rx < lineasZoom.length; rx++) {
               var lRx = lineasZoom[rx].trim();
               var lRxUp = lRx.toUpperCase();
-              // Ignorar palabras técnicas comunes de Zoom
-              if (lRxUp.indexOf("ZOOM") !== -1 || lRxUp.indexOf("MER") !== -1 || lRxUp.indexOf("BISUTERIA") !== -1 || lRxUp.indexOf("COD") !== -1 || lRxUp.indexOf("BFA") !== -1 || lRxUp.length < 4) continue;
-              if (/\d/.test(lRx)) continue; // Si tiene números probablemente sea dirección o tracking
-              nombreZoom = lRx;
-              break;
+              // Ignorar etiquetas de remitente, empresa o datos técnicos
+              if (lRxUp.indexOf("REMITENTE") !== -1 || lRxUp.indexOf("ZOOM") !== -1 || lRxUp.indexOf("MER") !== -1 || lRxUp.indexOf("BISUTERIA") !== -1 || lRxUp.indexOf("COD") !== -1 || lRxUp.indexOf("BFA") !== -1 || lRxUp.length < 4) continue;
+              if (/\d/.test(lRx)) continue;
+              
+              // Limpiar por si trae barras o símbolos raros al inicio
+              lRx = lRx.replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "").trim();
+              if (lRx.indexOf("-") !== -1) lRx = lRx.split("-")[0].trim();
+              
+              if (lRx.length > 2) {
+                nombreZoom = lRx;
+                break;
+              }
             }
           }
           if (nombreZoom) document.getElementById("nombre").value = nombreZoom;
