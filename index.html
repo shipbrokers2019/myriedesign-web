@@ -78,6 +78,19 @@
   <script>
     document.getElementById("fecha").valueAsDate = new Date();
 
+    function esLineaBasura(texto) {
+      var t = texto.toUpperCase();
+      if (t.indexOf("RETIRAR") !== -1) return true;
+      if (t.indexOf("OFICINA") !== -1) return true;
+      if (t.indexOf("AGENCIA") !== -1) return true;
+      if (t.indexOf("ENSACADO") !== -1) return true;
+      if (t.indexOf("CUPONES") !== -1) return true;
+      if (t.indexOf("DIRECCION") !== -1 || t.indexOf("DIRECCIÓN") !== -1) return true;
+      if (t.indexOf("REMITENTE") !== -1) return true;
+      if (t.indexOf("ORIGEN") !== -1) return true;
+      return false;
+    }
+
     function procesarTextoGuia() {
       try {
         var text = document.getElementById("rawText").value;
@@ -95,74 +108,59 @@
         else if (tUpper.indexOf("MRW") !== -1) document.getElementById("empresa").value = "MRW";
         else if (tUpper.indexOf("LIBERTY") !== -1) document.getElementById("empresa").value = "Liberty Express";
 
-        var esMRW = (document.getElementById("empresa").value === "MRW");
-
         // 2. EXTRAER TRACKING
         var matchTrack = text.match(/\b\d{7,20}\b/);
         if (matchTrack) {
           document.getElementById("tracking").value = matchTrack[0];
         }
 
-        // 3. EXTRAER NOMBRE DEL DESTINATARIO (LÓGICA ESPECIALIZADA MRW)
+        // 3. EXTRAER NOMBRE DEL DESTINATARIO
         var nombreEncontrado = "";
 
         for (var i = 0; i < lineas.length; i++) {
           var l = lineas[i].trim();
           var lUpper = l.toUpperCase();
 
-          // Saltar encabezados y remitente
-          if (lUpper.indexOf("REMITENTE") !== -1 || lUpper.indexOf("ORIGEN") !== -1 || lUpper.indexOf("AGENCIA ORIGEN") !== -1 || lUpper.indexOf("ENSACADO") !== -1) {
-            continue;
-          }
+          if (esLineaBasura(l)) continue;
 
-          // Si es MRW y encontramos la sección DESTINATARIO
-          if (lUpper.indexOf("DESTINATARIO") !== -1 || lUpper.indexOf("CONSIGNA A") !== -1 || lUpper.indexOf("DESTINO:") !== -1 || lUpper.indexOf("RECEPTOR") !== -1) {
+          if (lUpper.indexOf("DEST") !== -1 || lUpper.indexOf("NOMBRE") !== -1 || lUpper.indexOf("CLIENTE") !== -1 || lUpper.indexOf("CONSIGNA") !== -1 || lUpper.indexOf("RECEPTOR") !== -1) {
             
-            // Intentar limpiar la misma línea
             var limpio = l.replace(/DESTINATARIO/gi, "")
                           .replace(/DATOS DEL/gi, "")
                           .replace(/DESTINO/gi, "")
                           .replace(/CONSIGNA A/gi, "")
                           .replace(/RECEPTOR/gi, "")
                           .replace(/NOMBRE/gi, "")
+                          .replace(/CLIENTE/gi, "")
                           .replace(/[:\-]/g, "")
                           .trim();
 
             limpio = limpio.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "").trim();
 
-            if (limpio.length > 2) {
+            if (limpio.length > 2 && !esLineaBasura(limpio)) {
               nombreEncontrado = limpio;
               break;
-            } else if (i + 1 < lineas.length) {
-              // Si la palabra DESTINATARIO estaba sola, tomamos la línea siguiente
-              var siguienteLinea = lineas[i + 1].trim();
-              siguienteLinea = siguienteLinea.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "").replace(/[:\-]/g, "").trim();
-              if (siguienteLinea.length > 2 && siguienteLinea.toUpperCase().indexOf("TEL") === -1 && siguienteLinea.toUpperCase().indexOf("DIRECCION") === -1) {
-                nombreEncontrado = siguienteLinea;
-                break;
-              }
             }
           }
         }
 
-        // Respaldo general si el formato es atípico
+        // Si no lo encontró con etiqueta, busca la línea que tenga cédula (V-XXXXX) y extrae el nombre de esa misma línea
         if (!nombreEncontrado) {
-          for (var j = lineas.length - 1; j >= 0; j--) {
+          for (var j = 0; j < lineas.length; j++) {
             var lj = lineas[j].trim();
             var ljUpper = lj.toUpperCase();
 
-            if (ljUpper.indexOf("CLIENTE") !== -1 || ljUpper.indexOf("DEST") !== -1 || /\b[V][\-\s]?\d{6,8}\b/i.test(ljUpper)) {
-              if (ljUpper.indexOf("REMITENTE") === -1 && ljUpper.indexOf("ORIGEN") === -1) {
-                var limpioFallback = lj.replace(/DESTINATARIO/gi, "")
-                                       .replace(/DESTINO/gi, "")
-                                       .replace(/CLIENTE/gi, "")
-                                       .replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "")
-                                       .replace(/[:\-]/g, "")
-                                       .trim();
-                if (limpioFallback.length > 2) {
-                  nombreEncontrado = limpioFallback;
-                  break;
-                }
+            if (esLineaBasura(lj)) continue;
+
+            if (/\b[V][\-\s]?\d{6,8}\b/i.test(ljUpper) && ljUpper.indexOf("TRACKING") === -1 && ljUpper.indexOf("GUIA") === -1) {
+              var limpioFallback = lj.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "")
+                                     .replace(/DEST/gi, "")
+                                     .replace(/CLIENTE/gi, "")
+                                     .replace(/[:\-]/g, "")
+                                     .trim();
+              if (limpioFallback.length > 2 && !esLineaBasura(limpioFallback)) {
+                nombreEncontrado = limpioFallback;
+                break;
               }
             }
           }
