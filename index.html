@@ -75,7 +75,8 @@
     function esLineaBasura(texto) {
       var t = texto.toUpperCase().trim();
       if (!t) return true;
-      if (t.indexOf("*") !== -1) return true; // Ignorar asteriscos de cédulas censuradas
+      if (t.indexOf("*") !== -1) return true;
+      if (/\d/.test(t) && (t.indexOf("TELEF") !== -1 || t.indexOf("TLF") !== -1 || t.indexOf("TEL") !== -1)) return true; // Descarta líneas con teléfono pegado
       if (t === "ZOOM" || t === "GRUPO ZOOM" || t === "MRW" || t === "TEALCA") return true;
       if (t.indexOf("RETIRAR POR") !== -1 || t.indexOf("RETIRO POR") !== -1) return true;
       if (t.indexOf("OFICIN") !== -1) return true;
@@ -116,6 +117,7 @@
       resultado = resultado.replace(/BRIGEN/gi, "");
       resultado = resultado.replace(/BARCELONA/gi, "");
       resultado = resultado.replace(/XPRESS/gi, "");
+      resultado = resultado.replace(/TELEFON[O]?[\d]*/gi, "");
       resultado = resultado.replace(/D?CEDULA[\s\d\*\-]*/gi, "");
       resultado = resultado.replace(/R\.?I\.?F\.?\/C\.?I\.?[\s:]*/gi, "");
       resultado = resultado.replace(/RLFICI[\s:]*/gi, "");
@@ -124,6 +126,9 @@
       resultado = resultado.replace(/\b(?:0)?(412|424|414|416|426)\d{7}\b/g, "");
       resultado = resultado.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "");
       resultado = resultado.replace(/[:\.\-]/g, " ");
+
+      // Si aún le quedan dígitos numéricos, no es un nombre válido
+      if (/\d/.test(resultado)) return "";
 
       var palabras = resultado.trim().split(/\s+/).filter(Boolean);
 
