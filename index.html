@@ -9,9 +9,9 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V19</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V20</h2>
     
-    <!-- Selector de Empresa Primero para aislar la lógica -->
+    <!-- Selector de Empresa -->
     <div>
       <label class="block text-xs font-bold text-gray-700 mb-1">🏢 Seleccionar Empresa de Envío</label>
       <select id="empresa" onchange="cambiarEmpresa()" class="w-full p-2 border rounded-lg text-sm bg-blue-50 text-blue-900 font-bold border-blue-300">
@@ -82,7 +82,6 @@
       return "";
     }
 
-    // BLOQUE INDependIENTE POR EMPRESA
     function procesarTextoGuia() {
       try {
         var text = document.getElementById("rawText").value;
@@ -103,7 +102,7 @@
         // 1. LÓGICA AISLADA PARA MRW
         // ========================================================
         if (empresa === "MRW") {
-          // Buscar número puro grande (de 8 a 20 dígitos, sin letras)
+          // A. Tracking: Número puro largo (de 8 a 20 dígitos)
           for (var k = 0; k < lineas.length; k++) {
             var lk = lineas[k].toUpperCase();
             if (lk.indexOf("TRACKING") !== -1 || lk.indexOf("GUIA") !== -1 || lk.indexOf("N°") !== -1) {
@@ -116,29 +115,53 @@
             if (matchGen) trackingEncontrado = matchGen[0];
           }
 
-          // Buscar línea de cliente/teléfono
+          // B. Teléfono y Destinatario basados en DEST: o la línea con el número móvil
           for (var i = 0; i < lineas.length; i++) {
             var lineaActual = lineas[i];
             var matchTelf = lineaActual.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
-            if (matchTelf) {
-              tlfEncontrado = formatearTelefonoStrict(matchTelf[0]);
-              var partes = lineaActual.split(matchTelf[0]);
-              if (partes.length > 0) {
-                var limpio = partes[0].split(/[\s\-]+[VEJG][\s\-]*\d/i)[0];
-                limpio = limpio.replace(/^(DEST|DESTINATARIO|CLIENTE|SENOR|SR|SRA)[\s\:\-\.]*/i, "");
-                limpio = limpio.replace(/[\s\-\,\.\_\/]+$/, "").trim();
-                if (limpio.length > 2) nombreEncontrado = limpio;
+            
+            if (matchTelf || lineaActual.toUpperCase().indexOf("DEST") !== -1) {
+              if (matchTelf && !tlfEncontrado) {
+                tlfEncontrado = formatearTelefonoStrict(matchTelf[0]);
               }
-              break;
+
+              // Extraer texto a la izquierda del teléfono o después de DEST:
+              var textoLimpio = lineaActual;
+              if (matchTelf) {
+                textoLimpio = lineaActual.split(matchTelf[0])[0];
+              }
+
+              // Quitar prefijos y etiquetas de control
+              textoLimpio = textoLimpio.replace(/^(DEST[\s\:\-\.]*|DESTINATARIO[\s\:\-\.]*)/i, "");
+              textoLimpio = textoLimpio.replace(/[\s\-\,\.\_\/]+$/, "").trim();
+
+              if (textoLimpio.length > 2 && textoLimpio.toUpperCase().indexOf("TLF") === -1) {
+                nombreEncontrado = textoLimpio;
+                break;
+              }
+            }
+          }
+
+          // Si el nombre quedó en blanco, revisar la línea anterior o siguiente a DEST:
+          if (!nombreEncontrado) {
+            for (var x = 0; x < lineas.length; x++) {
+              if (lineas[x].toUpperCase().indexOf("DEST") !== -1) {
+                // Si la etiqueta DEST está sola, mirar la siguiente línea
+                if (lineas[x].replace(/DEST[\s\:\-\.]*/i, "").trim().length < 2 && lineas[x+1]) {
+                  nombreEncontrado = lineas[x+1].replace(/[\s\-\,\.\_\/]+$/, "").trim();
+                } else {
+                  nombreEncontrado = lineas[x].replace(/DEST[\s\:\-\.]*/i, "").trim();
+                }
+                break;
+              }
             }
           }
         }
 
         // ========================================================
-        // 2. LÓGICA AISLADA PARA ZOOM (Preparada para ajustar sin dañar otras)
+        // 2, 3, 4. BLOQUES PARA ZOOM, TEALCA, LAE (Intactos)
         // ========================================================
-        else if (empresa === "Zoom") {
-          // Aquí puedes aislar la regla de Zoom si su formato de tracking cambia
+        else {
           var matchGen = text.match(/\b\d{8,20}\b/);
           if (matchGen) trackingEncontrado = matchGen[0];
 
@@ -156,49 +179,6 @@
           }
         }
 
-        // ========================================================
-        // 3. LÓGICA AISLADA PARA TEALCA
-        // ========================================================
-        else if (empresa === "Tealca") {
-          var matchGen = text.match(/\b\d{8,20}\b/);
-          if (matchGen) trackingEncontrado = matchGen[0];
-
-          for (var i = 0; i < lineas.length; i++) {
-            var lineaActual = lineas[i];
-            var matchTelf = lineaActual.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
-            if (matchTelf) {
-              tlfEncontrado = formatearTelefonoStrict(matchTelf[0]);
-              var partes = lineaActual.split(matchTelf[0]);
-              if (partes.length > 0) {
-                nombreEncontrado = partes[0].replace(/[\s\-\,\.\_\/]+$/, "").trim();
-              }
-              break;
-            }
-          }
-        }
-
-        // ========================================================
-        // 4. LÓGICA AISLADA PARA LAE
-        // ========================================================
-        else if (empresa === "LAE") {
-          var matchGen = text.match(/\b\d{8,20}\b/);
-          if (matchGen) trackingEncontrado = matchGen[0];
-
-          for (var i = 0; i < lineas.length; i++) {
-            var lineaActual = lineas[i];
-            var matchTelf = lineaActual.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
-            if (matchTelf) {
-              tlfEncontrado = formatearTelefonoStrict(matchTelf[0]);
-              var partes = lineaActual.split(matchTelf[0]);
-              if (partes.length > 0) {
-                nombreEncontrado = partes[0].replace(/[\s\-\,\.\_\/]+$/, "").trim();
-              }
-              break;
-            }
-          }
-        }
-
-        // Asignar a los inputs
         document.getElementById("tracking").value = trackingEncontrado;
         document.getElementById("telefono").value = tlfEncontrado;
         document.getElementById("nombre").value = nombreEncontrado;
