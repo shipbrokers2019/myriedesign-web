@@ -90,21 +90,20 @@
       return false;
     }
 
-    function limpiarNombre(texto) {
-      var limpio = texto.replace(/\bDESTINATARIO\b/gi, "")
-                        .replace(/\bDATOS DEL\b/gi, "")
-                        .replace(/\bDESTINO\b/gi, "")
-                        .replace(/\bCONSIGNA A\b/gi, "")
-                        .replace(/\bRECEPTOR\b/gi, "")
-                        .replace(/\bNOMBRE\b/gi, "")
-                        .replace(/\bCLIENTE\b/gi, "")
-                        .replace(/\bDEST\b/gi, "")
-                        .replace(/[:\.\-]/g, "")
-                        .trim();
-
-      // Eliminar Cédulas o RIFs
-      limpio = limpio.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "").trim();
-      return limpio;
+    function depurarNombre(txt) {
+      var resultado = txt;
+      // Remueve palabras claves independientemente de mayúsculas/minúsculas
+      resultado = resultado.replace(/DESTINATARIO/gi, "");
+      resultado = resultado.replace(/DATOS DEL/gi, "");
+      resultado = resultado.replace(/DESTINO/gi, "");
+      resultado = resultado.replace(/CONSIGNA A/gi, "");
+      resultado = resultado.replace(/RECEPTOR/gi, "");
+      resultado = resultado.replace(/NOMBRE/gi, "");
+      resultado = resultado.replace(/CLIENTE/gi, "");
+      resultado = resultado.replace(/DEST/gi, "");
+      resultado = resultado.replace(/[:\.\-]/g, "");
+      resultado = resultado.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "");
+      return resultado.trim();
     }
 
     function procesarTextoGuia() {
@@ -141,7 +140,7 @@
 
           if (lUpper.indexOf("DEST") !== -1 || lUpper.indexOf("NOMBRE") !== -1 || lUpper.indexOf("CLIENTE") !== -1 || lUpper.indexOf("CONSIGNA") !== -1 || lUpper.indexOf("RECEPTOR") !== -1) {
             
-            var limpio = limpiarNombre(l);
+            var limpio = depurarNombre(l);
 
             if (limpio.length > 2 && !esLineaBasura(limpio)) {
               nombreEncontrado = limpio;
@@ -159,7 +158,7 @@
             if (esLineaBasura(lj)) continue;
 
             if (/\b[V][\-\s]?\d{6,8}\b/i.test(ljUpper) && ljUpper.indexOf("TRACKING") === -1 && ljUpper.indexOf("GUIA") === -1) {
-              var limpioFallback = limpiarNombre(lj);
+              var limpioFallback = depurarNombre(lj);
               if (limpioFallback.length > 2 && !esLineaBasura(limpioFallback)) {
                 nombreEncontrado = limpioFallback;
                 break;
@@ -169,7 +168,7 @@
         }
 
         if (nombreEncontrado) {
-          document.getElementById("nombre").value = nombreEncontrado;
+          document.getElementById("nombre").value = depurarNombre(nombreEncontrado);
         }
 
         // 4. EXTRAER TELÉFONO
