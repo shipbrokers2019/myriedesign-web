@@ -29,18 +29,18 @@
     <form id="guiaForm" class="space-y-3">
       <div>
         <label class="block text-xs font-bold text-gray-700">Destinatario</label>
-        <input type="text" id="nombre" placeholder="Ej: YORAXI DIAZ" required class="w-full mt-1 p-2 border rounded-lg text-sm">
+        <input type="text" id="nombre" placeholder="Ej: DHALY GONZALEZ" required class="w-full mt-1 p-2 border rounded-lg text-sm">
       </div>
       
       <div>
         <label class="block text-xs font-bold text-gray-700">Teléfono (WhatsApp)</label>
-        <input type="text" id="telefono" placeholder="Ej: 584120443011" required class="w-full mt-1 p-2 border rounded-lg text-sm">
+        <input type="text" id="telefono" placeholder="Ej: 584149579724" required class="w-full mt-1 p-2 border rounded-lg text-sm">
       </div>
 
       <div class="grid grid-cols-2 gap-2">
         <div>
           <label class="block text-xs font-bold text-gray-700">N° Tracking / Guía</label>
-          <input type="text" id="tracking" placeholder="Ej: 030300901000207" required class="w-full mt-1 p-2 border rounded-lg text-sm">
+          <input type="text" id="tracking" placeholder="Ej: 030302303000070" required class="w-full mt-1 p-2 border rounded-lg text-sm">
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-700">Empresa</label>
@@ -75,7 +75,8 @@
 
     function esLineaBasura(texto) {
       var t = texto.toUpperCase();
-      if (t.indexOf("RETIRAR POR OFICINA") !== -1) return true;
+      if (t.indexOf("RETIRAR POR") !== -1) return true;
+      if (t.indexOf("OFICIN") !== -1) return true;
       if (t.indexOf("ENTREGAR EN AGENCIA") !== -1) return true;
       if (t.indexOf("ENSACADO") !== -1) return true;
       if (t.indexOf("CUPONES") !== -1) return true;
@@ -84,34 +85,39 @@
       if (t.indexOf("ORIGEN") !== -1) return true;
       if (t.indexOf("COBRO EN DESTINO") !== -1) return true;
       if (t.indexOf("CONTRA REEMBOLSO") !== -1) return true;
+      if (t.indexOf("DESTINO:") !== -1) return true; // Ignorar explícitamente "DESTINO:"
       return false;
     }
 
     function depurarNombre(txt) {
       var resultado = txt;
+      // Quitamos etiquetas de campo
       resultado = resultado.replace(/DESTINATARIO/gi, "");
+      resultado = resultado.replace(/DESTINO:/gi, "");
       resultado = resultado.replace(/DATOS DEL/gi, "");
-      resultado = resultado.replace(/DESTINO/gi, "");
       resultado = resultado.replace(/CONSIGNA A/gi, "");
       resultado = resultado.replace(/RECEPTOR/gi, "");
       resultado = resultado.replace(/NOMBRE/gi, "");
       resultado = resultado.replace(/CLIENTE/gi, "");
-      resultado = resultado.replace(/DEST/gi, "");
+      resultado = resultado.replace(/DEST:/gi, ""); // Quita "DEST:" de MRW
       resultado = resultado.replace(/AGENCIA/gi, "");
       resultado = resultado.replace(/OFICINA/gi, "");
 
-      // Quitar etiquetas de teléfono que vengan en la misma línea del nombre (ej: TLF0412..., TLF: 0412..., etc.)
+      // Quitar teléfonos que vengan en la misma línea
       resultado = resultado.replace(/TLF[\s:\.]*\d+/gi, "");
       resultado = resultado.replace(/\b(?:0)?(412|424|414|416|426)\d{7}\b/g, "");
 
-      resultado = resultado.replace(/[:\.\-]/g, "");
+      // Quitar cédulas / RIF (ej: V-14210502)
       resultado = resultado.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "");
+
+      // Limpieza de símbolos sobrantes
+      resultado = resultado.replace(/[:\.\-]/g, "");
       return resultado.trim();
     }
 
     function formatearTelefono(numBruto) {
       if (!numBruto) return "";
-      var num = numBruto.replace(/\D/g, ""); // dejar solo dígitos
+      var num = numBruto.replace(/\D/g, "");
       if (num.length >= 10) {
         if (num.indexOf("0") === 0) {
           num = "58" + num.substring(1);
@@ -140,7 +146,7 @@
         else if (tUpper.indexOf("MRW") !== -1) document.getElementById("empresa").value = "MRW";
         else if (tUpper.indexOf("LIBERTY") !== -1) document.getElementById("empresa").value = "Liberty Express";
 
-        // 2. EXTRAER DESTINATARIO Y SU TELÉFONO DIRECTO
+        // 2. EXTRAER DESTINATARIO Y SU TELÉFONO
         var nombreEncontrado = "";
         var tlfDestinatario = "";
 
@@ -150,9 +156,9 @@
 
           if (esLineaBasura(l)) continue;
 
-          if (lUpper.indexOf("DEST") !== -1 || lUpper.indexOf("NOMBRE") !== -1 || lUpper.indexOf("CLIENTE") !== -1 || lUpper.indexOf("CONSIGNA") !== -1 || lUpper.indexOf("RECEPTOR") !== -1) {
+          // En MRW buscamos "DEST:" exactamente o términos equivalentes
+          if (lUpper.indexOf("DEST:") !== -1 || lUpper.indexOf("DESTINATARIO") !== -1 || lUpper.indexOf("CLIENTE") !== -1 || lUpper.indexOf("CONSIGNA") !== -1) {
             
-            // Buscar si en esta misma línea del destinatario está su teléfono (ej: YORAXI DIAZ TLF04120443011)
             var matchTelfLinea = l.match(/(?:TLF[\s:\.]*)?((?:0)?(?:412|424|414|416|426)\d{7})/i);
             if (matchTelfLinea) {
               tlfDestinatario = formatearTelefono(matchTelfLinea[1]);
@@ -167,7 +173,7 @@
           }
         }
 
-        // Respaldo por Cédula (V-XXXXX)
+        // Respaldo por Cédula si no traía etiqueta limpia
         if (!nombreEncontrado) {
           for (var j = 0; j < lineas.length; j++) {
             var lj = lineas[j].trim();
@@ -195,15 +201,14 @@
         }
 
         // 3. ASIGNAR TELÉFONO
-        // Si se encontró el teléfono directo en la línea del destinatario, usamos ese prioritariamente
         if (tlfDestinatario) {
           document.getElementById("telefono").value = tlfDestinatario;
         } else {
-          // Si no vino en la misma línea, se busca cualquier cel de Venezuela en el texto
-          var textoParaTelf = text.replace(/[\-\.\(\)\/]/g, " ");
-          var matchTelf = textoParaTelf.match(/(?:58|0)?(412|424|414|416|426)\d{7}\b/);
-          if (matchTelf) {
-            document.getElementById("telefono").value = formatearTelefono(matchTelf[0]);
+          // Si no vino en la misma línea, buscar un teléfono que NO sea el de la agencia/remitente si es posible
+          var matchTelfs = text.match(/(?:58|0)?(412|424|414|416|426)\d{7}\b/g) || [];
+          if (matchTelfs.length > 0) {
+            // Se selecciona preferiblemente el último teléfono de la sección superior o el que encaje
+            document.getElementById("telefono").value = formatearTelefono(matchTelfs[matchTelfs.length - 1]);
           }
         }
 
