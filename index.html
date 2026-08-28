@@ -101,13 +101,24 @@
     function depurarNombre(txt) {
       var resultado = txt;
 
+      // Si la línea contiene un guion y la palabra destinatario/destinalario antes, tomar solo lo que está después del guion
+      if (resultado.indexOf("-") !== -1) {
+        var partesGuion = resultado.split("-");
+        if (partesGuion.length > 1 && /DEST/i.test(partesGuion[0])) {
+          resultado = partesGuion.slice(1).join("-");
+        }
+      }
+
       resultado = resultado.replace(/^[\|\/\\\,\.\-_\:\;\s\d]+/g, "");
 
-      resultado = resultado.replace(/\bTRACKING\b/gi, "");
-      resultado = resultado.replace(/\bZOOM\b/gi, "");
-      resultado = resultado.replace(/b?estinatario[\s:]*/gi, "");
+      // Eliminar prefijos comunes y sus errores OCR (Destinatario, Destinalario, etc.)
+      resultado = resultado.replace(/DESTINATARIO/gi, "");
+      resultado = resultado.replace(/DESTINALARIO/gi, "");
+      resultado = resultado.replace(/DESTINATARI[O|A]?/gi, "");
       resultado = resultado.replace(/DESTINO:/gi, "");
       resultado = resultado.replace(/\bDEST\b[\s:]*/gi, "");
+      resultado = resultado.replace(/\bTRACKING\b/gi, "");
+      resultado = resultado.replace(/\bZOOM\b/gi, "");
       resultado = resultado.replace(/DATOS DEL/gi, "");
       resultado = resultado.replace(/CONSIGNA A/gi, "");
       resultado = resultado.replace(/RECEPTOR/gi, "");
@@ -240,7 +251,7 @@
           var l = lineas[i].trim();
           var lUpper = l.toUpperCase();
 
-          if (lUpper.indexOf("ESTINATARIO") !== -1 || lUpper.indexOf("DEST:") !== -1) {
+          if (lUpper.indexOf("ESTINATARI") !== -1 || lUpper.indexOf("DEST:") !== -1 || lUpper.indexOf("ESTINALARI") !== -1) {
             var limpioMisma = depurarNombre(l);
             if (limpioMisma.length > 2 && !esLineaBasura(limpioMisma)) {
               nombreEncontrado = limpioMisma;
