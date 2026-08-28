@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V46</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V47</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -81,7 +81,7 @@
       return "";
     }
 
-    // Limpieza radical y antiduplicados exacta para nombres repetidos
+    // Limpieza y remoción precisa de nombres duplicados por Google Lens
     function limpiarNombreFinal(txt) {
       if (!txt) return "";
       var limpio = txt.replace(/destinatalio[:\s]*/gi, "")
@@ -98,22 +98,16 @@
 
       limpio = limpio.replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "").trim();
 
-      // Eliminar duplicados si el texto completo está repetido (ej: A B C A B C)
+      // Eliminar duplicados exactos en bucle de palabras (ej: MARIA ANCELA CASTRO MARIA ANCELA)
       var palabras = limpio.split(/\s+/);
-      if (palabras.length >= 2 && palabras.length % 2 === 0) {
-        var mitad = palabras.length / 2;
-        var p1 = palabras.slice(0, mitad).join(" ").toUpperCase();
-        var p2 = palabras.slice(mitad).join(" ").toUpperCase();
-        if (p1 === p2) {
-          limpio = palabras.slice(0, mitad).join(" ");
-        }
-      } else if (palabras.length > 4) {
-        // Por si acaso Google Lens arrastra un trozo extra de la siguiente palabra repetida
-        var mitadAprox = Math.floor(palabras.length / 2);
-        var sub1 = palabras.slice(0, mitadAprox).join(" ").toUpperCase();
-        var sub2 = palabras.slice(mitadAprox, mitadAprox * 2).join(" ").toUpperCase();
-        if (sub1 === sub2) {
-          limpio = palabras.slice(0, mitadAprox).join(" ");
+      if (palabras.length >= 4) {
+        for (var tam = Math.floor(palabras.length / 2); tam >= 2; tam--) {
+          var parte1 = palabras.slice(0, tam).join(" ").toUpperCase();
+          var parte2 = palabras.slice(tam, tam * 2).join(" ").toUpperCase();
+          if (parte1 === parte2) {
+            limpio = palabras.slice(0, tam).join(" ");
+            break;
+          }
         }
       }
 
@@ -137,7 +131,7 @@
           empresaDetectada = "Zoom";
         } else if (tUpper.indexOf("LAE") !== -1 || tUpper.indexOf("EL DORADO") !== -1) {
           empresaDetectada = "LAE";
-        } else if (tUpper.indexOf("NUEVA BARCELONA") !== -1 || tUpper.indexOf("SOCOPO") !== -1 || tUpper.indexOf("CANT. CUPONES") !== -1 || tUpper.indexOf("ENSACADO") !== -1 || tUpper.indexOf("MACHIQUES") !== -1 || tUpper.indexOf("MER") !== -1) {
+        } else if (tUpper.indexOf("NUEVA BARCELONA") !== -1 || tUpper.indexOf("SOCOPO") !== -1 || tUpper.indexOf("CANT. CUPONES") !== -1 || tUpper.indexOf("ENSACADO") !== -1 || tUpper.indexOf("MACHIQUES") !== -1) {
           empresaDetectada = "MRW";
         }
 
