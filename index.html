@@ -157,7 +157,7 @@
       if (unicas.length === 2) {
         var p0 = unicas[0].toUpperCase();
         var p1 = unicas[1].toUpperCase();
-        var nombresComunes = ["ANDREINA", "RICARDO", "CARLOS", "MARIA", "JOSE", "LUIS", "ANA", "PEDRO", "JUAN", "SOFIA"];
+        var nombresComunes = ["ANDREINA", "RICARDO", "CARLOS", "MARIA", "JOSE", "LUIS", "ANA", "PEDRO", "JUAN", "SOFIA", "HAYDEE"];
         if (nombresComunes.indexOf(p1) !== -1 && nombresComunes.indexOf(p0) === -1) {
           unicas = [unicas[1], unicas[0]];
         }
@@ -170,15 +170,12 @@
       if (!numBruto) return "";
       var num = numBruto.replace(/\D/g, "");
       
-      // Si empieza con 58 y luego un prefijo válido
       if (/^58(412|424|414|416|426)\d{7}$/.test(num)) {
         return num;
       }
-      // Si empieza con 0412/0424...
       if (/^0(412|424|414|416|426)\d{7}$/.test(num)) {
         return "58" + num.substring(1);
       }
-      // Si empieza directamente con 412/424...
       if (/^(412|424|414|416|426)\d{7}$/.test(num)) {
         return "58" + num;
       }
@@ -196,7 +193,7 @@
         var lineas = text.split("\n");
         var tUpper = text.toUpperCase();
 
-        // 1. EMPRESA
+        // 1. DETECTAR EMPRESA
         var empresaDetectada = "MRW";
         if (tUpper.indexOf("TEALCA") !== -1) empresaDetectada = "Tealca";
         else if (tUpper.indexOf("ZOOM") !== -1 || tUpper.indexOf("GRUPO ZOOM") !== -1) empresaDetectada = "Zoom";
@@ -205,7 +202,7 @@
 
         document.getElementById("empresa").value = empresaDetectada;
 
-        // 2. EXTRAER TELÉFONO ESTRICTO (Sólo 0412/0424/0414/0416/0426)
+        // 2. EXTRAER TELÉFONO (SÓLO PREFIJOS VENEZOLANOS VÁLIDOS)
         var tlfEncontrado = "";
         var matchTelf = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/g);
         if (matchTelf && matchTelf.length > 0) {
@@ -263,35 +260,66 @@
           document.getElementById("nombre").value = nombreEncontrado;
         }
 
-        // 4. EXTRAER TRACKING / GUÍA (Lógica mejorada)
+        // 4. EXTRAER TRACKING POR BLOQUES SEGÚN EMPRESA
         var trackingEncontrado = "";
 
-        // Buscar línea que explícitamente diga TRACKING, GUIA, NRO, DOC
-        for (var k = 0; k < lineas.length; k++) {
-          var lk = lineas[k].toUpperCase();
-          if (lk.indexOf("TRACKING") !== -1 || lk.indexOf("GUIA") !== -1 || lk.indexOf("GUÍA") !== -1 || lk.indexOf("DOC") !== -1 || lk.indexOf("NRO") !== -1) {
-            var mTrackL = lineas[k].match(/\b\d{7,14}\b/);
-            if (mTrackL) {
-              trackingEncontrado = mTrackL[0];
+        if (empresaDetectada === "MRW") {
+          // BLOQUE MRW
+          var matchMrw = text.match(/TRACKING[\s:]*(\d{10,20})/i);
+          if (matchMrw && matchMrw[1]) {
+            trackingEncontrado = matchMrw[1];
+          } else {
+            // Buscar número largo típico de MRW (12 a 18 dígitos)
+            var numLargoMrw = text.match(/\b\d{12,18}\b/g);
+            if (numLargoMrw && numLargoMrw.length > 0) {
+              trackingEncontrado = numLargoMrw[0];
+            }
+          }
+        } 
+        else if (empresaDetectada === "Zoom") {
+          // BLOQUE ZOOM
+          for (var k = 0; k < lineas.length; k++) {
+            var lk = lineas[k].toUpperCase();
+            if (lk.indexOf("TRACKING") !== -1 || lk.indexOf("GUIA") !== -1 || lk.indexOf("GUÍA") !== -1 || lk.indexOf("DOC") !== -1 || lk.indexOf("NRO") !== -1) {
+              var mTrackL = lineas[k].match(/\b\d{7,14}\b/);
+              if (mTrackL) {
+                trackingEncontrado = mTrackL[0];
+                break;
+              }
+            }
+          }
+          if (!trackingEncontrado) {
+            var numTelfPuro = tlfEncontrado ? tlfEncontrado.replace("58", "") : "";
+            var todosNumeros = text.match(/\b\d{8,14}\b/g) || [];
+            for (var n = 0; n < todosNumeros.length; n++) {
+              var candidate = todosNumeros[n];
+              if (numTelfPuro && candidate.indexOf(numTelfPuro) !== -1) continue;
+              if (/^(0?412|0?424|0?414|0?416|0?426)/.test(candidate)) continue;
+              trackingEncontrado = candidate;
               break;
             }
           }
-        }
-
-        // Fallback: Si no lo halló en línea clave, buscar números de 9-12 dígitos en todo el texto descartando teléfonos y cédulas
-        if (!trackingEncontrado) {
-          var numTelfPuro = tlfEncontrado ? tlfEncontrado.replace("58", "") : "";
-          var todosNumeros = text.match(/\b\d{8,14}\b/g) || [];
-
-          for (var n = 0; n < todosNumeros.length; n++) {
-            var candidate = todosNumeros[n];
-            // Ignorar si coincide con el teléfono encontrado
-            if (numTelfPuro && candidate.indexOf(numTelfPuro) !== -1) continue;
-            // Ignorar si parece un prefijo de celular
-            if (/^(0?412|0?424|0?414|0?416|0?426)/.test(candidate)) continue;
-
-            trackingEncontrado = candidate;
-            break;
+        } 
+        else {
+          // BLOQUE TEALCA / OTROS (General)
+          for (var k2 = 0; k2 < lineas.length; k2++) {
+            var lk2 = lineas[k2].toUpperCase();
+            if (lk2.indexOf("TRACKING") !== -1 || lk2.indexOf("GUIA") !== -1 || lk2.indexOf("GUÍA") !== -1 || lk2.indexOf("DOC") !== -1 || lk2.indexOf("NRO") !== -1) {
+              var mTrackL2 = lineas[k2].match(/\b\d{7,16}\b/);
+              if (mTrackL2) {
+                trackingEncontrado = mTrackL2[0];
+                break;
+              }
+            }
+          }
+          if (!trackingEncontrado) {
+            var todosNumGen = text.match(/\b\d{7,16}\b/g) || [];
+            for (var g = 0; g < todosNumGen.length; g++) {
+              if (!/^(0?412|0?424|0?414|0?416|0?426)/.test(todosNumGen[g])) {
+                trackingEncontrado = todosNumGen[g];
+                break;
+              }
+            }
           }
         }
 
