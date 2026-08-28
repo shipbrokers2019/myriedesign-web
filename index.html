@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V65</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V66</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -174,54 +174,54 @@
         }
 
         // ========================================================
-        // 3. DESTINATARIO (Nuevo motor de exclusión V65)
+        // 3. DESTINATARIO (Motor Antifraude V66)
         // ========================================================
         var nombreFinal = "";
-        var palabrasBasura = [
-          "TRACKING", "GUIA", "GUÍA", "TELEFONO", "TLF", "DIRECCION", "DIR", 
-          "VOLUM", "PIEZA", "PESO", "CIUDAD", "ENTREGA", "TEALCA", "MRW", 
-          "ZOOM", "RETIRO", "TIENDA", "ESTANDAR", "COD", "FECHA", "ORIGEN", 
-          "MEDIDAS", "ANACO", "TURMERO", "AGENCIA", "SUCURSAL", "OFICINA", 
-          "PAGAR", "ENVIO", "CLIENTE", "PAGO", "NOMBRE", "DESTINATARIO", "DEST",
-          "MER", "CUPONES", "ENSACADO", "DE:", "PARA:", "V-", "E-", "J-", "G-"
+        
+        // Palabras comerciales o etiquetas que NUNCA deben ser el destinatario
+        var bloqueadasComerciales = [
+          "PANADERIA", "FARMACIA", "REPUESTOS", "TIENDA", "LOCAL", "PUNTO", 
+          "AGENCIA", "SUCURSAL", "OFICINA", "CENTRO", "EXPRESS", "MRW", "TEALCA", 
+          "ZOOM", "LAE", "LIBERTY", "TRACKING", "GUIA", "GUÍA", "TELEFONO", "TLF", 
+          "DIRECCION", "DIR", "VOLUM", "PIEZA", "PESO", "CIUDAD", "ENTREGA", 
+          "RETIRO", "ESTANDAR", "COD", "FECHA", "ORIGEN", "MEDIDAS", "ANACO", 
+          "TURMERO", "PAGAR", "ENVIO", "CLIENTE", "PAGO", "NOMBRE", "DESTINATARIO", 
+          "DEST", "MER", "CUPONES", "ENSACADO", "MYRIED", "MARVAL"
         ];
 
         for (var i = 0; i < lineas.length; i++) {
           var linea = lineas[i].trim();
           var lineaUp = linea.toUpperCase();
 
-          // Ignorar líneas muy cortas o que contengan números / cédulas / símbolos extraños
           if (linea.length < 5) continue;
           if (/\d/.test(linea)) continue; // Los nombres no llevan números
-          if (lineaUp.indexOf("http") !== -1 || lineaUp.indexOf("WWW") !== -1) continue;
 
-          // Verificar si contiene alguna palabra prohibida o etiqueta
-          var esBasura = false;
-          for (var p = 0; p < palabrasBasura.length; p++) {
-            if (lineaUp.indexOf(palabrasBasura[p]) !== -1) {
-              esBasura = true;
+          // Comprobar si contiene alguna palabra prohibida o comercial
+          var esInvalido = false;
+          for (var b = 0; b < bloqueadasComerciales.length; b++) {
+            if (lineaUp.indexOf(bloqueadasComerciales[b]) !== -1) {
+              esInvalido = true;
               break;
             }
           }
 
-          if (esBasura) continue;
+          if (esInvalido) continue;
 
-          // Limpiar caracteres extraños que arrastre Google Lens al inicio/final
+          // Limpiar caracteres extraños
           var candidatoLimpio = linea
             .replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "")
             .replace(/[\|\/\\\,\.\-_]+$/g, "")
             .trim();
 
-          // Si viene con guiones dobles (ej: GLORIANA FLORES - GLORIA...), recortar la primera parte limpia
           if (candidatoLimpio.indexOf(" - ") !== -1) {
             candidatoLimpio = candidatoLimpio.split(" - ")[0].trim();
           }
 
-          // Un nombre válido tiene al menos 2 palabras (Nombre y Apellido)
+          // Un nombre de persona real suele tener de 2 a 4 palabras (ej: Maria Faria)
           var palabras = candidatoLimpio.split(/\s+/);
-          if (palabras.length >= 2) {
+          if (palabras.length >= 2 && palabras.length <= 4) {
             nombreFinal = candidatoLimpio;
-            break; // Encontrado el primer candidato genuino
+            break; 
           }
         }
 
