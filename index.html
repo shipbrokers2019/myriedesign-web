@@ -83,7 +83,11 @@
 
     function esDireccionOBasura(txt) {
       var t = txt.toUpperCase();
-      var palabrasClave = ["CALLE", "CARRERA", "AVENIDA", "AV", "URB", "URBANIZACION", "SECTOR", "LOCAL", "LOCALIDAD", "EDIF", "EDIFICIO", "PISO", "APTO", "APARTAMENTO", "CRUCE", "VEREDA", "ZONA", "ESQUINA", "FRENTE", "TRAS", "DETRAS", "CC", "CENTRO COMERCIAL", "CUPONES", "ENEACADO", "ENSACADO", "CARACAD", "SOCOPO", "VALENCIA", "CARACAS", "BARCELONA", "TRACKING", "REWENTE", "RENTENTE", "REMITENTE"];
+      
+      // Si la línea parece un precio, tarifa o código numérico con puntos (ej: "3S. 2763.99")
+      if (/^\d+\s*[A-Z]?\.?\s*\d+[\.,]?\d*/.test(t)) return true;
+
+      var palabrasClave = ["CALLE", "CARRERA", "AVENIDA", "AV", "URB", "URBANIZACION", "SECTOR", "LOCAL", "LOCALIDAD", "EDIF", "EDIFICIO", "PISO", "APTO", "APARTAMENTO", "CRUCE", "VEREDA", "ZONA", "ESQUINA", "FRENTE", "TRAS", "DETRAS", "CC", "CENTRO COMERCIAL", "CUPONES", "ENEACADO", "ENSACADO", "CARACAD", "SOCOPO", "VALENCIA", "CARACAS", "BARCELONA", "TRACKING", "REWENTE", "RENTENTE", "REMITENTE", "CANT"];
       for (var i = 0; i < palabrasClave.length; i++) {
         if (t.indexOf(palabrasClave[i]) !== -1) return true;
       }
@@ -129,13 +133,13 @@
         var lineas = text.split("\n").map(function(l) { return l.trim(); }).filter(Boolean);
         var tUpper = text.toUpperCase();
 
-        // Detección inteligente de empresa (Si no dice Tealca ni Zoom, por defecto asume MRW ya que no traen la marca impresa)
+        // Detección de Empresa
         if (tUpper.indexOf("TEALCA") !== -1) {
           document.getElementById("empresa").value = "Tealca";
         } else if (tUpper.indexOf("ZOOM") !== -1) {
           document.getElementById("empresa").value = "Zoom";
         } else {
-          document.getElementById("empresa").value = "MRW"; // Por defecto MRW al no traer marca explícita
+          document.getElementById("empresa").value = "MRW";
         }
 
         // Extracción de Teléfono
@@ -155,7 +159,7 @@
           document.getElementById("tracking").value = trackingEncontrado;
         }
 
-        // Extracción de Nombre de Destinatario
+        // Extracción de Nombre de Destinatario con doble validación estricta
         var nombreEncontrado = "";
         for (var i = 0; i < lineas.length; i++) {
           var l = lineas[i].toUpperCase();
@@ -182,6 +186,7 @@
           }
         }
 
+        // Asignación final segura: Si el texto extraído es una tarifa o basura, deja el campo limpio
         if (nombreEncontrado && !esDireccionOBasura(nombreEncontrado)) {
           document.getElementById("nombre").value = nombreEncontrado;
         } else {
