@@ -101,7 +101,6 @@
     function depurarNombre(txt) {
       var resultado = txt;
 
-      // Si hay un guion, nos quedamos estrictamente con lo que está después
       if (resultado.indexOf("-") !== -1) {
         var partesGuion = resultado.split("-");
         if (partesGuion.length > 1) {
@@ -111,7 +110,6 @@
 
       resultado = resultado.replace(/^[\|\/\\\,\.\-_\:\;\s\d]+/g, "");
 
-      // Eliminación agresiva de cualquier variante de la palabra destinatario
       resultado = resultado.replace(/DESTINATARIO/gi, "");
       resultado = resultado.replace(/DESTINALARIO/gi, "");
       resultado = resultado.replace(/BESTINATARIO/gi, "");
@@ -147,10 +145,9 @@
 
       var palabras = resultado.trim().split(/\s+/).filter(Boolean);
 
-      // Limpieza extra por si queda alguna palabra residual al inicio relacionada
       if (palabras.length > 0) {
         var primera = palabras[0].toUpperCase();
-        if (primera.indexOf("ESTIN") !== -1 || primera.indexOf("ESTINAL") !== -1 || primera.indexOf("DEST") !== -1 || প্রথম.indexOf("BEST") !== -1) {
+        if (primera.indexOf("ESTIN") !== -1 || primera.indexOf("ESTINAL") !== -1 || primera.indexOf("DEST") !== -1 || primera.indexOf("BEST") !== -1) {
           palabras.shift();
         }
       }
@@ -180,7 +177,6 @@
       var vistas = new Set();
       for (var k = 0; k < palabras.length; k++) {
         var pUpper = palabras[k].toUpperCase();
-        // Doble validación: filtramos cualquier palabra que sea "destinatario" o variaciones
         if (pUpper.length > 1 && !vistas.has(pUpper) && pUpper.indexOf("DESTINAT") === -1 && pUpper.indexOf("DESTINAL") === -1 && pUpper.indexOf("BESTINAT") === -1) {
           vistas.add(pUpper);
           unicas.push(palabras[k]);
