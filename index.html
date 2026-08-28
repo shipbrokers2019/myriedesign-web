@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V43</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V44</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -81,14 +81,17 @@
       return "";
     }
 
-    // Limpieza radical por expresiones regulares múltiples
+    // Limpieza mejorada: remueve cualquier variante y la palabra "alario" o prefijos sobrantes
     function limpiarNombreFinal(txt) {
       if (!txt) return "";
       var limpio = txt.replace(/destinatalio[:\s]*/gi, "")
                         .replace(/destinatario[:\s]*/gi, "")
                         .replace(/destinatio[:\s]*/gi, "")
                         .replace(/destinat[:\s]*/gi, "")
-                        .replace(/destin[:\s]*/gi, "");
+                        .replace(/destin[:\s]*/gi, "")
+                        .replace(/alario[:\s]*/gi, "")
+                        .replace(/lario[:\s]*/gi, "");
+      
       if (limpio.indexOf("-") !== -1) {
         limpio = limpio.split("-")[0].trim();
       }
@@ -248,7 +251,6 @@
             }
           }
 
-          // ASIGNACIÓN ULTRA LIMPIA DIRECTA
           if (nombreZoom) {
             document.getElementById("nombre").value = limpiarNombreFinal(nombreZoom);
           }
