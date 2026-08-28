@@ -9,7 +9,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V26</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V27</h2>
     
     <!-- Selector de Empresa -->
     <div>
@@ -35,7 +35,7 @@
     <form id="guiaForm" class="space-y-3">
       <div>
         <label class="block text-xs font-bold text-gray-700">Destinatario</label>
-        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium" placeholder="Escribe el nombre del cliente">
+        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium" placeholder="Escribe el nombre del cliente aquí">
       </div>
       
       <div>
@@ -99,7 +99,7 @@
         var nombreEncontrado = "";
 
         // ========================================================
-        // 1. LÓGICA MRW V26 (Antifraude contra "deStiNo")
+        // 1. LÓGICA MRW V27 (Segura: Tracking y Teléfono automáticos, Nombre manual)
         // ========================================================
         if (empresa === "MRW") {
           // A. Tracking: Buscar número de 8 a 20 dígitos
@@ -121,29 +121,12 @@
             tlfEncontrado = formatearTelefonoStrict(matchTelfGeneral[0]);
           }
 
-          // C. Destinatario buscando etiquetas reales (Excluyendo "Cobro en destino")
-          for (var i = 0; i < lineas.length; i++) {
-            var l = lineas[i];
-            var lUp = l.toUpperCase();
-
-            // Si la línea tiene "DEST" pero NO es la de cobro en destino
-            var esDestEtiqueta = (lUp.indexOf("DEST:") !== -1 || lUp.indexOf("DESTINATARIO") !== -1 || (lUp.indexOf("DEST") !== -1 && lUp.indexOf("COBRO") === -1));
-
-            if (esDestEtiqueta) {
-              var limpio = l.replace(/DESTINATARIO[\s\:\-\.]*/i, "");
-              limpio = limpio.replace(/DEST[\s\:\-\.]*/i, "");
-              limpio = limpio.replace(/[\s\-\,\.\_\/]+$/, "").trim();
-
-              if (limpio.length > 2) {
-                nombreEncontrado = limpio;
-                break;
-              }
-            }
-          }
+          // Para MRW como seleccionaste "Sin nombre impreso", no intentamos adivinar texto extraño en el nombre
+          nombreEncontrado = ""; 
         }
 
         // ========================================================
-        // 2, 3, 4. BLOQUES PARA ZOOM, TEALCA, LAE
+        // 2, 3, 4. BLOQUES PARA ZOOM, TEALCA, LAE (Sí traen nombre)
         // ========================================================
         else {
           var matchGen = text.match(/\b\d{8,20}\b/);
@@ -166,11 +149,9 @@
         document.getElementById("tracking").value = trackingEncontrado;
         document.getElementById("telefono").value = tlfEncontrado;
         
-        // Si no hay nombre explícito con etiqueta DEST, dejamos el campo limpio para ti
-        if (nombreEncontrado) {
-          document.getElementById("nombre").value = nombreEncontrado;
-        } else {
-          document.getElementById("nombre").value = "";
+        // Asignamos el nombre (vacío en MRW para llenarlo a mano, o automático en las demás)
+        document.getElementById("nombre").value = nombreEncontrado;
+        if (!nombreEncontrado) {
           document.getElementById("nombre").focus();
         }
 
