@@ -101,20 +101,25 @@
     function depurarNombre(txt) {
       var resultado = txt;
 
+      // Si hay un guion, nos quedamos estrictamente con lo que está después
       if (resultado.indexOf("-") !== -1) {
         var partesGuion = resultado.split("-");
-        if (partesGuion.length > 1 && /DEST/i.test(partesGuion[0])) {
+        if (partesGuion.length > 1) {
           resultado = partesGuion.slice(1).join("-");
         }
       }
 
       resultado = resultado.replace(/^[\|\/\\\,\.\-_\:\;\s\d]+/g, "");
 
+      // Eliminación agresiva de cualquier variante de la palabra destinatario
       resultado = resultado.replace(/DESTINATARIO/gi, "");
       resultado = resultado.replace(/DESTINALARIO/gi, "");
-      resultado = resultado.replace(/DESTINATARI[O|A]?/gi, "");
+      resultado = resultado.replace(/BESTINATARIO/gi, "");
+      resultado = resultado.replace(/BESTINALARIO/gi, "");
+      resultado = resultado.replace(/[BD]ESTINATARI[O|A]?/gi, "");
+      resultado = resultado.replace(/[BD]ESTINALARI[O|A]?/gi, "");
       resultado = resultado.replace(/DESTINO:/gi, "");
-      resultado = resultado.replace(/\bDEST\b[\s:]*/gi, "");
+      resultado = resultado.replace(/\b[BD]EST\b[\s:]*/gi, "");
       resultado = resultado.replace(/\bTRACKING\b/gi, "");
       resultado = resultado.replace(/\bZOOM\b/gi, "");
       resultado = resultado.replace(/DATOS DEL/gi, "");
@@ -142,6 +147,14 @@
 
       var palabras = resultado.trim().split(/\s+/).filter(Boolean);
 
+      // Limpieza extra por si queda alguna palabra residual al inicio relacionada
+      if (palabras.length > 0) {
+        var primera = palabras[0].toUpperCase();
+        if (primera.indexOf("ESTIN") !== -1 || primera.indexOf("ESTINAL") !== -1 || primera.indexOf("DEST") !== -1 || প্রথম.indexOf("BEST") !== -1) {
+          palabras.shift();
+        }
+      }
+
       if (palabras.length > 1) {
         var depuradas = [];
         for (var i = 0; i < palabras.length; i++) {
@@ -167,7 +180,8 @@
       var vistas = new Set();
       for (var k = 0; k < palabras.length; k++) {
         var pUpper = palabras[k].toUpperCase();
-        if (pUpper.length > 1 && !vistas.has(pUpper)) {
+        // Doble validación: filtramos cualquier palabra que sea "destinatario" o variaciones
+        if (pUpper.length > 1 && !vistas.has(pUpper) && pUpper.indexOf("DESTINAT") === -1 && pUpper.indexOf("DESTINAL") === -1 && pUpper.indexOf("BESTINAT") === -1) {
           vistas.add(pUpper);
           unicas.push(palabras[k]);
         }
@@ -212,7 +226,6 @@
         var lineas = text.split("\n");
         var tUpper = text.toUpperCase();
 
-        // 1. DETECTAR EMPRESA (Evitando falsos positivos con MER de MRW)
         var empresaDetectada = "MRW";
         if (tUpper.indexOf("TEALCA") !== -1) {
           empresaDetectada = "Tealca";
@@ -223,13 +236,11 @@
         } else if (tUpper.indexOf("MRW") !== -1) {
           empresaDetectada = "MRW";
         } else {
-          // Si dice MER o tiene códigos típicos de Zoom sin decir explícitamente ZOOM
           empresaDetectada = "Zoom";
         }
 
         document.getElementById("empresa").value = empresaDetectada;
 
-        // 2. EXTRAER TELÉFONO
         var tlfEncontrado = "";
         var matchTelf = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/g);
         
@@ -250,14 +261,13 @@
         }
         document.getElementById("telefono").value = tlfEncontrado;
 
-        // 3. EXTRAER DESTINATARIO
         var nombreEncontrado = "";
 
         for (var i = 0; i < lineas.length; i++) {
           var l = lineas[i].trim();
           var lUpper = l.toUpperCase();
 
-          if (lUpper.indexOf("ESTINATARI") !== -1 || lUpper.indexOf("DEST:") !== -1 || lUpper.indexOf("ESTINALARI") !== -1) {
+          if (lUpper.indexOf("ESTINATARI") !== -1 || lUpper.indexOf("DEST:") !== -1 || lUpper.indexOf("ESTINALARI") !== -1 || lUpper.indexOf("BESTINATARI") !== -1) {
             var limpioMisma = depurarNombre(l);
             if (limpioMisma.length > 2 && !esLineaBasura(limpioMisma)) {
               nombreEncontrado = limpioMisma;
@@ -294,7 +304,6 @@
           document.getElementById("nombre").value = nombreEncontrado;
         }
 
-        // 4. EXTRAER TRACKING INTELIGENTE (Con respaldo infalible)
         var trackingEncontrado = "";
 
         if (empresaDetectada === "MRW") {
@@ -307,7 +316,6 @@
           }
         } 
         else {
-          // Para Zoom / Tealca / Otros
           for (var k = 0; k < lineas.length; k++) {
             var lk = lineas[k].toUpperCase();
             if (lk.indexOf("TRACKING") !== -1 || lk.indexOf("GUIA") !== -1 || lk.indexOf("GUÍA") !== -1 || lk.indexOf("DOC") !== -1 || lk.indexOf("NRO") !== -1) {
@@ -320,7 +328,6 @@
           }
         }
 
-        // Respaldo absoluto si el tracking quedó vacío: busca cualquier número de longitud válida que no sea teléfono
         if (!trackingEncontrado) {
           var numTelfPuro = tlfEncontrado ? tlfEncontrado.replace("58", "") : "";
           var todosNumeros = text.match(/\b\d{7,16}\b/g) || [];
@@ -328,7 +335,6 @@
             var candidate = todosNumeros[n];
             if (numTelfPuro && candidate.indexOf(numTelfPuro) !== -1) continue;
             if (/^(0?412|0?424|0?414|0?416|0?426)/.test(candidate)) continue;
-            // Si es un número pequeño de 2 o 3 dígitos (como el "871" de la imagen), lo saltamos
             if (candidate.length < 5) continue;
             trackingEncontrado = candidate;
             break;
