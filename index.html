@@ -83,11 +83,10 @@
 
     function esBasuraOInvalido(txt) {
       var t = txt.toUpperCase();
-      // Si contiene números, símbolos de precio, puntos extraños o palabras técnicas, se rechaza de inmediato
       if (/\d/.test(t)) return true;
       if (t.indexOf("S.") !== -1 || t.indexOf("$") !== -1 || t.indexOf("CANT") !== -1) return true;
 
-      var palabrasClave = ["CALLE", "CARRERA", "AVENIDA", "AV", "URB", "URBANIZACION", "SECTOR", "LOCAL", "LOCALIDAD", "EDIF", "EDIFICIO", "PISO", "APTO", "APARTAMENTO", "CRUCE", "VEREDA", "ZONA", "ESQUINA", "FRENTE", "TRAS", "DETRAS", "CC", "CENTRO COMERCIAL", "CUPONES", "ENEACADO", "ENSACADO", "CARACAD", "SOCOPO", "VALENCIA", "CARACAS", "BARCELONA", "TRACKING", "REWENTE", "RENTENTE", "REMITENTE", "DESTINATARIO"];
+      var palabrasClave = ["CALLE", "CARRERA", "AVENIDA", "AV", "URB", "URBANIZACION", "SECTOR", "LOCAL", "LOCALIDAD", "EDIF", "EDIFICIO", "PISO", "APTO", "APARTAMENTO", "CRUCE", "VEREDA", "ZONA", "ESQUINA", "FRENTE", "TRAS", "DETRAS", "CC", "CENTRO COMERCIAL", "CUPONES", "ENEACADO", "ENSACADO", "CARACAD", "SOCOPO", "VALENCIA", "CARACAS", "BARCELONA", "TRACKING", "DESTINATARIO"];
       for (var i = 0; i < palabrasClave.length; i++) {
         if (t.indexOf(palabrasClave[i]) !== -1) return true;
       }
@@ -96,7 +95,7 @@
 
     function limpiarNombreComun(txt) {
       var res = txt.toUpperCase();
-      var basuras = ["REMITENTE", "RENTENTE", "REWENTE", "DESTINATARIO", "DESTINALARIO", "CLIENTE", "NOMBRE", "DIRECCION", "DIR", "VALENCIA", "CARACAS", "SOCOPO", "BARCELONA", "ZOOM", "MRW", "TEALCA", "ENSACADO", "ENEACADO", "CANT", "CUPONES", "TRACKING"];
+      var basuras = ["DESTINATARIO", "DESTINALARIO", "CLIENTE", "NOMBRE", "DIRECCION", "DIR", "VALENCIA", "CARACAS", "SOCOPO", "BARCELONA", "ZOOM", "MRW", "TEALCA", "ENSACADO", "ENEACADO", "CANT", "CUPONES", "TRACKING"];
       for (var i = 0; i < basuras.length; i++) {
         res = res.split(basuras[i]).join("");
       }
@@ -159,7 +158,7 @@
           document.getElementById("tracking").value = trackingEncontrado;
         }
 
-        // Extracción estricta de Destinatario (Solo si hay etiqueta explícita o una línea de puro texto sin números)
+        // Extracción de Destinatario
         var nombreEncontrado = "";
         for (var i = 0; i < lineas.length; i++) {
           var l = lineas[i].toUpperCase();
@@ -174,7 +173,6 @@
           }
         }
 
-        // Si no hay etiqueta explícita, se evalúan las líneas pero con la regla estricta de NO aceptar números
         if (!nombreEncontrado) {
           for (var j = 0; j < lineas.length; j++) {
             var lj = lineas[j];
@@ -186,7 +184,6 @@
           }
         }
 
-        // Asignación final limpia
         if (nombreEncontrado && !esBasuraOInvalido(nombreEncontrado)) {
           document.getElementById("nombre").value = nombreEncontrado;
         } else {
