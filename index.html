@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V45</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V46</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -81,7 +81,7 @@
       return "";
     }
 
-    // Limpieza profunda y eliminación de nombres repetidos por Google Lens
+    // Limpieza radical y antiduplicados exacta para nombres repetidos
     function limpiarNombreFinal(txt) {
       if (!txt) return "";
       var limpio = txt.replace(/destinatalio[:\s]*/gi, "")
@@ -98,14 +98,22 @@
 
       limpio = limpio.replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "").trim();
 
-      // Eliminar palabras o fragmentos duplicados contiguos (Ej: MARIA ANCELA CASTRO MARIA ANCELA...)
+      // Eliminar duplicados si el texto completo está repetido (ej: A B C A B C)
       var palabras = limpio.split(/\s+/);
-      var mitad = Math.floor(palabras.length / 2);
-      if (palabras.length >= 4 && palabras.length % 2 === 0) {
-        var primeraMitad = palabras.slice(0, mitad).join(" ");
-        var segundaMitad = palabras.slice(mitad).join(" ");
-        if (primeraMitad.toUpperCase() === segundaMitad.toUpperCase()) {
-          limpio = primeraMitad;
+      if (palabras.length >= 2 && palabras.length % 2 === 0) {
+        var mitad = palabras.length / 2;
+        var p1 = palabras.slice(0, mitad).join(" ").toUpperCase();
+        var p2 = palabras.slice(mitad).join(" ").toUpperCase();
+        if (p1 === p2) {
+          limpio = palabras.slice(0, mitad).join(" ");
+        }
+      } else if (palabras.length > 4) {
+        // Por si acaso Google Lens arrastra un trozo extra de la siguiente palabra repetida
+        var mitadAprox = Math.floor(palabras.length / 2);
+        var sub1 = palabras.slice(0, mitadAprox).join(" ").toUpperCase();
+        var sub2 = palabras.slice(mitadAprox, mitadAprox * 2).join(" ").toUpperCase();
+        if (sub1 === sub2) {
+          limpio = palabras.slice(0, mitadAprox).join(" ");
         }
       }
 
@@ -209,7 +217,7 @@
             var todosNumeros = text.match(/\b\d{8,15}\b/g) || [];
             for (var n = 0; n < todosNumeros.length; n++) {
               var candidate = todosNumeros[n];
-              if (candidate === "871" || candidate === "801") continue; // Omitir códigos de sucursal
+              if (candidate === "871" || candidate === "801") continue;
               if (/^(0?412|0?424|0?414|0?416|0?426)/.test(candidate)) continue;
               trackingEncontrado = candidate;
               break;
