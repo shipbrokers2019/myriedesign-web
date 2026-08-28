@@ -80,11 +80,12 @@
       if (t.indexOf("ENSACADO") !== -1) return true;
       if (t.indexOf("CUPONES") !== -1) return true;
       if (t.indexOf("DIRECCION") !== -1 || t.indexOf("DIRECCIÓN") !== -1) return true;
-      if (t.indexOf("REMITENTE") !== -1 && t.indexOf("DESTINATARIO") === -1) return true;
+      if (t.indexOf("REMITENTE") !== -1) return true;
       if (t.indexOf("ORIGEN") !== -1) return true;
       if (t.indexOf("COBRO EN DESTINO") !== -1) return true;
       if (t.indexOf("CONTRA REEMBOLSO") !== -1) return true;
       if (t.indexOf("DESTINO:") !== -1) return true;
+      if (t.indexOf("RIF") !== -1 || t.indexOf("R.I.F") !== -1 || t.indexOf("RLFICI") !== -1 || t.indexOf("R.L.F.I.C.I") !== -1) return true;
       return false;
     }
 
@@ -100,6 +101,8 @@
       resultado = resultado.replace(/CLIENTE/gi, "");
       resultado = resultado.replace(/AGENCIA/gi, "");
       resultado = resultado.replace(/OFICINA/gi, "");
+      resultado = resultado.replace(/R\.?I\.?F\.?\/C\.?I\.?[\s:]*/gi, "");
+      resultado = resultado.replace(/RLFICI[\s:]*/gi, "");
 
       resultado = resultado.replace(/TLF[\s:\.]*\d+/gi, "");
       resultado = resultado.replace(/\b(?:0)?(412|424|414|416|426)\d{7}\b/g, "");
@@ -107,7 +110,7 @@
       resultado = resultado.replace(/\b\d+\b/g, "");
       resultado = resultado.replace(/[:\.\-]/g, "");
 
-      // Limpia duplicados típicos de Zoom ("NOMBRE - NOMBRE")
+      // Si Zoom repite el nombre dos veces ("NOMBRE - NOMBRE"), dejamos solo uno
       var partes = resultado.trim().split(/\s+/);
       if (partes.length >= 4) {
         var mitad = Math.floor(partes.length / 2);
@@ -147,48 +150,73 @@
         var tUpper = text.toUpperCase();
 
         // 1. DETECTAR EMPRESA
-        if (tUpper.indexOf("TEALCA") !== -1) document.getElementById("empresa").value = "Tealca";
-        else if (tUpper.indexOf("ZOOM") !== -1 || tUpper.indexOf("GRUPO ZOOM") !== -1) document.getElementById("empresa").value = "Zoom";
-        else if (tUpper.indexOf("MRW") !== -1) document.getElementById("empresa").value = "MRW";
-        else if (tUpper.indexOf("LIBERTY") !== -1) document.getElementById("empresa").value = "Liberty Express";
+        var empresaDetectada = "MRW";
+        if (tUpper.indexOf("TEALCA") !== -1) empresaDetectada = "Tealca";
+        else if (tUpper.indexOf("ZOOM") !== -1 || tUpper.indexOf("GRUPO ZOOM") !== -1) empresaDetectada = "Zoom";
+        else if (tUpper.indexOf("MRW") !== -1) empresaDetectada = "MRW";
+        else if (tUpper.indexOf("LIBERTY") !== -1) empresaDetectada = "Liberty Express";
+
+        document.getElementById("empresa").value = empresaDetectada;
 
         // 2. EXTRAER DESTINATARIO Y SU TELÉFONO
         var nombreEncontrado = "";
         var tlfDestinatario = "";
 
-        for (var i = 0; i < lineas.length; i++) {
-          var l = lineas[i].trim();
-          var lUpper = l.toUpperCase();
-
-          if (esLineaBasura(l)) continue;
-
-          if (lUpper.indexOf("DEST") !== -1 || lUpper.indexOf("DESTINATARIO") !== -1 || lUpper.indexOf("CLIENTE") !== -1 || lUpper.indexOf("CONSIGNA") !== -1) {
-            
-            var matchTelfLinea = l.match(/(?:TLF[\s:\.]*)?((?:0)?(?:412|424|414|416|426)\d{7})/i);
-            if (matchTelfLinea) {
-              tlfDestinatario = formatearTelefono(matchTelfLinea[1]);
-            } else {
-              for (var sub = 1; sub <= 2; sub++) {
-                if (i + sub < lineas.length) {
-                  var sigLinea = lineas[i + sub].trim();
-                  var matchSub = sigLinea.match(/(?:TLF[\s:\.]*)?((?:0)?(?:412|424|414|416|426)\d{7})/i);
-                  if (matchSub) {
-                    tlfDestinatario = formatearTelefono(matchSub[1]);
-                    break;
-                  }
-                }
+        // REGLA ESPECÍFICA PARA ZOOM
+        if (empresaDetectada === "Zoom") {
+          for (var i = 0; i < lineas.length; i++) {
+            var lUpper = lineas[i].toUpperCase();
+            if (lUpper.indexOf("DESTINATARIO:") !== -1) {
+              var lineaDest = lineas[i];
+              // Extraer solo la parte después de "Destinatario:"
+              var idx = lineaDest.toUpperCase().indexOf("DESTINATARIO:");
+              var textoDespues = lineaDest.substring(idx + 13);
+              
+              var limpioZoom = depurarNombre(textoDespues);
+              if (limpioZoom.length > 2 && !esLineaBasura(limpioZoom)) {
+                nombreEncontrado = limpioZoom;
+                break;
               }
-            }
-
-            var limpio = depurarNombre(l);
-            if (limpio.length > 2) {
-              nombreEncontrado = limpio;
-              break;
             }
           }
         }
 
-        // Respaldo por Cédula (V-XXXXX) si no enganchó por la etiqueta DESTINATARIO
+        // REGLA GENERAL (MRW Y DEMÁS) - INTACTA
+        if (!nombreEncontrado) {
+          for (var i = 0; i < lineas.length; i++) {
+            var l = lineas[i].trim();
+            var lUpper = l.toUpperCase();
+
+            if (esLineaBasura(l)) continue;
+
+            if (lUpper.indexOf("DEST") !== -1 || lUpper.indexOf("DESTINATARIO") !== -1 || lUpper.indexOf("CLIENTE") !== -1 || lUpper.indexOf("CONSIGNA") !== -1) {
+              
+              var matchTelfLinea = l.match(/(?:TLF[\s:\.]*)?((?:0)?(?:412|424|414|416|426)\d{7})/i);
+              if (matchTelfLinea) {
+                tlfDestinatario = formatearTelefono(matchTelfLinea[1]);
+              } else {
+                for (var sub = 1; sub <= 2; sub++) {
+                  if (i + sub < lineas.length) {
+                    var sigLinea = lineas[i + sub].trim();
+                    var matchSub = sigLinea.match(/(?:TLF[\s:\.]*)?((?:0)?(?:412|424|414|416|426)\d{7})/i);
+                    if (matchSub) {
+                      tlfDestinatario = formatearTelefono(matchSub[1]);
+                      break;
+                    }
+                  }
+                }
+              }
+
+              var limpio = depurarNombre(l);
+              if (limpio.length > 2 && !esLineaBasura(limpio)) {
+                nombreEncontrado = limpio;
+                break;
+              }
+            }
+          }
+        }
+
+        // Respaldo por Cédula (V-XXXXX)
         if (!nombreEncontrado) {
           for (var j = 0; j < lineas.length; j++) {
             var lj = lineas[j].trim();
@@ -203,7 +231,7 @@
               }
 
               var limpioFallback = depurarNombre(lj);
-              if (limpioFallback.length > 2) {
+              if (limpioFallback.length > 2 && !esLineaBasura(limpioFallback)) {
                 nombreEncontrado = limpioFallback;
                 break;
               }
