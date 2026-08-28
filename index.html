@@ -9,7 +9,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V10</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V11</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -24,7 +24,7 @@
     <form id="guiaForm" class="space-y-3">
       <div>
         <label class="block text-xs font-bold text-gray-700">Destinatario</label>
-        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium" placeholder="Nombre limpio del cliente">
+        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium" placeholder="Solo el nombre limpio">
       </div>
       
       <div>
@@ -87,7 +87,7 @@
 
         var lineas = text.split("\n").map(function(l) { return l.trim(); }).filter(Boolean);
 
-        // 1. EXTRAER TRACKING (Buscamos la línea de tracking o cualquier número largo de 8 a 15 dígitos)
+        // 1. EXTRAER TRACKING
         var trackingEncontrado = "";
         for (var k = 0; k < lineas.length; k++) {
           var lk = lineas[k].toUpperCase();
@@ -105,26 +105,30 @@
         }
         document.getElementById("tracking").value = trackingEncontrado;
 
-        // 2. EXTRAER TELÉFONO Y NOMBRE DE LA MISMA LÍNEA
+        // 2. EXTRAER TELÉFONO Y DEJAR SOLO EL NOMBRE
         var tlfEncontrado = "";
         var nombreEncontrado = "";
 
         for (var i = 0; i < lineas.length; i++) {
           var lineaActual = lineas[i];
-          // Verificamos si esta línea contiene un número de teléfono válido venezolano
           var matchTelf = lineaActual.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
           
           if (matchTelf) {
             tlfEncontrado = formatearTelefonoStrict(matchTelf[0]);
             
-            // Todo lo que está antes del teléfono en esa misma línea es el nombre
+            // Tomamos lo que está antes del teléfono
             var partesLinea = lineaActual.split(matchTelf[0]);
-            if (partesLinea.length > 0 && partesLinea[0].trim().length > 0) {
+            if (partesLinea.length > 0) {
               var limpio = partesLinea[0];
-              // Limpiar prefijos comunes como DEST:, CLIENTE:, SR, SRA, etc.
+              
+              // Cortar tajantemente desde donde aparezca una cédula (ej: V-, E-, J-) o la palabra TLF/TEL
+              limpio = limpio.split(/[\s\-]+[VEJG][\s\-]*\d/i)[0];
+              limpio = limpio.split(/TLF|TEL/i)[0];
+
+              // Limpiar prefijos y símbolos sobrantes
               limpio = limpio.replace(/^(DEST|DESTINATARIO|CLIENTE|SENOR|SR|SRA)[\s\:\-\.]*/i, "");
-              // Limpiar guiones o símbolos sobrantes al final
               limpio = limpio.replace(/[\s\-\,\.\_\/]+$/, "").trim();
+
               if (limpio.length > 2) {
                 nombreEncontrado = limpio;
               }
