@@ -9,7 +9,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V12</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V13</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -24,7 +24,7 @@
     <form id="guiaForm" class="space-y-3">
       <div>
         <label class="block text-xs font-bold text-gray-700">Destinatario</label>
-        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium" placeholder="Solo el nombre limpio">
+        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium" placeholder="Nombre del cliente">
       </div>
       
       <div>
@@ -105,7 +105,7 @@
         }
         document.getElementById("tracking").value = trackingEncontrado;
 
-        // 2. EXTRAER TELÉFONO DE TODO EL TEXTO
+        // 2. EXTRAER TELÉFONO
         var tlfEncontrado = "";
         var matchTelf = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/g);
         if (matchTelf && matchTelf.length > 0) {
@@ -116,13 +116,13 @@
         }
         document.getElementById("telefono").value = tlfEncontrado;
 
-        // 3. EXTRAER NOMBRE (Línea que contiene el nombre del cliente)
+        // 3. EXTRAER NOMBRE (Ultra estricto para evitar basura de batería, porcentajes o símbolos)
         var nombreEncontrado = "";
         for (var i = 0; i < lineas.length; i++) {
           var l = lineas[i];
           var lUp = l.toUpperCase();
 
-          // Ignorar líneas técnicas, tracking, ciudades, números solos o etiquetas
+          // Ignorar cualquier línea basura, técnica, símbolos de sistema o números solos
           if (
             lUp.indexOf("TRACKING") !== -1 ||
             lUp.indexOf("ENSACADO") !== -1 ||
@@ -130,27 +130,32 @@
             lUp.indexOf("BS.") !== -1 ||
             lUp.indexOf("YARITAGUA") !== -1 ||
             lUp.indexOf("EL TIGRITO") !== -1 ||
-            /^\d+$/.test(lUp) || // Si es solo un número (como "00")
-            lUp.length < 3
+            lUp.indexOf("%") !== -1 ||
+            lUp.indexOf("II") !== -1 ||
+            /^\W+$/.test(lUp) || // Solo símbolos (ej: .1II)
+            /^\d+$/.test(lUp) || // Solo números
+            lUp.length < 4
           ) {
             continue;
           }
 
-          // Si la línea tiene un teléfono, cortamos lo que está antes del teléfono
+          // Si la línea tiene el teléfono, separamos el nombre
           if (/(412|424|414|416|426)/.test(l)) {
             var partes = l.split(/(?:\+?58|0)?(?:412|424|414|416|426)/);
             if (partes[0].trim().length > 2) {
               l = partes[0];
+            } else {
+              continue; // Si no hay nombre antes del teléfono en esta línea, saltamos
             }
           }
 
-          // Limpiar cédulas, prefijos y símbolos
+          // Limpiar cédulas y prefijos
           l = l.split(/[\s\-]+[VEJG][\s\-]*\d/i)[0];
           l = l.replace(/^(DEST|DESTINATARIO|CLIENTE|SENOR|SR|SRA)[\s\:\-\.]*/i, "");
           l = l.replace(/[\s\-\,\.\_\/]+$/, "").trim();
 
-          // Si queda un texto con apariencia de nombre (letras largas)
-          if (l.length > 2 && /[A-Z]/.test(l.toUpperCase())) {
+          // Validar que sean letras reales (alfabético con espacios)
+          if (l.length > 3 && /^[A-ZÁÉÍÓÚÑ\s]+$/i.test(l)) {
             nombreEncontrado = l;
             break;
           }
