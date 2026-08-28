@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V49</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V50</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -81,12 +81,11 @@
       return "";
     }
 
-    // Limpieza profunda de prefijos rotos por Google Lens (bestinatario, arlo, etc.) y duplicados
     function limpiarNombreFinal(txt) {
       if (!txt) return "";
       var limpio = txt.replace(/^[a-z]*tinatario[:\s]*/gi, "")
                         .replace(/^[a-z]*atario[:\s]*/gi, "")
-                        .replace(/^([a-z]{1,5})[:\s]+/gi, "") // Borra restos cortos como "arlo:", "mer:", etc. al inicio
+                        .replace(/^([a-z]{1,5})[:\s]+/gi, "")
                         .replace(/destinatalio[:\s]*/gi, "")
                         .replace(/destinatario[:\s]*/gi, "")
                         .replace(/destinatio[:\s]*/gi, "")
@@ -101,7 +100,6 @@
 
       limpio = limpio.replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "").trim();
 
-      // Eliminar duplicados exactos en bucle de palabras
       var palabras = limpio.split(/\s+/);
       if (palabras.length >= 4) {
         for (var tam = Math.floor(palabras.length / 2); tam >= 2; tam--) {
@@ -127,10 +125,11 @@
 
         var tUpper = text.toUpperCase();
 
+        // Detección precisa de empresa (MRW manda si tiene tracking 03... o palabras clave de MRW)
         var empresaDetectada = "MRW";
         if (tUpper.indexOf("TEALCA") !== -1) {
           empresaDetectada = "Tealca";
-        } else if (tUpper.indexOf("ZOOM") !== -1 || tUpper.indexOf("MER") !== -1) {
+        } else if ((tUpper.indexOf("ZOOM") !== -1 || tUpper.indexOf("MER") !== -1) && tUpper.indexOf("ENSACADO") === -1 && tUpper.indexOf("CUPONES") === -1) {
           empresaDetectada = "Zoom";
         } else if (tUpper.indexOf("LAE") !== -1 || tUpper.indexOf("EL DORADO") !== -1) {
           empresaDetectada = "LAE";
@@ -145,36 +144,29 @@
           var lineas = text.split("\n");
           var nombreEncontrado = "";
 
+          // Buscar línea de destinatario en MRW evitando direcciones y basura
           for (var i = 0; i < lineas.length; i++) {
             var l = lineas[i].trim();
             var lUpper = l.toUpperCase();
-            if (lUpper.indexOf("ESTINAT") !== -1 || lUpper.indexOf("DEST") !== -1 || lUpper.indexOf("CM.") !== -1) {
+            if (lUpper.indexOf("ESTINAT") !== -1 || lUpper.indexOf("DEST") !== -1 || lUpper.indexOf("CM.") !== -1 || lUpper.indexOf("DIR;") !== -1) {
+              // Si la línea es solo dirección, buscamos en la siguiente o anterior
+              if (lUpper.indexOf("DIR;") !== -1 || lUpper.indexOf("CALLE") !== -1 || lUpper.indexOf("AV.") !== -1) continue;
+              
               var limpioMisma = depurarNombreMRW(l);
               if (limpioMisma.length > 2 && !esBasuraMRW(limpioMisma)) {
                 nombreEncontrado = limpioMisma;
-              } else {
-                for (var sub = 1; sub <= 2; sub++) {
-                  if (i + sub < lineas.length) {
-                    var sigLinea = lineas[i + sub].trim();
-                    if (esBasuraMRW(sigLinea)) continue;
-                    var limpioSig = depurarNombreMRW(sigLinea);
-                    if (limpioSig.length > 2 && !esBasuraMRW(limpioSig)) {
-                      nombreEncontrado = limpioSig;
-                      break;
-                    }
-                  }
-                }
+                break;
               }
-              if (nombreEncontrado) break;
             }
           }
 
+          // Fallback inteligente para MRW si no halló etiqueta explícita
           if (!nombreEncontrado) {
             for (var j = 0; j < lineas.length; j++) {
               var lj = lineas[j].trim();
               if (esBasuraMRW(lj)) continue;
               var limpioFallback = depurarNombreMRW(lj);
-              if (limpioFallback.length > 3 && /[a-zA-Z]/.test(limpioFallback) && !esBasuraMRW(limpioFallback)) {
+              if (limpioFallback.length > 3 && /[a-zA-Z]/.test(limpioFallback) && !esBasuraMRW(limpioFallback) && limpioFallback.indexOf("DIR;") === -1 && limpioFallback.indexOf("CALLE") === -1) {
                 nombreEncontrado = limpioFallback;
                 break;
               }
@@ -185,6 +177,7 @@
             document.getElementById("nombre").value = limpiarNombreFinal(nombreEncontrado);
           }
 
+          // Teléfono MRW
           var tlfEncontrado = "";
           var matchTGlobal = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
           if (matchTGlobal) {
@@ -192,6 +185,7 @@
           }
           document.getElementById("telefono").value = tlfEncontrado;
 
+          // Tracking MRW (busca el número de 15 dígitos o el que acompaña a TRACKING)
           var trackingEncontrado = "";
           for (var k = 0; k < lineas.length; k++) {
             var lk = lineas[k].toUpperCase();
@@ -201,13 +195,9 @@
             }
           }
           if (!trackingEncontrado) {
-            var todosNumeros = text.match(/\b\d{8,15}\b/g) || [];
-            for (var n = 0; n < todosNumeros.length; n++) {
-              var candidate = todosNumeros[n];
-              if (candidate === "871" || candidate === "801") continue;
-              if (/^(0?412|0?424|0?414|0?416|0?426)/.test(candidate)) continue;
-              trackingEncontrado = candidate;
-              break;
+            var todosNumeros = text.match(/\b\d{10,15}\b/g) || [];
+            if (todosNumeros.length > 0) {
+              trackingEncontrado = todosNumeros[0];
             }
           }
           if (trackingEncontrado) document.getElementById("tracking").value = trackingEncontrado;
@@ -215,7 +205,7 @@
         }
 
         // ========================================================
-        // BLOQUE 2: ZOOM (Incluye guías con "MER")
+        // BLOQUE 2: ZOOM
         // ========================================================
         if (empresaDetectada === "Zoom") {
           var lineasZoom = text.split("\n");
@@ -306,11 +296,11 @@
     function esBasuraMRW(texto) {
       var t = texto.toUpperCase().trim();
       if (!t) return true;
-      if (t === "MRW" || t.indexOf("V-8142710") !== -1) return true;
+      if (t === "MRW" || t.indexOf("V-") !== -1 || t.indexOf("E-") !== -1) return true;
       if (t.indexOf("RETIRAR POR") !== -1 || t.indexOf("OFICIN") !== -1 || t.indexOf("ENSACADO") !== -1 || t.indexOf("CUPONES") !== -1) return true;
       if (t.indexOf("DIRECCION") !== -1 || t.indexOf("REMITENTE") !== -1 || t.indexOf("COBRO EN DESTINO") !== -1) return true;
-      if (t.indexOf("RIF") !== -1 || t.indexOf("COD.SEG") !== -1 || t.indexOf("BSUTERIA") !== -1 || t.indexOf("BISUTERIA") !== -1) return true;
-      if (t.indexOf("TRACKING") !== -1) return true;
+      if (t.indexOf("RIF") !== -1 || t.indexOf("COD.SEG") !== -1 || t.indexOf("BSUTERIA") !== -1 || t.indexOf("BISUTERIA") !== -1 || t.indexOf("BIGUTERIA") !== -1) return true;
+      if (t.indexOf("TRACKING") !== -1 || t.indexOf("BS.") !== -1) return true;
       return false;
     }
 
