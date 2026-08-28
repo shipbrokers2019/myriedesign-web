@@ -9,7 +9,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V24</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V25</h2>
     
     <!-- Selector de Empresa -->
     <div>
@@ -35,7 +35,7 @@
     <form id="guiaForm" class="space-y-3">
       <div>
         <label class="block text-xs font-bold text-gray-700">Destinatario</label>
-        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium" placeholder="Nombre del cliente">
+        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium" placeholder="Escribe el nombre si no viene en el texto">
       </div>
       
       <div>
@@ -99,7 +99,7 @@
         var nombreEncontrado = "";
 
         // ========================================================
-        // 1. LÓGICA INTELIGENTE PARA MRW
+        // 1. LÓGICA BLINDADA PARA MRW
         // ========================================================
         if (empresa === "MRW") {
           // A. Tracking: Buscar número de 8 a 20 dígitos
@@ -121,8 +121,7 @@
             tlfEncontrado = formatearTelefonoStrict(matchTelfGeneral[0]);
           }
 
-          // C. Destinatario inteligente para MRW:
-          // Busca la primera línea que NO sea basura (cobro, tracking, números puros, ensacado)
+          // C. Destinatario ultra-seguro (Ignora basura, números y teléfonos)
           for (var i = 0; i < lineas.length; i++) {
             var l = lineas[i];
             var lUp = l.toUpperCase();
@@ -134,7 +133,10 @@
               lUp.indexOf("CANT") !== -1 ||
               lUp.indexOf("CUPONES") !== -1 ||
               lUp.indexOf("B8.") !== -1 ||
-              /^\d+$/.test(l) || // Si es solo un número
+              lUp.indexOf("TLF") !== -1 ||
+              lUp.indexOf("TELEFONO") !== -1 ||
+              /^\d+$/.test(l) || // Solo números puros
+              /\d{7,}/.test(l) || // Si la línea contiene números largos (como el teléfono)
               l.length < 3;
 
             if (!esBasura) {
@@ -167,7 +169,14 @@
 
         document.getElementById("tracking").value = trackingEncontrado;
         document.getElementById("telefono").value = tlfEncontrado;
-        document.getElementById("nombre").value = nombreEncontrado;
+        
+        // Si no encontró un nombre real, deja el campo limpio y listo para escribir
+        if (nombreEncontrado) {
+          document.getElementById("nombre").value = nombreEncontrado;
+        } else {
+          document.getElementById("nombre").value = "";
+          document.getElementById("nombre").focus();
+        }
 
       } catch (e) {
         alert("Error al procesar: " + e.message);
