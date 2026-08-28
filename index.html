@@ -9,7 +9,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V15</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V17</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -87,7 +87,7 @@
 
         var lineas = text.split("\n").map(function(l) { return l.trim(); }).filter(Boolean);
 
-        // 1. EXTRAER TRACKING
+        // 1. EXTRAER TRACKING (Busca la línea de tracking o cualquier número largo de 8 a 15 dígitos)
         var trackingEncontrado = "";
         for (var k = 0; k < lineas.length; k++) {
           var lk = lineas[k].toUpperCase();
@@ -105,59 +105,48 @@
         }
         document.getElementById("tracking").value = trackingEncontrado;
 
-        // 2. EXTRAER TELÉFONO
+        // 2. EXTRAER TELÉFONO Y NOMBRE DE LA MISMA LÍNEA DONDE CONVIVEN
         var tlfEncontrado = "";
-        var matchTelf = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/g);
-        if (matchTelf && matchTelf.length > 0) {
-          for (var m = 0; m < matchTelf.length; m++) {
-            var tValido = formatearTelefonoStrict(matchTelf[m]);
-            if (tValido) { tlfEncontrado = tValido; }
-          }
-        }
-        document.getElementById("telefono").value = tlfEncontrado;
-
-        // 3. EXTRAER NOMBRE
         var nombreEncontrado = "";
+
         for (var i = 0; i < lineas.length; i++) {
-          var l = lineas[i];
-          var lUp = l.toUpperCase();
+          var lineaActual = lineas[i];
+          // Buscar si esta línea contiene un número de teléfono móvil venezolano
+          var matchTelf = lineaActual.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
+          
+          if (matchTelf) {
+            tlfEncontrado = formatearTelefonoStrict(matchTelf[0]);
+            
+            // Lo que está a la izquierda del teléfono es el nombre del destinatario
+            var partes = lineaActual.split(matchTelf[0]);
+            if (partes.length > 0) {
+              var limpio = partes[0];
+              
+              // Cortar si hay cédulas o etiquetas tipo V- o TLF
+              limpio = limpio.split(/[\s\-]+[VEJG][\s\-]*\d/i)[0];
+              limpio = limpio.split(/TLF|TEL/i)[0];
 
-          if (
-            lUp.indexOf("TRACKING") !== -1 ||
-            lUp.indexOf("ENSACADO") !== -1 ||
-            lUp.indexOf("CANT") !== -1 ||
-            lUp.indexOf("CUPONES") !== -1 ||
-            lUp.indexOf("BS") !== -1 ||
-            lUp.indexOf("YARITAGUA") !== -1 ||
-            lUp.indexOf("EL TIGRITO") !== -1 ||
-            lUp.indexOf("%") !== -1 ||
-            lUp.indexOf("II") !== -1 ||
-            /^\W+$/.test(lUp) ||
-            /^\d+$/.test(lUp) ||
-            lUp.length < 4
-          ) {
-            continue;
-          }
+              // Limpiar símbolos raros o palabras de relleno iniciales
+              limpio = limpio.replace(/^(DEST|DESTINATARIO|CLIENTE|SENOR|SR|SRA)[\s\:\-\.]*/i, "");
+              limpio = limpio.replace(/[\s\-\,\.\_\/]+$/, "").trim();
 
-          if (/(412|424|414|416|426)/.test(l)) {
-            var partes = l.split(/(?:\+?58|0)?(?:412|424|414|416|426)/);
-            if (partes[0].trim().length > 2) {
-              l = partes[0];
-            } else {
-              continue;
+              if (limpio.length > 2) {
+                nombreEncontrado = limpio;
+              }
             }
-          }
-
-          l = l.split(/[\s\-]+[VEJG][\s\-]*\d/i)[0];
-          l = l.replace(/^(DEST|DESTINATARIO|CLIENTE|SENOR|SR|SRA)[\s\:\-\.]*/i, "");
-          l = l.replace(/[\s\-\,\.\_\/]+$/, "").trim();
-
-          if (l.length > 3 && /^[A-ZÁÉÍÓÚÑ\s]+$/i.test(l)) {
-            nombreEncontrado = l;
-            break;
+            break; // Encontramos la línea correcta, salimos del ciclo
           }
         }
 
+        // Si el teléfono no estaba en la misma línea pero hay un teléfono aislado en el texto
+        if (!tlfEncontrado) {
+          var matchTelfGeneral = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
+          if (matchTelfGeneral) {
+            tlfEncontrado = formatearTelefonoStrict(matchTelfGeneral[0]);
+          }
+        }
+
+        document.getElementById("telefono").value = tlfEncontrado;
         document.getElementById("nombre").value = nombreEncontrado;
 
       } catch (e) {
