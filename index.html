@@ -29,18 +29,18 @@
     <form id="guiaForm" class="space-y-3">
       <div>
         <label class="block text-xs font-bold text-gray-700">Destinatario</label>
-        <input type="text" id="nombre" placeholder="Ej: INGRID CAMPOS" required class="w-full mt-1 p-2 border rounded-lg text-sm">
+        <input type="text" id="nombre" placeholder="Ej: YORAXI DIAZ" required class="w-full mt-1 p-2 border rounded-lg text-sm">
       </div>
       
       <div>
         <label class="block text-xs font-bold text-gray-700">Teléfono (WhatsApp)</label>
-        <input type="text" id="telefono" placeholder="Ej: 584148072041" required class="w-full mt-1 p-2 border rounded-lg text-sm">
+        <input type="text" id="telefono" placeholder="Ej: 584120443011" required class="w-full mt-1 p-2 border rounded-lg text-sm">
       </div>
 
       <div class="grid grid-cols-2 gap-2">
         <div>
           <label class="block text-xs font-bold text-gray-700">N° Tracking / Guía</label>
-          <input type="text" id="tracking" placeholder="Ej: 031000601000211" required class="w-full mt-1 p-2 border rounded-lg text-sm">
+          <input type="text" id="tracking" placeholder="Ej: 030300901000207" required class="w-full mt-1 p-2 border rounded-lg text-sm">
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-700">Empresa</label>
@@ -99,9 +99,28 @@
       resultado = resultado.replace(/DEST/gi, "");
       resultado = resultado.replace(/AGENCIA/gi, "");
       resultado = resultado.replace(/OFICINA/gi, "");
+
+      // Quitar etiquetas de teléfono que vengan en la misma línea del nombre (ej: TLF0412..., TLF: 0412..., etc.)
+      resultado = resultado.replace(/TLF[\s:\.]*\d+/gi, "");
+      resultado = resultado.replace(/\b(?:0)?(412|424|414|416|426)\d{7}\b/g, "");
+
       resultado = resultado.replace(/[:\.\-]/g, "");
       resultado = resultado.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "");
       return resultado.trim();
+    }
+
+    function formatearTelefono(numBruto) {
+      if (!numBruto) return "";
+      var num = numBruto.replace(/\D/g, ""); // dejar solo dígitos
+      if (num.length >= 10) {
+        if (num.indexOf("0") === 0) {
+          num = "58" + num.substring(1);
+        } else if (num.indexOf("58") !== 0) {
+          num = "58" + num;
+        }
+        return num;
+      }
+      return "";
     }
 
     function procesarTextoGuia() {
@@ -121,56 +140,9 @@
         else if (tUpper.indexOf("MRW") !== -1) document.getElementById("empresa").value = "MRW";
         else if (tUpper.indexOf("LIBERTY") !== -1) document.getElementById("empresa").value = "Liberty Express";
 
-        // 2. EXTRAER TELÉFONO (Especialmente avanzado para Zoom)
-        // Limpiamos caracteres separadores comunes para unir números cortados
-        var textoParaTelf = text.replace(/[\-\.\(\)\/]/g, " ");
-        var matchTelf = textoParaTelf.match(/(?:58|0)?(412|424|414|416|426)\d{7}\b/);
-        
-        if (matchTelf) {
-          var num = matchTelf[0].replace(/\s+/g, "");
-          if (num.indexOf("0") === 0) {
-            num = "58" + num.substring(1);
-          } else if (num.indexOf("58") !== 0) {
-            num = "58" + num;
-          }
-          document.getElementById("telefono").value = num;
-        }
-
-        // 3. EXTRAER TRACKING / GUÍA (Secuencias largas de números)
-        // Si hay una palabra explicita "TRACKING" o "GUIA" o "DOCUMENTO"
-        var trackingEncontrado = "";
-        for (var k = 0; k < lineas.length; k++) {
-          var lk = lineas[k].toUpperCase();
-          if (lk.indexOf("TRACKING") !== -1 || lk.indexOf("GUIA") !== -1 || lk.indexOf("GUÍA") !== -1 || lk.indexOf("DOC") !== -1) {
-            var mTrackL = lineas[k].match(/\b\d{6,20}\b/);
-            if (mTrackL) {
-              trackingEncontrado = mTrackL[0];
-              break;
-            }
-          }
-        }
-        
-        // Si no se encontró por etiqueta, busca el número más largo que no sea el teléfono procesado
-        if (!trackingEncontrado) {
-          var telfActual = document.getElementById("telefono").value;
-          var numTelfPuro = telfActual ? telfActual.replace("58", "") : "";
-
-          var todosNumeros = text.match(/\b\d{7,20}\b/g) || [];
-          for (var n = 0; n < todosNumeros.length; n++) {
-            if (numTelfPuro && todosNumeros[n].indexOf(numTelfPuro) !== -1) {
-              continue; // Salta si es el teléfono
-            }
-            trackingEncontrado = todosNumeros[n];
-            break;
-          }
-        }
-
-        if (trackingEncontrado) {
-          document.getElementById("tracking").value = trackingEncontrado;
-        }
-
-        // 4. EXTRAER NOMBRE DEL DESTINATARIO
+        // 2. EXTRAER DESTINATARIO Y SU TELÉFONO DIRECTO
         var nombreEncontrado = "";
+        var tlfDestinatario = "";
 
         for (var i = 0; i < lineas.length; i++) {
           var l = lineas[i].trim();
@@ -180,6 +152,12 @@
 
           if (lUpper.indexOf("DEST") !== -1 || lUpper.indexOf("NOMBRE") !== -1 || lUpper.indexOf("CLIENTE") !== -1 || lUpper.indexOf("CONSIGNA") !== -1 || lUpper.indexOf("RECEPTOR") !== -1) {
             
+            // Buscar si en esta misma línea del destinatario está su teléfono (ej: YORAXI DIAZ TLF04120443011)
+            var matchTelfLinea = l.match(/(?:TLF[\s:\.]*)?((?:0)?(?:412|424|414|416|426)\d{7})/i);
+            if (matchTelfLinea) {
+              tlfDestinatario = formatearTelefono(matchTelfLinea[1]);
+            }
+
             var limpio = depurarNombre(l);
 
             if (limpio.length > 2 && !esLineaBasura(limpio)) {
@@ -198,6 +176,11 @@
             if (esLineaBasura(lj)) continue;
 
             if (/\b[V][\-\s]?\d{6,8}\b/i.test(ljUpper) && ljUpper.indexOf("TRACKING") === -1 && ljUpper.indexOf("GUIA") === -1) {
+              var matchTelfL = lj.match(/(?:TLF[\s:\.]*)?((?:0)?(?:412|424|414|416|426)\d{7})/i);
+              if (matchTelfL && !tlfDestinatario) {
+                tlfDestinatario = formatearTelefono(matchTelfL[1]);
+              }
+
               var limpioFallback = depurarNombre(lj);
               if (limpioFallback.length > 2 && !esLineaBasura(limpioFallback)) {
                 nombreEncontrado = limpioFallback;
@@ -208,7 +191,51 @@
         }
 
         if (nombreEncontrado) {
-          document.getElementById("nombre").value = depurarNombre(nombreEncontrado);
+          document.getElementById("nombre").value = nombreEncontrado;
+        }
+
+        // 3. ASIGNAR TELÉFONO
+        // Si se encontró el teléfono directo en la línea del destinatario, usamos ese prioritariamente
+        if (tlfDestinatario) {
+          document.getElementById("telefono").value = tlfDestinatario;
+        } else {
+          // Si no vino en la misma línea, se busca cualquier cel de Venezuela en el texto
+          var textoParaTelf = text.replace(/[\-\.\(\)\/]/g, " ");
+          var matchTelf = textoParaTelf.match(/(?:58|0)?(412|424|414|416|426)\d{7}\b/);
+          if (matchTelf) {
+            document.getElementById("telefono").value = formatearTelefono(matchTelf[0]);
+          }
+        }
+
+        // 4. EXTRAER TRACKING / GUÍA
+        var trackingEncontrado = "";
+        for (var k = 0; k < lineas.length; k++) {
+          var lk = lineas[k].toUpperCase();
+          if (lk.indexOf("TRACKING") !== -1 || lk.indexOf("GUIA") !== -1 || lk.indexOf("GUÍA") !== -1 || lk.indexOf("DOC") !== -1) {
+            var mTrackL = lineas[k].match(/\b\d{6,20}\b/);
+            if (mTrackL) {
+              trackingEncontrado = mTrackL[0];
+              break;
+            }
+          }
+        }
+        
+        if (!trackingEncontrado) {
+          var telfActual = document.getElementById("telefono").value;
+          var numTelfPuro = telfActual ? telfActual.replace("58", "") : "";
+
+          var todosNumeros = text.match(/\b\d{7,20}\b/g) || [];
+          for (var n = 0; n < todosNumeros.length; n++) {
+            if (numTelfPuro && todosNumeros[n].indexOf(numTelfPuro) !== -1) {
+              continue;
+            }
+            trackingEncontrado = todosNumeros[n];
+            break;
+          }
+        }
+
+        if (trackingEncontrado) {
+          document.getElementById("tracking").value = trackingEncontrado;
         }
 
       } catch (e) {
