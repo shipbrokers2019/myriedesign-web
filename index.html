@@ -83,7 +83,8 @@
       if (t.indexOf("CUPONES") !== -1) return true;
       if (t.indexOf("DIRECCION") !== -1 || t.indexOf("DIRECCIÓN") !== -1) return true;
       if (t.indexOf("REMITENTE") !== -1) return true;
-      if (t.indexOf("ORIGEN") !== -1) return true;
+      if (t.indexOf("ORIGEN") !== -1 || t.indexOf("BRIGEN") !== -1) return true;
+      if (t.indexOf("BARCELONA") !== -1 || t.indexOf("XPRESS") !== -1 || t.indexOf("BIP") !== -1) return true;
       if (t.indexOf("COBRO EN DESTINO") !== -1) return true;
       if (t.indexOf("CONTRA REEMBOLSO") !== -1) return true;
       if (t.indexOf("DESTINO:") !== -1) return true;
@@ -105,6 +106,10 @@
       resultado = resultado.replace(/CLIENTE/gi, "");
       resultado = resultado.replace(/AGENCIA/gi, "");
       resultado = resultado.replace(/OFICINA/gi, "");
+      resultado = resultado.replace(/ORIGEN/gi, "");
+      resultado = resultado.replace(/BRIGEN/gi, "");
+      resultado = resultado.replace(/BARCELONA/gi, "");
+      resultado = resultado.replace(/XPRESS/gi, "");
       resultado = resultado.replace(/R\.?I\.?F\.?\/C\.?I\.?[\s:]*/gi, "");
       resultado = resultado.replace(/RLFICI[\s:]*/gi, "");
 
@@ -114,7 +119,7 @@
       resultado = resultado.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "");
       resultado = resultado.replace(/[:\.\-]/g, " ");
 
-      // Si el nombre se duplica ("NOMBRE - NOMBRE"), tomamos solo una parte
+      // Si el nombre se repite dos veces en el OCR ("VERYGIONETT LOAIZA VERYGIONETT LOAIZA"), tomamos solo una mitad
       var partes = resultado.trim().split(/\s+/);
       if (partes.length >= 4) {
         var mitad = Math.floor(partes.length / 2);
@@ -166,22 +171,21 @@
         var nombreEncontrado = "";
         var tlfDestinatario = "";
 
-        // ALGORITMO BÚSQUEDA DE NOMBRE Y TELÉFONO
         for (var i = 0; i < lineas.length; i++) {
           var l = lineas[i].trim();
           var lUpper = l.toUpperCase();
 
-          if (lUpper.indexOf("DESTINATARIO") !== -1 || lUpper.indexOf("DEST:") !== -1 || lUpper.indexOf("CLIENTE") !== -1) {
+          if (lUpper.indexOf("DESTINATARIO") !== -1 || lUpper.indexOf("DEST:") !== -1) {
             
-            // Buscar si el nombre está en la misma línea después de "DESTINATARIO:"
+            // Probar en la misma línea
             var textoMisma = l.substring(lUpper.indexOf("DEST") + 4).replace(/^INATARIO[\s:]*/i, "").replace(/^[\s:]*/, "");
             var limpioMisma = depurarNombre(textoMisma);
             
             if (limpioMisma.length > 2 && !esLineaBasura(limpioMisma)) {
               nombreEncontrado = limpioMisma;
             } else {
-              // Buscar en las siguientes 3 líneas
-              for (var sub = 1; sub <= 3; sub++) {
+              // Buscar estricta y únicamente en las 2 líneas SIGUIENTES a la palabra DESTINATARIO
+              for (var sub = 1; sub <= 2; sub++) {
                 if (i + sub < lineas.length) {
                   var sigLinea = lineas[i + sub].trim();
                   if (esLineaBasura(sigLinea)) continue;
@@ -195,7 +199,7 @@
               }
             }
 
-            // Buscar teléfono cercano
+            // Extraer teléfono cercano
             for (var k = 0; k <= 3; k++) {
               if (i + k < lineas.length) {
                 var matchSub = lineas[i + k].match(/(?:TLF[\s:\.]*)?((?:0)?(?:412|424|414|416|426)\d{7})/i);
@@ -210,7 +214,7 @@
           }
         }
 
-        // Respaldo por si no encontró la palabra "DESTINATARIO"
+        // Respaldo secundario para MRW y otras guías sin etiqueta DESTINATARIO explicita
         if (!nombreEncontrado) {
           for (var j = 0; j < lineas.length; j++) {
             var lj = lineas[j].trim();
