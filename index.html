@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V56</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V57</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -85,13 +85,11 @@
       if (!txt || txt.length < 3) return false;
       var tUp = txt.toUpperCase();
       
-      // Bloquear si contiene palabras prohibidas de relleno o técnicas
-      var prohibidas = ["VOLUM", "PIEZA", "PESO", "CIUDAD", "DIRECCION", "ENTREGA", "TEALCA", "MRW", "ZOOM", "RETIRO", "TIENDA", "ESTANDAR", "COD", "FECHA", "ORIGEN", "REMITENTE", "MEDIDAS", "TELEFONO", "TLF"];
+      var prohibidas = ["VOLUM", "PIEZA", "PESO", "CIUDAD", "DIRECCION", "ENTREGA", "TEALCA", "MRW", "ZOOM", "RETIRO", "TIENDA", "ESTANDAR", "COD", "FECHA", "ORIGEN", "REMITENTE", "MEDIDAS", "TELEFONO", "TLF", "ANAACO", "TURMERO"];
       for (var i = 0; i < prohibidas.length; i++) {
         if (tUp.indexOf(prohibidas[i]) !== -1) return false;
       }
       
-      // Bloquear si la línea es un número de teléfono o contiene secuencias numéricas largas (como cédulas o tlf)
       if (/\b(412|424|414|416|426)\d{7}\b/.test(txt)) return false;
       if (/\b\d{7,10}\b/.test(txt)) return false;
       if (/\b[VvEeJjGg][-\s]?\d{6,9}\b/.test(txt)) return false;
@@ -266,7 +264,7 @@
         }
 
         // ========================================================
-        // BLOQUE 3: TEALCA (Ultra-blindado contra teléfonos y basura)
+        // BLOQUE 3: TEALCA (Búsqueda inteligente optimizada)
         // ========================================================
         if (empresaDetectada === "Tealca") {
           var lineasTealca = text.split("\n");
@@ -320,7 +318,7 @@
           }
           document.getElementById("telefono").value = tlfTealca;
 
-          // 3. Nombre Tealca (Búsqueda estricta)
+          // 3. Nombre Tealca (Búsqueda mejorada)
           var nombreTealca = "";
           for (var tn = 0; tn < lineasTealca.length; tn++) {
             var ltn = lineasTealca[tn].trim();
@@ -358,7 +356,7 @@
             document.getElementById("nombre").value = limpiarNombreFinal(nombreTealca);
           } else {
             document.getElementById("nombre").value = "";
-            alert("⚠️ Atención: El texto copiado de Tealca está incompleto y no incluye el nombre ni la cédula. Asegúrate de seleccionar toda la parte superior de la etiqueta con Google Lens.");
+            alert("⚠️ Atención: En esta selección falta el nombre. Intenta abarcar un poquito más arriba con Google Lens para capturar el nombre del cliente.");
           }
           return;
         }
