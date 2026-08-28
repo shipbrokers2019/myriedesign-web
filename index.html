@@ -80,15 +80,31 @@
 
     function esLineaBasura(texto) {
       var t = texto.toUpperCase();
-      if (t.indexOf("RETIRAR") !== -1) return true;
-      if (t.indexOf("OFICINA") !== -1) return true;
-      if (t.indexOf("AGENCIA") !== -1) return true;
+      if (t.indexOf("RETIRAR POR OFICINA") !== -1) return true;
+      if (t.indexOf("ENTREGAR EN AGENCIA") !== -1) return true;
       if (t.indexOf("ENSACADO") !== -1) return true;
       if (t.indexOf("CUPONES") !== -1) return true;
       if (t.indexOf("DIRECCION") !== -1 || t.indexOf("DIRECCIÓN") !== -1) return true;
       if (t.indexOf("REMITENTE") !== -1) return true;
       if (t.indexOf("ORIGEN") !== -1) return true;
       return false;
+    }
+
+    function limpiarNombre(texto) {
+      var limpio = texto.replace(/\bDESTINATARIO\b/gi, "")
+                        .replace(/\bDATOS DEL\b/gi, "")
+                        .replace(/\bDESTINO\b/gi, "")
+                        .replace(/\bCONSIGNA A\b/gi, "")
+                        .replace(/\bRECEPTOR\b/gi, "")
+                        .replace(/\bNOMBRE\b/gi, "")
+                        .replace(/\bCLIENTE\b/gi, "")
+                        .replace(/\bDEST\b/gi, "")
+                        .replace(/[:\.\-]/g, "")
+                        .trim();
+
+      // Eliminar Cédulas o RIFs
+      limpio = limpio.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "").trim();
+      return limpio;
     }
 
     function procesarTextoGuia() {
@@ -125,17 +141,7 @@
 
           if (lUpper.indexOf("DEST") !== -1 || lUpper.indexOf("NOMBRE") !== -1 || lUpper.indexOf("CLIENTE") !== -1 || lUpper.indexOf("CONSIGNA") !== -1 || lUpper.indexOf("RECEPTOR") !== -1) {
             
-            var limpio = l.replace(/DESTINATARIO/gi, "")
-                          .replace(/DATOS DEL/gi, "")
-                          .replace(/DESTINO/gi, "")
-                          .replace(/CONSIGNA A/gi, "")
-                          .replace(/RECEPTOR/gi, "")
-                          .replace(/NOMBRE/gi, "")
-                          .replace(/CLIENTE/gi, "")
-                          .replace(/[:\-]/g, "")
-                          .trim();
-
-            limpio = limpio.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "").trim();
+            var limpio = limpiarNombre(l);
 
             if (limpio.length > 2 && !esLineaBasura(limpio)) {
               nombreEncontrado = limpio;
@@ -144,7 +150,7 @@
           }
         }
 
-        // Si no lo encontró con etiqueta, busca la línea que tenga cédula (V-XXXXX) y extrae el nombre de esa misma línea
+        // Respaldo por Cédula (V-XXXXX)
         if (!nombreEncontrado) {
           for (var j = 0; j < lineas.length; j++) {
             var lj = lineas[j].trim();
@@ -153,11 +159,7 @@
             if (esLineaBasura(lj)) continue;
 
             if (/\b[V][\-\s]?\d{6,8}\b/i.test(ljUpper) && ljUpper.indexOf("TRACKING") === -1 && ljUpper.indexOf("GUIA") === -1) {
-              var limpioFallback = lj.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "")
-                                     .replace(/DEST/gi, "")
-                                     .replace(/CLIENTE/gi, "")
-                                     .replace(/[:\-]/g, "")
-                                     .trim();
+              var limpioFallback = limpiarNombre(lj);
               if (limpioFallback.length > 2 && !esLineaBasura(limpioFallback)) {
                 nombreEncontrado = limpioFallback;
                 break;
