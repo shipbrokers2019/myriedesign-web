@@ -28,22 +28,22 @@
     <form id="guiaForm" class="space-y-3">
       <div>
         <label class="block text-xs font-bold text-gray-700">Destinatario</label>
-        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm">
+        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium">
       </div>
       
       <div>
         <label class="block text-xs font-bold text-gray-700">Teléfono (WhatsApp)</label>
-        <input type="text" id="telefono" class="w-full mt-1 p-2 border rounded-lg text-sm">
+        <input type="text" id="telefono" class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium">
       </div>
 
       <div class="grid grid-cols-2 gap-2">
         <div>
           <label class="block text-xs font-bold text-gray-700">N° Tracking / Guía</label>
-          <input type="text" id="tracking" required class="w-full mt-1 p-2 border rounded-lg text-sm">
+          <input type="text" id="tracking" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium">
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-700">Empresa</label>
-          <select id="empresa" class="w-full mt-1 p-2 border rounded-lg text-sm bg-white">
+          <select id="empresa" class="w-full mt-1 p-2 border rounded-lg text-sm bg-white text-gray-900 font-medium">
             <option value="MRW">MRW</option>
             <option value="Tealca">Tealca</option>
             <option value="Zoom">Zoom</option>
@@ -55,7 +55,7 @@
 
       <div>
         <label class="block text-xs font-bold text-gray-700">Fecha de Envío</label>
-        <input type="date" id="fecha" required class="w-full mt-1 p-2 border rounded-lg text-sm">
+        <input type="date" id="fecha" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium">
       </div>
 
       <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-sm transition">
@@ -96,10 +96,10 @@
     function depurarNombre(txt) {
       var resultado = txt;
 
-      // Quitar caracteres no alfabéticos al inicio
+      // Quitar caracteres especiales iniciales
       resultado = resultado.replace(/^[\|\/\\\,\.\-_\:\;\s\d]+/g, "");
 
-      // Quitar palabras reservadas de guías
+      // Palabras a descartar
       resultado = resultado.replace(/\bZOOM\b/gi, "");
       resultado = resultado.replace(/b?estinatario[\s:]*/gi, "");
       resultado = resultado.replace(/DESTINO:/gi, "");
@@ -118,7 +118,7 @@
       resultado = resultado.replace(/R\.?I\.?F\.?\/C\.?I\.?[\s:]*/gi, "");
       resultado = resultado.replace(/RLFICI[\s:]*/gi, "");
 
-      // Quitar números, cédulas y teléfonos
+      // Quitar números y teléfonos
       resultado = resultado.replace(/TLF[\s:\.]*\d+/gi, "");
       resultado = resultado.replace(/\b(?:0)?(412|424|414|416|426)\d{7}\b/g, "");
       resultado = resultado.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "");
@@ -126,13 +126,12 @@
 
       var palabras = resultado.trim().split(/\s+/).filter(Boolean);
 
-      // 1. Corregir palabras con prefijos sueltos o errores OCR al inicio (ej. DRICARDO cuando existe RICARDO)
+      // Descartar errores OCR de sombra (ej. DRICARDO si existe RICARDO)
       if (palabras.length > 1) {
         var depuradas = [];
         for (var i = 0; i < palabras.length; i++) {
           var pCur = palabras[i].toUpperCase();
           var esSombra = false;
-          
           for (var j = 0; j < palabras.length; j++) {
             if (i !== j) {
               var pOtro = palabras[j].toUpperCase();
@@ -149,15 +148,24 @@
         palabras = depuradas;
       }
 
-      // 2. Deduplicar manteniendo palabras únicas sin repetir
+      // Palabras únicas
       var unicas = [];
       var vistas = new Set();
-
       for (var k = 0; k < palabras.length; k++) {
         var pUpper = palabras[k].toUpperCase();
         if (pUpper.length > 1 && !vistas.has(pUpper)) {
           vistas.add(pUpper);
           unicas.push(palabras[k]);
+        }
+      }
+
+      // Si quedan 2 palabras y están al revés (ej: SUCRE RICARDO -> RICARDO SUCRE)
+      if (unicas.length === 2) {
+        var p0 = unicas[0].toUpperCase();
+        var p1 = unicas[1].toUpperCase();
+        // Si el primer elemento suele ser un apellido o prefijo raro y el segundo es un nombre común como RICARDO
+        if ((p1 === "RICARDO" || p1 === "CARLOS" || p1 === "MARIA" || p1 === "JOSE" || p1 === "LUIS" || p1 === "ANA") && p0 !== p1) {
+          unicas = [unicas[1], unicas[0]];
         }
       }
 
@@ -189,7 +197,7 @@
         var lineas = text.split("\n");
         var tUpper = text.toUpperCase();
 
-        // 1. DETECTAR EMPRESA
+        // 1. EMPRESA
         var empresaDetectada = "MRW";
         if (tUpper.indexOf("TEALCA") !== -1) empresaDetectada = "Tealca";
         else if (tUpper.indexOf("ZOOM") !== -1 || tUpper.indexOf("GRUPO ZOOM") !== -1) empresaDetectada = "Zoom";
@@ -198,18 +206,23 @@
 
         document.getElementById("empresa").value = empresaDetectada;
 
-        // 2. EXTRAER DESTINATARIO Y TELÉFONO
+        // 2. EXTRAER BÚSQUEDA GENERAL DE TELÉFONO EN TODO EL TEXTO
+        var tlfEncontrado = "";
+        // Buscar patrón venezolano: 0412/0424/0414/0416/0426 o 412/424... con 7 dígitos
+        var matchTelf = text.match(/(?:TLF|TEL|CEL|WAP)?[\s:\.]*(\+?58)?[\s-]*?(0?4(?:12|24|14|16|26)[\s-]?\d{3}[\s-]?\d{4}|\d{10,11})/i);
+        if (matchTelf && matchTelf[0]) {
+          tlfEncontrado = formatearTelefono(matchTelf[0]);
+        }
+
+        // 3. EXTRAER DESTINATARIO
         var nombreEncontrado = "";
-        var tlfDestinatario = "";
 
         for (var i = 0; i < lineas.length; i++) {
           var l = lineas[i].trim();
           var lUpper = l.toUpperCase();
 
           if (lUpper.indexOf("ESTINATARIO") !== -1 || lUpper.indexOf("DEST:") !== -1) {
-            
             var limpioMisma = depurarNombre(l);
-            
             if (limpioMisma.length > 2 && !esLineaBasura(limpioMisma)) {
               nombreEncontrado = limpioMisma;
             } else {
@@ -217,7 +230,6 @@
                 if (i + sub < lineas.length) {
                   var sigLinea = lineas[i + sub].trim();
                   if (esLineaBasura(sigLinea)) continue;
-                  
                   var limpioSig = depurarNombre(sigLinea);
                   if (limpioSig.length > 2 && !esLineaBasura(limpioSig)) {
                     nombreEncontrado = limpioSig;
@@ -226,17 +238,6 @@
                 }
               }
             }
-
-            for (var k = 0; k <= 3; k++) {
-              if (i + k < lineas.length) {
-                var matchSub = lineas[i + k].match(/(?:TLF[\s:\.]*)?((?:0)?(?:412|424|414|416|426)\d{7})/i);
-                if (matchSub) {
-                  tlfDestinatario = formatearTelefono(matchSub[1]);
-                  break;
-                }
-              }
-            }
-
             if (nombreEncontrado) break;
           }
         }
@@ -245,7 +246,6 @@
           for (var j = 0; j < lineas.length; j++) {
             var lj = lineas[j].trim();
             if (esLineaBasura(lj)) continue;
-
             var limpioFallback = depurarNombre(lj);
             if (limpioFallback.length > 3 && /[a-zA-Z]/.test(limpioFallback) && !esLineaBasura(limpioFallback)) {
               nombreEncontrado = limpioFallback;
@@ -254,24 +254,15 @@
           }
         }
 
+        // ASIGNAR NOMBRE REAL
         if (nombreEncontrado) {
           document.getElementById("nombre").value = nombreEncontrado;
         }
 
-        // 3. ASIGNAR TELÉFONO
-        if (tlfDestinatario) {
-          document.getElementById("telefono").value = tlfDestinatario;
-        } else {
-          var textoSinRemitente = text.replace(/REMITENTE[\s\S]*?ORIGEN/gi, "");
-          var matchTelfs = textoSinRemitente.match(/(?:58|0)?(412|424|414|416|426)\d{7}\b/g) || [];
-          if (matchTelfs.length > 0) {
-            document.getElementById("telefono").value = formatearTelefono(matchTelfs[0]);
-          } else {
-            document.getElementById("telefono").value = "";
-          }
-        }
+        // ASIGNAR TELÉFONO REAL (Valor de texto negro en el campo)
+        document.getElementById("telefono").value = tlfEncontrado ? tlfEncontrado : "";
 
-        // 4. EXTRAER TRACKING / GUÍA
+        // 4. EXTRAER TRACKING
         var trackingEncontrado = "";
         for (var k = 0; k < lineas.length; k++) {
           var lk = lineas[k].toUpperCase();
@@ -285,9 +276,7 @@
         }
         
         if (!trackingEncontrado) {
-          var telfActual = document.getElementById("telefono").value;
-          var numTelfPuro = telfActual ? telfActual.replace("58", "") : "";
-
+          var numTelfPuro = tlfEncontrado ? tlfEncontrado.replace("58", "") : "";
           var todosNumeros = text.match(/\b\d{7,20}\b/g) || [];
           for (var n = 0; n < todosNumeros.length; n++) {
             if (numTelfPuro && todosNumeros[n].indexOf(numTelfPuro) !== -1) {
