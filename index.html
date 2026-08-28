@@ -85,13 +85,12 @@
       if (t.indexOf("ORIGEN") !== -1) return true;
       if (t.indexOf("COBRO EN DESTINO") !== -1) return true;
       if (t.indexOf("CONTRA REEMBOLSO") !== -1) return true;
-      if (t.indexOf("DESTINO:") !== -1) return true; // Ignorar explícitamente "DESTINO:"
+      if (t.indexOf("DESTINO:") !== -1) return true;
       return false;
     }
 
     function depurarNombre(txt) {
       var resultado = txt;
-      // Quitamos etiquetas de campo
       resultado = resultado.replace(/DESTINATARIO/gi, "");
       resultado = resultado.replace(/DESTINO:/gi, "");
       resultado = resultado.replace(/DATOS DEL/gi, "");
@@ -99,18 +98,13 @@
       resultado = resultado.replace(/RECEPTOR/gi, "");
       resultado = resultado.replace(/NOMBRE/gi, "");
       resultado = resultado.replace(/CLIENTE/gi, "");
-      resultado = resultado.replace(/DEST:/gi, ""); // Quita "DEST:" de MRW
+      resultado = resultado.replace(/DEST:/gi, "");
       resultado = resultado.replace(/AGENCIA/gi, "");
       resultado = resultado.replace(/OFICINA/gi, "");
 
-      // Quitar teléfonos que vengan en la misma línea
       resultado = resultado.replace(/TLF[\s:\.]*\d+/gi, "");
       resultado = resultado.replace(/\b(?:0)?(412|424|414|416|426)\d{7}\b/g, "");
-
-      // Quitar cédulas / RIF (ej: V-14210502)
       resultado = resultado.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "");
-
-      // Limpieza de símbolos sobrantes
       resultado = resultado.replace(/[:\.\-]/g, "");
       return resultado.trim();
     }
@@ -146,7 +140,7 @@
         else if (tUpper.indexOf("MRW") !== -1) document.getElementById("empresa").value = "MRW";
         else if (tUpper.indexOf("LIBERTY") !== -1) document.getElementById("empresa").value = "Liberty Express";
 
-        // 2. EXTRAER DESTINATARIO Y SU TELÉFONO
+        // 2. EXTRAER DESTINATARIO Y SU TELÉFONO (Especial MRW)
         var nombreEncontrado = "";
         var tlfDestinatario = "";
 
@@ -156,16 +150,28 @@
 
           if (esLineaBasura(l)) continue;
 
-          // En MRW buscamos "DEST:" exactamente o términos equivalentes
+          // Si encontramos la línea del destinatario (DEST: o DESTINATARIO)
           if (lUpper.indexOf("DEST:") !== -1 || lUpper.indexOf("DESTINATARIO") !== -1 || lUpper.indexOf("CLIENTE") !== -1 || lUpper.indexOf("CONSIGNA") !== -1) {
             
+            // A) Buscar teléfono en esta misma línea
             var matchTelfLinea = l.match(/(?:TLF[\s:\.]*)?((?:0)?(?:412|424|414|416|426)\d{7})/i);
             if (matchTelfLinea) {
               tlfDestinatario = formatearTelefono(matchTelfLinea[1]);
+            } else {
+              // B) Si no estaba en la misma línea, revisar las 2 líneas siguientes por si el TLF está justo debajo (Caso MRW)
+              for (var sub = 1; sub <= 2; sub++) {
+                if (i + sub < lineas.length) {
+                  var sigLinea = lineas[i + sub].trim();
+                  var matchSub = sigLinea.match(/(?:TLF[\s:\.]*)?((?:0)?(?:412|424|414|416|426)\d{7})/i);
+                  if (matchSub) {
+                    tlfDestinatario = formatearTelefono(matchSub[1]);
+                    break;
+                  }
+                }
+              }
             }
 
             var limpio = depurarNombre(l);
-
             if (limpio.length > 2 && !esLineaBasura(limpio)) {
               nombreEncontrado = limpio;
               break;
@@ -173,7 +179,7 @@
           }
         }
 
-        // Respaldo por Cédula si no traía etiqueta limpia
+        // Respaldo por Cédula (V-XXXXX) si no halló la etiqueta DEST:
         if (!nombreEncontrado) {
           for (var j = 0; j < lineas.length; j++) {
             var lj = lineas[j].trim();
@@ -204,11 +210,11 @@
         if (tlfDestinatario) {
           document.getElementById("telefono").value = tlfDestinatario;
         } else {
-          // Si no vino en la misma línea, buscar un teléfono que NO sea el de la agencia/remitente si es posible
-          var matchTelfs = text.match(/(?:58|0)?(412|424|414|416|426)\d{7}\b/g) || [];
+          // Búsqueda general omitiendo la parte superior (remitente)
+          var textoSinRemitente = text.replace(/REMITENTE[\s\S]*?ORIGEN/gi, "");
+          var matchTelfs = textoSinRemitente.match(/(?:58|0)?(412|424|414|416|426)\d{7}\b/g) || [];
           if (matchTelfs.length > 0) {
-            // Se selecciona preferiblemente el último teléfono de la sección superior o el que encaje
-            document.getElementById("telefono").value = formatearTelefono(matchTelfs[matchTelfs.length - 1]);
+            document.getElementById("telefono").value = formatearTelefono(matchTelfs[0]);
           }
         }
 
