@@ -157,7 +157,7 @@
       if (unicas.length === 2) {
         var p0 = unicas[0].toUpperCase();
         var p1 = unicas[1].toUpperCase();
-        var nombresComunes = ["ANDREINA", "RICARDO", "CARLOS", "MARIA", "JOSE", "LUIS", "ANA", "PEDRO", "JUAN", "SOFIA", "HAYDEE"];
+        var nombresComunes = ["ANDREINA", "RICARDO", "CARLOS", "MARIA", "JOSE", "LUIS", "ANA", "PEDRO", "JUAN", "SOFIA", "HAYDEE", "DAYANA"];
         if (nombresComunes.indexOf(p1) !== -1 && nombresComunes.indexOf(p0) === -1) {
           unicas = [unicas[1], unicas[0]];
         }
@@ -202,16 +202,24 @@
 
         document.getElementById("empresa").value = empresaDetectada;
 
-        // 2. EXTRAER TELÉFONO (SÓLO PREFIJOS VENEZOLANOS VÁLIDOS)
+        // 2. EXTRAER TELÉFONO (IGNORA EL PRIMER TELÉFONO QUE ES DE LA AGENCIA/REMITENTE)
         var tlfEncontrado = "";
         var matchTelf = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/g);
+        
         if (matchTelf && matchTelf.length > 0) {
+          var telefonosValidos = [];
           for (var m = 0; m < matchTelf.length; m++) {
             var tValido = formatearTelefonoStrict(matchTelf[m]);
             if (tValido) {
-              tlfEncontrado = tValido;
-              break;
+              telefonosValidos.push(tValido);
             }
+          }
+          
+          // Si hay más de un teléfono, tomamos el último (el del destinatario)
+          if (telefonosValidos.length > 1) {
+            tlfEncontrado = telefonosValidos[telefonosValidos.length - 1];
+          } else if (telefonosValidos.length === 1) {
+            tlfEncontrado = telefonosValidos[0];
           }
         }
         document.getElementById("telefono").value = tlfEncontrado;
@@ -269,7 +277,6 @@
           if (matchMrw && matchMrw[1]) {
             trackingEncontrado = matchMrw[1];
           } else {
-            // Buscar número largo típico de MRW (12 a 18 dígitos)
             var numLargoMrw = text.match(/\b\d{12,18}\b/g);
             if (numLargoMrw && numLargoMrw.length > 0) {
               trackingEncontrado = numLargoMrw[0];
@@ -301,7 +308,7 @@
           }
         } 
         else {
-          // BLOQUE TEALCA / OTROS (General)
+          // BLOQUE TEALCA / OTROS
           for (var k2 = 0; k2 < lineas.length; k2++) {
             var lk2 = lineas[k2].toUpperCase();
             if (lk2.indexOf("TRACKING") !== -1 || lk2.indexOf("GUIA") !== -1 || lk2.indexOf("GUÍA") !== -1 || lk2.indexOf("DOC") !== -1 || lk2.indexOf("NRO") !== -1) {
