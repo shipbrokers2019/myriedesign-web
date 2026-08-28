@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V34</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V35</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -106,58 +106,16 @@
         document.getElementById("empresa").value = empresaDetectada;
 
         // ========================================================
-        // BLOQUE 1: MRW (BLINDADO: IGNORA ABSOLUTAMENTE EL PRIMER TELÉFONO DE ARRIBA)
+        // BLOQUE 1: MRW (ESTRICTO: TELÉFONO EN LA MISMA LÍNEA DEL DESTINATARIO)
         // ========================================================
         if (empresaDetectada === "MRW") {
           var lineas = text.split("\n");
           
-          // Teléfono MRW: Buscar solo en líneas que contengan DEST, DESTINATARIO o TLF posterior al remitente
-          var tlfEncontrado = "";
-          var seccionDestinatarioIniciada = false;
-
-          for (var idx = 0; idx < lineas.length; idx++) {
-            var lLine = lineas[idx];
-            var lLineUp = lLine.toUpperCase();
-
-            // Detectamos dónde empieza la zona del destinatario para ignorar la cabecera (remitente)
-            if (lLineUp.indexOf("DEST") !== -1 || lLineUp.indexOf("DESTINATARIO") !== -1) {
-              seccionDestinatarioIniciada = true;
-            }
-
-            // Si ya estamos en la zona del destinatario o la línea tiene explícitamente TLF
-            if (seccionDestinatarioIniciada || lLineUp.indexOf("TLF") !== -1 || lLineUp.indexOf("DEST") !== -1) {
-              var matchLineaTlf = lLine.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
-              if (matchLineaTlf) {
-                var tVal = formatearTelefonoStrict(matchLineaTlf[0]);
-                if (tVal) {
-                  tlfEncontrado = tVal;
-                  break;
-                }
-              }
-            }
-          }
-
-          // Si por alguna razón no lo halló con la marca DEST, buscamos todos pero forzamos a tomar el último (el del destinatario abajo) o descartar el primero
-          if (!tlfEncontrado) {
-            var todosT = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/g);
-            if (todosT && todosT.length > 1) {
-              tlfEncontrado = formatearTelefonoStrict(todosT[todosT.length - 1]); // Toma el último del bloque, ignorando el de arriba
-            } else if (todosT && todosT.length === 1) {
-              // Si solo hay uno en todo el texto, evaluamos si está muy arriba (remitente) o abajo. Si está arriba, lo dejamos en blanco para evitar errores.
-              // Pero por seguridad en MRW siempre hay dos (remitente y destinatario).
-              var idxRemitente = text.indexOf("REMITENTE");
-              var idxTlf = text.indexOf(todosT[0]);
-              if (idxRemitente !== -1 && idxTlf < idxRemitente + 30) {
-                tlfEncontrado = ""; // Es el del remitente, se descarta
-              } else {
-                tlfEncontrado = formatearTelefonoStrict(todosT[0]);
-              }
-            }
-          }
-          document.getElementById("telefono").value = tlfEncontrado;
-
-          // Destinatario MRW
           var nombreEncontrado = "";
+          var lineaDelNombre = "";
+          var indiceLineaNombre = -1;
+
+          // Paso 1: Encontrar el nombre y la línea exacta donde está
           for (var i = 0; i < lineas.length; i++) {
             var l = lineas[i].trim();
             var lUpper = l.toUpperCase();
@@ -165,6 +123,8 @@
               var limpioMisma = depurarNombreMRW(l);
               if (limpioMisma.length > 2 && !esBasuraMRW(limpioMisma)) {
                 nombreEncontrado = limpioMisma;
+                lineaDelNombre = l;
+                indiceLineaNombre = i;
               } else {
                 for (var sub = 1; sub <= 2; sub++) {
                   if (i + sub < lineas.length) {
@@ -173,6 +133,8 @@
                     var limpioSig = depurarNombreMRW(sigLinea);
                     if (limpioSig.length > 2 && !esBasuraMRW(limpioSig)) {
                       nombreEncontrado = limpioSig;
+                      lineaDelNombre = sigLinea;
+                      indiceLineaNombre = i + sub;
                       break;
                     }
                   }
@@ -181,6 +143,7 @@
               if (nombreEncontrado) break;
             }
           }
+
           if (!nombreEncontrado) {
             for (var j = 0; j < lineas.length; j++) {
               var lj = lineas[j].trim();
@@ -188,13 +151,40 @@
               var limpioFallback = depurarNombreMRW(lj);
               if (limpioFallback.length > 3 && /[a-zA-Z]/.test(limpioFallback) && !esBasuraMRW(limpioFallback)) {
                 nombreEncontrado = limpioFallback;
+                lineaDelNombre = lj;
+                indiceLineaNombre = j;
                 break;
               }
             }
           }
-          if (nombreEncontrado) document.getElementById("nombre").value = nombreEncontrado;
 
-          // Tracking MRW
+          if (nombreEncontrado) {
+            document.getElementById("nombre").value = nombreEncontrado;
+          }
+
+          // Paso 2: Extraer el teléfono ESTRICTAMENTE de la misma línea del nombre o su bloque inmediato
+          var tlfEncontrado = "";
+          
+          // Buscamos primero en la línea exacta del nombre o la línea de abajo inmediata si el teléfono está allí
+          var lineasAEvaluar = [lineaDelNombre];
+          if (indiceLineaNombre !== -1 && indiceLineaNombre + 1 < lineas.length) {
+            lineasAEvaluar.push(lineas[indiceLineaNombre + 1]);
+          }
+
+          for (var ev = 0; ev < lineasAEvaluar.length; ev++) {
+            var matchT = lineasAEvaluar[ev].match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
+            if (matchT) {
+              var tVal = formatearTelefonoStrict(matchT[0]);
+              if (tVal) {
+                tlfEncontrado = tVal;
+                break;
+              }
+            }
+          }
+
+          document.getElementById("telefono").value = tlfEncontrado;
+
+          // Paso 3: Tracking MRW
           var trackingEncontrado = "";
           for (var k = 0; k < lineas.length; k++) {
             var lk = lineas[k].toUpperCase();
