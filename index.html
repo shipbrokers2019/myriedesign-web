@@ -9,7 +9,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V22</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos (MRW Perfecto)</h2>
     
     <!-- Selector de Empresa -->
     <div>
@@ -99,10 +99,10 @@
         var nombreEncontrado = "";
 
         // ========================================================
-        // 1. LÓGICA AISLADA PARA MRW
+        // 1. LÓGICA DE MRW (La que funcionaba perfecto)
         // ========================================================
         if (empresa === "MRW") {
-          // A. Tracking: Número puro largo (de 8 a 20 dígitos)
+          // A. Tracking: Buscar número de 8 a 20 dígitos
           for (var k = 0; k < lineas.length; k++) {
             var lk = lineas[k].toUpperCase();
             if (lk.indexOf("TRACKING") !== -1 || lk.indexOf("GUIA") !== -1 || lk.indexOf("N°") !== -1) {
@@ -121,12 +121,11 @@
             tlfEncontrado = formatearTelefonoStrict(matchTelfGeneral[0]);
           }
 
-          // C. Destinatario (Busca de forma estricta la etiqueta DEST:)
+          // C. Destinatario exacto con la etiqueta DEST o DESTINO
           for (var i = 0; i < lineas.length; i++) {
             var lUp = lineas[i].toUpperCase();
-            // Validar que sea una línea de destino real y que NO sea "COBRO EN DESTINO"
-            if ((lUp.indexOf("DEST") !== -1 || lUp.indexOf("DESTINATARIO") !== -1) && lUp.indexOf("COBRO") === -1) {
-              var limpio = lineas[i].replace(/DESTINATARIO[\s\:\-\.]*/i, "");
+            if (lUp.indexOf("DEST") !== -1 || lUp.indexOf("DESTINO") !== -1) {
+              var limpio = lineas[i].replace(/DESTINO[\s\:\-\.]*/i, "");
               limpio = limpio.replace(/DEST[\s\:\-\.]*/i, "");
               limpio = limpio.replace(/DESt[\s\:\-\.]*INO[\s\:\-\.]*/i, "");
               limpio = limpio.replace(/[\s\-\,\.\_\/]+$/, "").trim();
@@ -137,15 +136,10 @@
               }
             }
           }
-
-          // Si el texto pegado no contiene la línea de destino, se queda en blanco para avisar que falta texto
-          if (nombreEncontrado.toUpperCase().indexOf("RETIRAR") !== -1 || nombreEncontrado.length < 3) {
-            nombreEncontrado = "";
-          }
         }
 
         // ========================================================
-        // 2, 3, 4. BLOQUES PARA ZOOM, TEALCA, LAE (Intactos)
+        // 2, 3, 4. BLOQUES PARA ZOOM, TEALCA, LAE
         // ========================================================
         else {
           var matchGen = text.match(/\b\d{8,20}\b/);
@@ -168,10 +162,6 @@
         document.getElementById("tracking").value = trackingEncontrado;
         document.getElementById("telefono").value = tlfEncontrado;
         document.getElementById("nombre").value = nombreEncontrado;
-
-        if (!nombreEncontrado && empresa === "MRW") {
-          alert("El texto copiado no incluye el nombre del destinatario (busca la sección donde dice DEST: en la guía).");
-        }
 
       } catch (e) {
         alert("Error al procesar: " + e.message);
