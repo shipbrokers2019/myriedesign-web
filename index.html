@@ -9,7 +9,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V8</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V9</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -129,31 +129,36 @@
           document.getElementById("tracking").value = trackingEncontrado;
         }
 
-        // --- EXTRACCIÓN Y LIMPIEZA PROFUNDA DE DESTINATARIO ---
+        // --- EXTRACCIÓN Y FILTRADO ULTRA ESTRICTO DE DESTINATARIO ---
         var nombreEncontrado = "";
         for (var i = 0; i < lineas.length; i++) {
           var l = lineas[i];
           var lUp = l.toUpperCase();
           
-          // Ignorar líneas técnicas
-          if (lUp.indexOf("TRACKING") !== -1 || lUp.indexOf("ENSACADO") !== -1 || lUp.indexOf("CANT") !== -1 || lUp.indexOf("BS.") !== -1 || lUp.indexOf("EL TIGRITO") !== -1 || lUp.indexOf("SOCOPO") !== -1) {
+          // Ignorar líneas técnicas, cédulas sueltas, números puros o códigos postales
+          if (
+            lUp.indexOf("TRACKING") !== -1 || 
+            lUp.indexOf("ENSACADO") !== -1 || 
+            lUp.indexOf("CANT") !== -1 || 
+            lUp.indexOf("BS.") !== -1 || 
+            lUp.indexOf("EL TIGRITO") !== -1 || 
+            lUp.indexOf("SOCOPO") !== -1 ||
+            /^[VEJG]-?\d+$/.test(lUp) || // Ignora si es solo cédula (ej: V-641337)
+            lUp.length < 4             // Ignora líneas muy cortas
+          ) {
             continue;
           }
 
-          // Buscar una línea que tenga pinta de nombre (que tenga letras)
-          if (/[A-Z]/.test(lUp)) {
-            var limpio = l;
-            // Remover prefijos molestos
-            limpio = limpio.replace(/^(DEST|DESTINATARIO|CLIENTE|SENOR|SR|SRA)[\s\:\-\.]*/i, "");
-            // Cortar si tiene teléfono pegado
-            limpio = limpio.split(/TLF|TEL|0412|0424|0414|0416|0426/i)[0].trim();
-            // Limpiar guiones, puntos o símbolos volando al final (ej: "V-")
-            limpio = limpio.replace(/[\s\-\,\.\_\/]+$/, "").trim();
+          // Si pasa los filtros, limpiamos prefijos y basura
+          var limpio = l;
+          limpio = limpio.replace(/^(DEST|DESTINATARIO|CLIENTE|SENOR|SR|SRA)[\s\:\-\.]*/i, "");
+          limpio = limpio.split(/TLF|TEL|0412|0424|0414|0416|0426/i)[0].trim();
+          limpio = limpio.replace(/[\s\-\,\.\_\/]+$/, "").trim();
 
-            if (limpio.length > 2) {
-              nombreEncontrado = limpio;
-              break;
-            }
+          // Validar que tenga al menos un espacio (nombre y apellido) o suficientes letras
+          if (limpio.length > 3 && /[A-Z].*\s+[A-Z]/.test(limpio)) {
+            nombreEncontrado = limpio;
+            break;
           }
         }
 
