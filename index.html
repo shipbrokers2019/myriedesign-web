@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V50</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V51</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -125,7 +125,7 @@
 
         var tUpper = text.toUpperCase();
 
-        // Detección precisa de empresa (MRW manda si tiene tracking 03... o palabras clave de MRW)
+        // Detección blindada de empresa
         var empresaDetectada = "MRW";
         if (tUpper.indexOf("TEALCA") !== -1) {
           empresaDetectada = "Tealca";
@@ -138,20 +138,17 @@
         document.getElementById("empresa").value = empresaDetectada;
 
         // ========================================================
-        // BLOQUE 1: MRW
+        // BLOQUE 1: MRW (Protegido e Intacto)
         // ========================================================
         if (empresaDetectada === "MRW") {
           var lineas = text.split("\n");
           var nombreEncontrado = "";
 
-          // Buscar línea de destinatario en MRW evitando direcciones y basura
           for (var i = 0; i < lineas.length; i++) {
             var l = lineas[i].trim();
             var lUpper = l.toUpperCase();
             if (lUpper.indexOf("ESTINAT") !== -1 || lUpper.indexOf("DEST") !== -1 || lUpper.indexOf("CM.") !== -1 || lUpper.indexOf("DIR;") !== -1) {
-              // Si la línea es solo dirección, buscamos en la siguiente o anterior
               if (lUpper.indexOf("DIR;") !== -1 || lUpper.indexOf("CALLE") !== -1 || lUpper.indexOf("AV.") !== -1) continue;
-              
               var limpioMisma = depurarNombreMRW(l);
               if (limpioMisma.length > 2 && !esBasuraMRW(limpioMisma)) {
                 nombreEncontrado = limpioMisma;
@@ -160,7 +157,6 @@
             }
           }
 
-          // Fallback inteligente para MRW si no halló etiqueta explícita
           if (!nombreEncontrado) {
             for (var j = 0; j < lineas.length; j++) {
               var lj = lineas[j].trim();
@@ -177,7 +173,6 @@
             document.getElementById("nombre").value = limpiarNombreFinal(nombreEncontrado);
           }
 
-          // Teléfono MRW
           var tlfEncontrado = "";
           var matchTGlobal = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
           if (matchTGlobal) {
@@ -185,7 +180,6 @@
           }
           document.getElementById("telefono").value = tlfEncontrado;
 
-          // Tracking MRW (busca el número de 15 dígitos o el que acompaña a TRACKING)
           var trackingEncontrado = "";
           for (var k = 0; k < lineas.length; k++) {
             var lk = lineas[k].toUpperCase();
@@ -205,7 +199,7 @@
         }
 
         // ========================================================
-        // BLOQUE 2: ZOOM
+        // BLOQUE 2: ZOOM (Protegido e Intacto)
         // ========================================================
         if (empresaDetectada === "Zoom") {
           var lineasZoom = text.split("\n");
@@ -255,31 +249,68 @@
         }
 
         // ========================================================
-        // BLOQUE 3: TEALCA
+        // BLOQUE 3: TEALCA (Nuevo y Optimizado)
         // ========================================================
         if (empresaDetectada === "Tealca") {
           var lineasTealca = text.split("\n");
+
+          // 1. Tracking Tealca (usualmente tras la palabra GUIA:)
           var trackTealca = "";
           for (var t = 0; t < lineasTealca.length; t++) {
             var lt = lineasTealca[t].toUpperCase();
             if (lt.indexOf("GUIA") !== -1 || lt.indexOf("GUÍA") !== -1) {
-              var mT = lineasTealca[t].match(/\b\d{8,12}\b/);
+              var mT = lineasTealca[t].match(/\b\d{6,10}\b/);
               if (mT) { trackTealca = mT[0]; break; }
+              // Si el número está en la línea siguiente
+              if (t + 1 < lineasTealca.length) {
+                var mTNext = lineasTealca[t + 1].match(/\b\d{6,10}\b/);
+                if (mTNext) { trackTealca = mTNext[0]; break; }
+              }
             }
+          }
+          if (!trackTealca) {
+            var mGenT = text.match(/\b\d{7,8}\b/);
+            if (mGenT) trackTealca = mGenT[0];
           }
           if (trackTealca) document.getElementById("tracking").value = trackTealca;
 
+          // 2. Teléfono Tealca
           var tlfTealca = "";
-          var matchGenT = text.match(/(412|424|414|416|426)\d{7}/);
-          if (matchGenT) tlfTealca = formatearTelefonoStrict(matchGenT[0]);
+          for (var tl = 0; tl < lineasTealca.length; tl++) {
+            var ltlUp = lineasTealca[tl].toUpperCase();
+            if (ltlUp.indexOf("TELEFONO") !== -1 || ltlUp.indexOf("TLF") !== -1) {
+              var mPhone = lineasTealca[tl].match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
+              if (mPhone) {
+                tlfTealca = formatearTelefonoStrict(mPhone[0]);
+                break;
+              } else if (tl + 1 < lineasTealca.length) {
+                var mPhoneNext = lineasTealca[tl + 1].match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
+                if (mPhoneNext) {
+                  tlfTealca = formatearTelefonoStrict(mPhoneNext[0]);
+                  break;
+                }
+              }
+            }
+          }
+          if (!tlfTealca) {
+            var matchGenT = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
+            if (matchGenT) tlfTealca = formatearTelefonoStrict(matchGenT[0]);
+          }
           document.getElementById("telefono").value = tlfTealca;
 
+          // 3. Nombre / Destinatario Tealca (busca la línea NOMBRE)
           var nombreTealca = "";
           for (var tn = 0; tn < lineasTealca.length; tn++) {
-            var ltn = lineasTealca[tn].toUpperCase();
-            if (ltn.indexOf("NOMBRE") !== -1) {
-              nombreTealca = lineasTealca[tn];
-              break;
+            var ltnUp = lineasTealca[tn].toUpperCase();
+            if (ltnUp.indexOf("NOMBRE") !== -1) {
+              var limpiaN = lineasTealca[tn].replace(/NOMBRE[:\s]*/gi, "").trim();
+              if (limpiaN.length > 2) {
+                nombreTealca = limpiaN;
+                break;
+              } else if (tn + 1 < lineasTealca.length) {
+                nombreTealca = lineasTealca[tn + 1].trim();
+                break;
+              }
             }
           }
           if (nombreTealca) {
