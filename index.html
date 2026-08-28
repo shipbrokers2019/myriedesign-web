@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V57</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V59</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -28,7 +28,7 @@
     <form id="guiaForm" class="space-y-3">
       <div>
         <label class="block text-xs font-bold text-gray-700">Destinatario</label>
-        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium">
+        <input type="text" id="nombre" required placeholder="Nombre del cliente" class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium">
       </div>
       
       <div>
@@ -81,54 +81,28 @@
       return "";
     }
 
-    function esNombreValido(txt) {
+    // Filtro estricto que BLOQUEA CUALQUIER TELÉFONO O PALABRA PROHIBIDA
+    function esNombreValidoEstricto(txt) {
       if (!txt || txt.length < 3) return false;
       var tUp = txt.toUpperCase();
+
+      // Si la línea contiene la palabra teléfono, tlf o un número de teléfono, rechazarla de inmediato
+      if (tUp.indexOf("TELEFONO") !== -1 || tUp.indexOf("TLF") !== -1 || tUp.indexOf("CEL") !== -1) return false;
+      if (/(?:\+?58|0)?(412|424|414|416|426)\d{7}/.test(txt)) return false;
+      if (/\d{7,}/.test(txt)) return false; // Rechazar si tiene números largos (como cédulas o tlf)
+
+      var prohibidas = [
+        "VOLUM", "PIEZA", "PESO", "CIUDAD", "DIRECCION", "DIR", "ENTREGA", 
+        "TEALCA", "MRW", "ZOOM", "RETIRO", "TIENDA", "ESTANDAR", "COD", 
+        "FECHA", "ORIGEN", "REMITENTE", "MEDIDAS", "ANACO", "TURMERO", 
+        "AGENCIA", "SUCURSAL", "OFICINA", "PAGAR", "ENVIO"
+      ];
       
-      var prohibidas = ["VOLUM", "PIEZA", "PESO", "CIUDAD", "DIRECCION", "ENTREGA", "TEALCA", "MRW", "ZOOM", "RETIRO", "TIENDA", "ESTANDAR", "COD", "FECHA", "ORIGEN", "REMITENTE", "MEDIDAS", "TELEFONO", "TLF", "ANAACO", "TURMERO"];
       for (var i = 0; i < prohibidas.length; i++) {
         if (tUp.indexOf(prohibidas[i]) !== -1) return false;
       }
-      
-      if (/\b(412|424|414|416|426)\d{7}\b/.test(txt)) return false;
-      if (/\b\d{7,10}\b/.test(txt)) return false;
-      if (/\b[VvEeJjGg][-\s]?\d{6,9}\b/.test(txt)) return false;
 
       return true;
-    }
-
-    function limpiarNombreFinal(txt) {
-      if (!txt) return "";
-      var limpio = txt.replace(/^[a-z]*tinatario[:\s]*/gi, "")
-                        .replace(/^[a-z]*atario[:\s]*/gi, "")
-                        .replace(/^([a-z]{1,5})[:\s]+/gi, "")
-                        .replace(/destinatalio[:\s]*/gi, "")
-                        .replace(/destinatario[:\s]*/gi, "")
-                        .replace(/destinatio[:\s]*/gi, "")
-                        .replace(/destinat[:\s]*/gi, "")
-                        .replace(/destin[:\s]*/gi, "")
-                        .replace(/alario[:\s]*/gi, "")
-                        .replace(/lario[:\s]*/gi, "");
-      
-      if (limpio.indexOf("-") !== -1) {
-        limpio = limpio.split("-")[0].trim();
-      }
-
-      limpio = limpio.replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "").trim();
-
-      var palabras = limpio.split(/\s+/);
-      if (palabras.length >= 4) {
-        for (var tam = Math.floor(palabras.length / 2); tam >= 2; tam--) {
-          var parte1 = palabras.slice(0, tam).join(" ").toUpperCase();
-          var parte2 = palabras.slice(tam, tam * 2).join(" ").toUpperCase();
-          if (parte1 === parte2) {
-            limpio = palabras.slice(0, tam).join(" ");
-            break;
-          }
-        }
-      }
-
-      return limpio.trim();
     }
 
     function procesarTextoGuia() {
@@ -152,76 +126,64 @@
 
         document.getElementById("empresa").value = empresaDetectada;
 
+        // Limpiar campos antes de llenar
+        document.getElementById("nombre").value = "";
+        document.getElementById("telefono").value = "";
+        document.getElementById("tracking").value = "";
+
+        var lineas = text.split("\n");
+
         // ========================================================
-        // BLOQUE 1: MRW (Protegido e Intacto)
+        // EXTRACCIÓN DE TELÉFONO GENERAL (Seguro para todas)
+        // ========================================================
+        var matchTGlobal = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
+        if (matchTGlobal) {
+          document.getElementById("telefono").value = formatearTelefonoStrict(matchTGlobal[0]);
+        }
+
+        // ========================================================
+        // BLOQUE 1: MRW
         // ========================================================
         if (empresaDetectada === "MRW") {
-          var lineas = text.split("\n");
           var nombreEncontrado = "";
-
           for (var i = 0; i < lineas.length; i++) {
             var l = lineas[i].trim();
             var lUpper = l.toUpperCase();
-            if (lUpper.indexOf("ESTINAT") !== -1 || lUpper.indexOf("DEST") !== -1 || lUpper.indexOf("CM.") !== -1 || lUpper.indexOf("DIR;") !== -1) {
-              if (lUpper.indexOf("DIR;") !== -1 || lUpper.indexOf("CALLE") !== -1 || lUpper.indexOf("AV.") !== -1) continue;
+            if (lUpper.indexOf("ESTINAT") !== -1 || lUpper.indexOf("DEST") !== -1) {
               var limpioMisma = depurarNombreMRW(l);
-              if (limpioMisma.length > 2 && !esBasuraMRW(limpioMisma)) {
+              if (esNombreValidoEstricto(limpioMisma)) {
                 nombreEncontrado = limpioMisma;
                 break;
               }
             }
           }
-
-          if (!nombreEncontrado) {
-            for (var j = 0; j < lineas.length; j++) {
-              var lj = lineas[j].trim();
-              if (esBasuraMRW(lj)) continue;
-              var limpioFallback = depurarNombreMRW(lj);
-              if (limpioFallback.length > 3 && /[a-zA-Z]/.test(limpioFallback) && !esBasuraMRW(limpioFallback) && limpioFallback.indexOf("DIR;") === -1 && limpioFallback.indexOf("CALLE") === -1) {
-                nombreEncontrado = limpioFallback;
-                break;
-              }
-            }
-          }
-
           if (nombreEncontrado) {
             document.getElementById("nombre").value = limpiarNombreFinal(nombreEncontrado);
           }
 
-          var tlfEncontrado = "";
-          var matchTGlobal = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
-          if (matchTGlobal) {
-            tlfEncontrado = formatearTelefonoStrict(matchTGlobal[0]);
-          }
-          document.getElementById("telefono").value = tlfEncontrado;
-
           var trackingEncontrado = "";
           for (var k = 0; k < lineas.length; k++) {
             var lk = lineas[k].toUpperCase();
-            if (lk.indexOf("TRACKING") !== -1 || lk.indexOf("GUIA") !== -1 || lk.indexOf("GUÍA") !== -1 || lk.indexOf("DOC") !== -1 || lk.indexOf("NRO") !== -1) {
+            if (lk.indexOf("TRACKING") !== -1 || lk.indexOf("GUIA") !== -1 || lk.indexOf("DOC") !== -1 || lk.indexOf("NRO") !== -1) {
               var mTrackL = lineas[k].match(/\b\d{10,15}\b/);
               if (mTrackL) { trackingEncontrado = mTrackL[0]; break; }
             }
           }
           if (!trackingEncontrado) {
             var todosNumeros = text.match(/\b\d{10,15}\b/g) || [];
-            if (todosNumeros.length > 0) {
-              trackingEncontrado = todosNumeros[0];
-            }
+            if (todosNumeros.length > 0) trackingEncontrado = todosNumeros[0];
           }
           if (trackingEncontrado) document.getElementById("tracking").value = trackingEncontrado;
           return;
         }
 
         // ========================================================
-        // BLOQUE 2: ZOOM (Protegido e Intacto)
+        // BLOQUE 2: ZOOM
         // ========================================================
         if (empresaDetectada === "Zoom") {
-          var lineasZoom = text.split("\n");
-          
           var trackZoom = "";
-          for (var z = 0; z < lineasZoom.length; z++) {
-            var mZ = lineasZoom[z].match(/\b\d{10}\b/);
+          for (var z = 0; z < lineas.length; z++) {
+            var mZ = lineas[z].match(/\b\d{10}\b/);
             if (mZ) { trackZoom = mZ[0]; break; }
           }
           if (!trackZoom) {
@@ -229,55 +191,22 @@
             if (mGenZ) trackZoom = mGenZ[0];
           }
           if (trackZoom) document.getElementById("tracking").value = trackZoom;
-
-          var nombreZoom = "";
-          for (var iz = 0; iz < lineasZoom.length; iz++) {
-            var lzUp = lineasZoom[iz].toUpperCase();
-            if (lzUp.indexOf("DESTINAT") !== -1 || lzUp.indexOf("DESTINATALIO") !== -1 || lzUp.indexOf("DESTINATIO") !== -1 || lzUp.indexOf("BESTINATARIO") !== -1) {
-              nombreZoom = lineasZoom[iz];
-              break;
-            }
-          }
-
-          if (!nombreZoom) {
-            for (var rx = 0; rx < lineasZoom.length; rx++) {
-              var lRx = lineasZoom[rx].trim();
-              var lRxUp = lRx.toUpperCase();
-              if (lRxUp.indexOf("REMITENTE") !== -1 || lRxUp.indexOf("ZOOM") !== -1 || lRxUp.indexOf("MER") !== -1 || lRxUp.indexOf("BISUTERIA") !== -1 || lRxUp.indexOf("BIGUTERIA") !== -1 || lRxUp.indexOf("COD") !== -1 || lRxUp.length < 4) continue;
-              if (/\d/.test(lRx)) continue;
-              nombreZoom = lRx;
-              break;
-            }
-          }
-
-          if (nombreZoom) {
-            document.getElementById("nombre").value = limpiarNombreFinal(nombreZoom);
-          }
-
-          var tlfZoom = "";
-          var matchGenTz = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/g);
-          if (matchGenTz && matchGenTz.length > 0) {
-            tlfZoom = formatearTelefonoStrict(matchGenTz[matchGenTz.length - 1]);
-          }
-          document.getElementById("telefono").value = tlfZoom;
           return;
         }
 
         // ========================================================
-        // BLOQUE 3: TEALCA (Búsqueda inteligente optimizada)
+        // BLOQUE 3: TEALCA
         // ========================================================
         if (empresaDetectada === "Tealca") {
-          var lineasTealca = text.split("\n");
-
           // 1. Tracking Tealca
           var trackTealca = "";
-          for (var t = 0; t < lineasTealca.length; t++) {
-            var lt = lineasTealca[t].toUpperCase();
+          for (var t = 0; t < lineas.length; t++) {
+            var lt = lineas[t].toUpperCase();
             if (lt.indexOf("GUIA") !== -1 || lt.indexOf("GUÍA") !== -1) {
-              var mT = lineasTealca[t].match(/\b\d{7,8}\b/);
+              var mT = lineas[t].match(/\b\d{7,8}\b/);
               if (mT) { trackTealca = mT[0]; break; }
-              if (t + 1 < lineasTealca.length) {
-                var mTNext = lineasTealca[t + 1].match(/\b\d{7,8}\b/);
+              if (t + 1 < lineas.length) {
+                var mTNext = lineas[t + 1].match(/\b\d{7,8}\b/);
                 if (mTNext) { trackTealca = mTNext[0]; break; }
               }
             }
@@ -294,69 +223,21 @@
           }
           if (trackTealca) document.getElementById("tracking").value = trackTealca;
 
-          // 2. Teléfono Tealca
-          var tlfTealca = "";
-          for (var tl = 0; tl < lineasTealca.length; tl++) {
-            var ltlUp = lineasTealca[tl].toUpperCase();
-            if (ltlUp.indexOf("TELEFONO") !== -1 || ltlUp.indexOf("TLF") !== -1) {
-              var mPhone = lineasTealca[tl].match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
-              if (mPhone) {
-                tlfTealca = formatearTelefonoStrict(mPhone[0]);
-                break;
-              } else if (tl + 1 < lineasTealca.length) {
-                var mPhoneNext = lineasTealca[tl + 1].match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
-                if (mPhoneNext) {
-                  tlfTealca = formatearTelefonoStrict(mPhoneNext[0]);
-                  break;
-                }
-              }
-            }
-          }
-          if (!tlfTealca) {
-            var matchGenT = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
-            if (matchGenT) tlfTealca = formatearTelefonoStrict(matchGenT[0]);
-          }
-          document.getElementById("telefono").value = tlfTealca;
-
-          // 3. Nombre Tealca (Búsqueda mejorada)
+          // 2. Nombre Tealca (Búsqueda línea por línea descartando basura y teléfonos)
           var nombreTealca = "";
-          for (var tn = 0; tn < lineasTealca.length; tn++) {
-            var ltn = lineasTealca[tn].trim();
-            var ltnUp = ltn.toUpperCase();
-            
-            if (ltnUp.indexOf("V-") !== -1 || ltnUp.indexOf("E-") !== -1 || ltnUp.indexOf("J-") !== -1 || ltnUp.indexOf("CEDULA") !== -1 || ltnUp.indexOf("CÉDULA") !== -1) {
-              if (tn - 1 >= 0) {
-                var prevLin = lineasTealca[tn - 1].trim();
-                if (esNombreValido(prevLin)) {
-                  nombreTealca = prevLin;
-                  break;
-                }
-              }
-              if (tn + 1 < lineasTealca.length) {
-                var sigLin = lineasTealca[tn + 1].trim();
-                if (esNombreValido(sigLin)) {
-                  nombreTealca = sigLin;
-                  break;
-                }
-              }
-            }
-          }
-
-          if (!nombreTealca) {
-            for (var fx = 0; fx < lineasTealca.length; fx++) {
-              var lfx = lineasTealca[fx].trim();
-              if (esNombreValido(lfx)) {
-                nombreTealca = lfx;
-                break;
-              }
+          for (var tn = 0; tn < lineas.length; tn++) {
+            var ltn = lineas[tn].trim();
+            if (esNombreValidoEstricto(ltn)) {
+              nombreTealca = ltn;
+              break;
             }
           }
 
           if (nombreTealca) {
             document.getElementById("nombre").value = limpiarNombreFinal(nombreTealca);
           } else {
+            // Si el texto copiado solo contiene ciudad/dirección/teléfono, el campo queda listo para escribir
             document.getElementById("nombre").value = "";
-            alert("⚠️ Atención: En esta selección falta el nombre. Intenta abarcar un poquito más arriba con Google Lens para capturar el nombre del cliente.");
           }
           return;
         }
@@ -366,22 +247,23 @@
       }
     }
 
-    function esBasuraMRW(texto) {
-      var t = texto.toUpperCase().trim();
-      if (!t) return true;
-      if (t === "MRW" || t.indexOf("V-") !== -1 || t.indexOf("E-") !== -1) return true;
-      if (t.indexOf("RETIRAR POR") !== -1 || t.indexOf("OFICIN") !== -1 || t.indexOf("ENSACADO") !== -1 || t.indexOf("CUPONES") !== -1) return true;
-      if (t.indexOf("DIRECCION") !== -1 || t.indexOf("REMITENTE") !== -1 || t.indexOf("COBRO EN DESTINO") !== -1) return true;
-      if (t.indexOf("RIF") !== -1 || t.indexOf("COD.SEG") !== -1 || t.indexOf("BSUTERIA") !== -1 || t.indexOf("BISUTERIA") !== -1 || t.indexOf("BIGUTERIA") !== -1) return true;
-      if (t.indexOf("TRACKING") !== -1 || t.indexOf("BS.") !== -1) return true;
-      return false;
+    function limpiarNombreFinal(txt) {
+      if (!txt) return "";
+      var limpio = txt.replace(/^[a-z]*tinatario[:\s]*/gi, "")
+                        .replace(/^[a-z]*atario[:\s]*/gi, "")
+                        .replace(/^([a-z]{1,5})[:\s]+/gi, "")
+                        .replace(/destinatalio[:\s]*/gi, "")
+                        .replace(/destinatario[:\s]*/gi, "");
+      
+      if (limpio.indexOf("-") !== -1) {
+        limpio = limpio.split("-")[0].trim();
+      }
+      return limpio.replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "").trim();
     }
 
     function depurarNombreMRW(txt) {
       var resultado = txt.replace(/^[\|\/\\\,\.\-_\:\;\s\d]+/g, "");
-      resultado = resultado.replace(/destinatario[\s:]*/gi, "").replace(/\bDESTINO\b[:]?/gi, "").replace(/\bDEST\b[\s:]*/gi, "");
-      resultado = resultado.replace(/\b[VvEeJjGg][-\s]?\d{6,9}\b/g, "");
-      resultado = resultado.replace(/TLF[\s:\.]*\d+/gi, "").replace(/\b(?:0)?(412|424|414|416|426)\d{7}\b/g, "").replace(/[:\.\-]/g, " ");
+      resultado = resultado.replace(/destinatario[\s:]*/gi, "").replace(/\bDESTINO\b[:]?/gi, "");
       return resultado.trim();
     }
 
