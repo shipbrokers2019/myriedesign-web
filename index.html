@@ -81,9 +81,18 @@
       return "";
     }
 
+    function esDireccionOBasura(txt) {
+      var t = txt.toUpperCase();
+      var palabrasClave = ["CALLE", "CARRERA", "AVENIDA", "AV", "URB", "URBANIZACION", "SECTOR", "LOCAL", "LOCALIDAD", "EDIF", "EDIFICIO", "PISO", "APTO", "APARTAMENTO", "CRUCE", "VEREDA", "ZONA", "ESQUINA", "FRENTE", "TRAS", "DETRAS", "CC", "CENTRO COMERCIAL", "CUPONES", "ENEACADO", "ENSACADO", "CARACAD", "SOCOPO", "VALENCIA", "CARACAS", "BARCELONA", "TRACKING", "REWENTE", "RENTENTE", "REMITENTE"];
+      for (var i = 0; i < palabrasClave.length; i++) {
+        if (t.indexOf(palabrasClave[i]) !== -1) return true;
+      }
+      return false;
+    }
+
     function limpiarNombreComun(txt) {
       var res = txt.toUpperCase();
-      var basuras = ["REMITENTE", "RENTENTE", "DESTINATARIO", "DESTINALARIO", "CLIENTE", "NOMBRE", "DIRECCION", "DIR", "VALENCIA", "CARACAS", "SOCOPO", "BARCELONA", "ZOOM", "MRW", "TEALCA", "ENSACADO", "CANT", "CUPONES", "TRACKING"];
+      var basuras = ["REMITENTE", "RENTENTE", "REWENTE", "DESTINATARIO", "DESTINALARIO", "CLIENTE", "NOMBRE", "DIRECCION", "DIR", "VALENCIA", "CARACAS", "SOCOPO", "BARCELONA", "ZOOM", "MRW", "TEALCA", "ENSACADO", "ENEACADO", "CANT", "CUPONES", "TRACKING"];
       for (var i = 0; i < basuras.length; i++) {
         res = res.split(basuras[i]).join("");
       }
@@ -94,105 +103,21 @@
       return res;
     }
 
-    // --- MÓDULO INDEPENDIENTE ZOOM ---
-    function procesarZoom(text, lineas) {
-      document.getElementById("empresa").value = "Zoom";
-
-      var trackingEncontrado = "";
+    function buscarTrackingGeneral(text, lineas) {
       for (var k = 0; k < lineas.length; k++) {
         var lk = lineas[k].toUpperCase();
         if (lk.indexOf("TRACKING") !== -1 || lk.indexOf("GUIA") !== -1) {
-          var m = lineas[k].match(/\b\d{8,15}\b/);
-          if (m) { trackingEncontrado = m[0]; break; }
+          var m = lineas[k].match(/\b\d{10}\b/) || lineas[k].match(/\b\d{8,15}\b/);
+          if (m) return m[0];
         }
       }
-      if (!trackingEncontrado) {
-        var matchDirecto = text.match(/\b03\d{10}\b/);
-        if (matchDirecto) trackingEncontrado = matchDirecto[0];
-      }
-      if (trackingEncontrado) document.getElementById("tracking").value = trackingEncontrado;
+      var matchDiez = text.match(/\b\d{10}\b/);
+      if (matchDiez) return matchDiez[0];
 
-      var nombreEncontrado = "";
-      for (var i = 0; i < lineas.length; i++) {
-        var l = lineas[i].toUpperCase();
-        if (l.indexOf("DESTINATARIO") !== -1 || l.indexOf("DEST:") !== -1 || l.indexOf("CLIENTE") !== -1) {
-          if (i + 1 < lineas.length) {
-            var candidato = limpiarNombreComun(lineas[i + 1]);
-            if (candidato.length > 3) { nombreEncontrado = candidato; break; }
-          }
-        }
-      }
-
-      if (!nombreEncontrado) {
-        for (var j = 0; j < lineas.length; j++) {
-          var lj = lineas[j];
-          var ljUp = lj.toUpperCase();
-          if (ljUp.indexOf("TRACKING") !== -1 || ljUp.indexOf("CUPONES") !== -1 || ljUp.indexOf("ENSACADO") !== -1 || ljUp.indexOf("SOCOPO") !== -1 || ljUp.indexOf("CARACAS") !== -1 || ljUp.indexOf("VALENCIA") !== -1 || /\d/.test(lj)) {
-            continue;
-          }
-          var limpio = limpiarNombreComun(lj);
-          if (limpio.length > 3 && /[a-zA-Z]/.test(limpio)) {
-            nombreEncontrado = limpio;
-            break;
-          }
-        }
-      }
-
-      if (nombreEncontrado) document.getElementById("nombre").value = nombreEncontrado;
+      var matchGen = text.match(/\b\d{8,15}\b/);
+      return matchGen ? matchGen[0] : "";
     }
 
-    // --- MÓDULO INDEPENDIENTE MRW (Actualizado para este formato) ---
-    function procesarMRW(text, lineas) {
-      document.getElementById("empresa").value = "MRW";
-
-      // 1. Tracking MRW (Busca la línea con TRACKING o extrae el número largo de 11+ dígitos)
-      var trackingEncontrado = "";
-      for (var k = 0; k < lineas.length; k++) {
-        var lk = lineas[k].toUpperCase();
-        if (lk.indexOf("TRACKING") !== -1) {
-          var m = lineas[k].match(/\b\d{10,20}\b/);
-          if (m) { trackingEncontrado = m[0]; break; }
-        }
-      }
-      if (!trackingEncontrado) {
-        var matchNums = text.match(/\b\d{11,18}\b/g);
-        if (matchNums && matchNums.length > 0) trackingEncontrado = matchNums[0];
-      }
-      if (trackingEncontrado) document.getElementById("tracking").value = trackingEncontrado;
-
-      // 2. Nombre MRW (Busca etiqueta Destinatario o busca la línea de nombre típica ignorando cupones/ensacados)
-      var nombreEncontrado = "";
-      for (var i = 0; i < lineas.length; i++) {
-        var l = lineas[i].toUpperCase();
-        if (l.indexOf("DESTINATARIO") !== -1 || l.indexOf("DEST") !== -1) {
-          if (i + 1 < lineas.length) {
-            var candidato = limpiarNombreComun(lineas[i + 1]);
-            if (candidato.length > 3) { nombreEncontrado = candidato; break; }
-          }
-        }
-      }
-
-      // Si no hay etiqueta explícita de destinatario, busca la línea que contiene el nombre real de la persona
-      if (!nombreEncontrado) {
-        for (var j = 0; j < lineas.length; j++) {
-          var lj = lineas[j];
-          var ljUp = lj.toUpperCase();
-          // Ignorar líneas técnicas de este formato de MRW
-          if (ljUp.indexOf("TRACKING") !== -1 || ljUp.indexOf("CUPONES") !== -1 || ljUp.indexOf("ENSACADO") !== -1 || ljUp.indexOf("SOCOPO") !== -1 || ljUp.indexOf("VALENCIA") !== -1 || ljUp.indexOf("CARACAS") !== -1 || ljUp.indexOf(".") !== -1 && /\d/.test(lj)) {
-            continue;
-          }
-          var limpio = limpiarNombreComun(lj);
-          if (limpio.length > 3 && /[a-zA-Z]/.test(limpio) && !/\d/.test(limpio)) {
-            nombreEncontrado = limpio;
-            break;
-          }
-        }
-      }
-
-      if (nombreEncontrado) document.getElementById("nombre").value = nombreEncontrado;
-    }
-
-    // --- FUNCIÓN PRINCIPAL DE ENRUTAMIENTO ---
     function procesarTextoGuia() {
       try {
         var text = document.getElementById("rawText").value;
@@ -204,6 +129,16 @@
         var lineas = text.split("\n").map(function(l) { return l.trim(); }).filter(Boolean);
         var tUpper = text.toUpperCase();
 
+        // Detección inteligente de empresa (Si no dice Tealca ni Zoom, por defecto asume MRW ya que no traen la marca impresa)
+        if (tUpper.indexOf("TEALCA") !== -1) {
+          document.getElementById("empresa").value = "Tealca";
+        } else if (tUpper.indexOf("ZOOM") !== -1) {
+          document.getElementById("empresa").value = "Zoom";
+        } else {
+          document.getElementById("empresa").value = "MRW"; // Por defecto MRW al no traer marca explícita
+        }
+
+        // Extracción de Teléfono
         var tlfEncontrado = "";
         var matchTelf = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/g);
         if (matchTelf && matchTelf.length > 0) {
@@ -214,14 +149,43 @@
         }
         document.getElementById("telefono").value = tlfEncontrado;
 
-        // Detección de empresa por contenido característico
-        if (tUpper.indexOf("MRW") !== -1 || tUpper.indexOf("CUPONES") !== -1 || tUpper.indexOf("ENSACADO") !== -1) {
-          procesarMRW(text, lineas);
-        } else if (tUpper.indexOf("TEALCA") !== -1) {
-          document.getElementById("empresa").value = "Tealca";
-          procesarZoom(text, lineas);
+        // Extracción de Tracking
+        var trackingEncontrado = buscarTrackingGeneral(text, lineas);
+        if (trackingEncontrado) {
+          document.getElementById("tracking").value = trackingEncontrado;
+        }
+
+        // Extracción de Nombre de Destinatario
+        var nombreEncontrado = "";
+        for (var i = 0; i < lineas.length; i++) {
+          var l = lineas[i].toUpperCase();
+          if (l.indexOf("DESTINATARIO") !== -1 || l.indexOf("DEST") !== -1) {
+            if (i + 1 < lineas.length) {
+              var candidato = limpiarNombreComun(lineas[i + 1]);
+              if (candidato.length > 3 && !esDireccionOBasura(candidato)) { 
+                nombreEncontrado = candidato; 
+                break; 
+              }
+            }
+          }
+        }
+
+        if (!nombreEncontrado) {
+          for (var j = 0; j < lineas.length; j++) {
+            var lj = lineas[j];
+            if (esDireccionOBasura(lj) || /\d/.test(lj)) continue;
+            var limpio = limpiarNombreComun(lj);
+            if (limpio.length > 3 && /[a-zA-Z]/.test(limpio) && !esDireccionOBasura(limpio)) {
+              nombreEncontrado = limpio;
+              break;
+            }
+          }
+        }
+
+        if (nombreEncontrado && !esDireccionOBasura(nombreEncontrado)) {
+          document.getElementById("nombre").value = nombreEncontrado;
         } else {
-          procesarZoom(text, lineas);
+          document.getElementById("nombre").value = ""; 
         }
 
       } catch (e) {
