@@ -33,7 +33,7 @@
       
       <div>
         <label class="block text-xs font-bold text-gray-700">Teléfono (WhatsApp)</label>
-        <input type="text" id="telefono" placeholder="Ej: 584241511750" required class="w-full mt-1 p-2 border rounded-lg text-sm">
+        <input type="text" id="telefono" placeholder="Ej: 584241511750" class="w-full mt-1 p-2 border rounded-lg text-sm">
       </div>
 
       <div class="grid grid-cols-2 gap-2">
@@ -96,14 +96,15 @@
     function depurarNombre(txt) {
       var resultado = txt;
 
-      // Símbolos raros que extrae Lens al inicio
-      resultado = resultado.replace(/^[\|\/\\\,\.\-_\:\;]+/g, "");
+      // Quitar basura de símbolos iniciales
+      resultado = resultado.replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "");
 
-      // Palabras clave de etiquetas de guías
+      // Quitar etiquetas de guías y prefijos habituales de OCR
       resultado = resultado.replace(/\bZOOM\b/gi, "");
       resultado = resultado.replace(/b?estinatario[\s:]*/gi, "");
       resultado = resultado.replace(/DESTINO:/gi, "");
       resultado = resultado.replace(/\bDEST\b[\s:]*/gi, "");
+      resultado = resultado.replace(/\bD[\.\s:]+/gi, ""); // Quita "D " o "D." al inicio
       resultado = resultado.replace(/DATOS DEL/gi, "");
       resultado = resultado.replace(/CONSIGNA A/gi, "");
       resultado = resultado.replace(/RECEPTOR/gi, "");
@@ -124,17 +125,23 @@
       resultado = resultado.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "");
       resultado = resultado.replace(/[:\.\-]/g, " ");
 
-      // Limpieza de caracteres raros iniciales otra vez
       resultado = resultado.trim().replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "");
 
-      // Deduplicar frase repetida ("RICARDO SUCRE RICARDO SUCRE" -> "RICARDO SUCRE")
       var palabras = resultado.trim().split(/\s+/).filter(Boolean);
 
-      // Si empieza con una letra o basura pegada de 1 caracter sola antes del nombre (ej: "D RICARDO"), la quitamos
-      if (palabras.length > 1 && palabras[0].length === 1) {
-        palabras.shift();
+      // Si la primera palabra arranca con basura (ej: "DRICARDO"), limpiarla si existe la misma palabra correcta después
+      if (palabras.length > 2) {
+        var primera = palabras[0].toUpperCase();
+        var segunda = palabras[1].toUpperCase();
+        var tercera = palabras[2].toUpperCase();
+
+        // Ejemplo: DRICARDO SUCRE RICARDO SUCRE -> si la 3ra palabra está contenida en la 1ra
+        if (primera.indexOf(tercera) !== -1 && primera !== tercera) {
+          palabras.shift(); // Elimina "DRICARDO"
+        }
       }
 
+      // Deduplicar repeticiones (ej. RICARDO SUCRE RICARDO SUCRE -> RICARDO SUCRE)
       if (palabras.length >= 2) {
         var num = palabras.length;
         if (num % 2 === 0) {
@@ -145,14 +152,12 @@
             palabras = palabras.slice(0, mitad);
           }
         } else {
-          // Intentar coincidencia parcial
           var pUnicas = [];
           for (var i = 0; i < palabras.length; i++) {
             if (i === 0 || palabras[i].toUpperCase() !== palabras[i - 1].toUpperCase()) {
               pUnicas.push(palabras[i]);
             }
           }
-          // Verificar si aún hay repetición completa en pUnicas
           if (pUnicas.length >= 4) {
             var m = Math.floor(pUnicas.length / 2);
             var h1 = pUnicas.slice(0, m).join(" ").toUpperCase();
@@ -212,13 +217,11 @@
 
           if (lUpper.indexOf("ESTINATARIO") !== -1 || lUpper.indexOf("DEST:") !== -1) {
             
-            // Probar en la misma línea
             var limpioMisma = depurarNombre(l);
             
             if (limpioMisma.length > 2 && !esLineaBasura(limpioMisma)) {
               nombreEncontrado = limpioMisma;
             } else {
-              // Buscar en las siguientes 2 líneas
               for (var sub = 1; sub <= 2; sub++) {
                 if (i + sub < lineas.length) {
                   var sigLinea = lineas[i + sub].trim();
@@ -233,7 +236,6 @@
               }
             }
 
-            // Extraer teléfono cercano
             for (var k = 0; k <= 3; k++) {
               if (i + k < lineas.length) {
                 var matchSub = lineas[i + k].match(/(?:TLF[\s:\.]*)?((?:0)?(?:412|424|414|416|426)\d{7})/i);
@@ -248,7 +250,6 @@
           }
         }
 
-        // Respaldo secundario por si la guía no tiene la palabra "DESTINATARIO"
         if (!nombreEncontrado) {
           for (var j = 0; j < lineas.length; j++) {
             var lj = lineas[j].trim();
@@ -274,6 +275,8 @@
           var matchTelfs = textoSinRemitente.match(/(?:58|0)?(412|424|414|416|426)\d{7}\b/g) || [];
           if (matchTelfs.length > 0) {
             document.getElementById("telefono").value = formatearTelefono(matchTelfs[0]);
+          } else {
+            document.getElementById("telefono").value = ""; // Dejar vacío si no hay teléfono
           }
         }
 
