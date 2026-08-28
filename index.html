@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V54</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V55</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -79,6 +79,19 @@
       if (/^0(412|424|414|416|426)\d{7}$/.test(num)) return "58" + num.substring(1);
       if (/^(412|424|414|416|426)\d{7}$/.test(num)) return "58" + num;
       return "";
+    }
+
+    function esNombreValido(txt) {
+      if (!txt || txt.length < 3) return false;
+      var tUp = txt.toUpperCase();
+      // Palabras prohibidas que nunca deben ser un nombre
+      var prohibidas = ["VOLUM", "PIEZA", "PESO", "CIUDAD", "DIRECCION", "ENTREGA", "TEALCA", "MRW", "ZOOM", "RETIRO", "TIENDA", "ESTANDAR", "COD", "FECHA", "ORIGEN", "REMITENTE", "MEDIDAS"];
+      for (var i = 0; i < prohibidas.length; i++) {
+        if (tUp.indexOf(prohibidas[i]) !== -1) return false;
+      }
+      // No debe tener números puros o códigos de volumen
+      if (/\d/.test(txt) && (tUp.indexOf("KG") !== -1 || tUp.indexOf("M3") !== -1 || tUp.indexOf("0.") !== -1)) return false;
+      return true;
     }
 
     function limpiarNombreFinal(txt) {
@@ -248,7 +261,7 @@
         }
 
         // ========================================================
-        // BLOQUE 3: TEALCA (Nombre ultra-preciso por Cédula / Línea limpia)
+        // BLOQUE 3: TEALCA (Ultra-blindado con validación de nombres)
         // ========================================================
         if (empresaDetectada === "Tealca") {
           var lineasTealca = text.split("\n");
@@ -302,28 +315,23 @@
           }
           document.getElementById("telefono").value = tlfTealca;
 
-          // 3. Nombre Tealca (Búsqueda inteligente por Cédula)
+          // 3. Nombre Tealca (Búsqueda estricta)
           var nombreTealca = "";
           for (var tn = 0; tn < lineasTealca.length; tn++) {
             var ltn = lineasTealca[tn].trim();
             var ltnUp = ltn.toUpperCase();
             
-            // Si la línea contiene la Cédula (ej. V-12345678), el nombre suele estar justo antes o justo después
             if (ltnUp.indexOf("V-") !== -1 || ltnUp.indexOf("E-") !== -1 || ltnUp.indexOf("J-") !== -1 || ltnUp.indexOf("CEDULA") !== -1 || ltnUp.indexOf("CÉDULA") !== -1) {
-              // Revisar la línea anterior
               if (tn - 1 >= 0) {
                 var prevLin = lineasTealca[tn - 1].trim();
-                var prevUp = prevLin.toUpperCase();
-                if (prevUp.indexOf("TEALCA") === -1 && prevUp.indexOf("GUIA") === -1 && prevUp.indexOf("DESTINATARIO") === -1 && prevLin.length > 3 && !/\d{5}/.test(prevLin)) {
+                if (esNombreValido(prevLin)) {
                   nombreTealca = prevLin;
                   break;
                 }
               }
-              // Revisar la línea siguiente
               if (tn + 1 < lineasTealca.length) {
                 var sigLin = lineasTealca[tn + 1].trim();
-                var sigUp = sigLin.toUpperCase();
-                if (sigUp.indexOf("CIUDAD") === -1 && sigUp.indexOf("DIRECCION") === -1 && sigUp.indexOf("ENTREGA") === -1 && sigUp.indexOf("TELEFONO") === -1 && sigLin.length > 3) {
+                if (esNombreValido(sigLin)) {
                   nombreTealca = sigLin;
                   break;
                 }
@@ -331,22 +339,21 @@
             }
           }
 
-          // Fallback general si no encontró por cédula
           if (!nombreTealca) {
             for (var fx = 0; fx < lineasTealca.length; fx++) {
               var lfx = lineasTealca[fx].trim();
-              var lfxUp = lfx.toUpperCase();
-              if (lfxUp.indexOf("TEALCA") !== -1 || lfxUp.indexOf("GUIA") !== -1 || lfxUp.indexOf("FECHA") !== -1 || lfxUp.indexOf("ESTANDAR") !== -1 || lfxUp.indexOf("COD") !== -1 || lfxUp.indexOf("ORIGEN") !== -1 || lfxUp.indexOf("REMITENTE") !== -1 || lfxUp.indexOf("PIEZA") !== -1 || lfxUp.indexOf("PESO") !== -1 || lfxUp.indexOf("MEDIDAS") !== -1 || lfxUp.indexOf("CEDULA") !== -1 || lfxUp.indexOf("TELEFONO") !== -1 || lfxUp.indexOf("ENTREGA") !== -1 || lfxUp.indexOf("CIUDAD") !== -1 || lfxUp.indexOf("DIRECCION") !== -1 || lfx.length < 3 || /\d/.test(lfx)) continue;
-              
-              nombreTealca = lfx;
-              break;
+              if (esNombreValido(lfx)) {
+                nombreTealca = lfx;
+                break;
+              }
             }
           }
 
           if (nombreTealca) {
             document.getElementById("nombre").value = limpiarNombreFinal(nombreTealca);
           } else {
-            alert("⚠️ Atención: No se pudo detectar el nombre del cliente en Tealca. Asegúrate de incluir la cédula y el nombre al copiar con Google Lens.");
+            document.getElementById("nombre").value = "";
+            alert("⚠️ Atención: El texto copiado de Tealca no incluye el nombre o la cédula. Por favor, asegúrate de seleccionar toda la parte superior de la etiqueta con Google Lens.");
           }
           return;
         }
