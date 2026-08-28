@@ -9,7 +9,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V17</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V18</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -87,11 +87,11 @@
 
         var lineas = text.split("\n").map(function(l) { return l.trim(); }).filter(Boolean);
 
-        // 1. EXTRAER TRACKING (Busca la línea de tracking o cualquier número largo de 8 a 15 dígitos)
+        // 1. EXTRAER TRACKING (Busca números largos de 8 a 15 dígitos)
         var trackingEncontrado = "";
         for (var k = 0; k < lineas.length; k++) {
           var lk = lineas[k].toUpperCase();
-          if (lk.indexOf("TRACKING") !== -1 || lk.indexOf("GUIA") !== -1) {
+          if (lk.indexOf("TRACKING") !== -1 || lk.indexOf("GUIA") !== -1 || lk.indexOf("N°") !== -1) {
             var m = lineas[k].match(/\b\d{8,15}\b/);
             if (m) {
               trackingEncontrado = m[0];
@@ -105,28 +105,22 @@
         }
         document.getElementById("tracking").value = trackingEncontrado;
 
-        // 2. EXTRAER TELÉFONO Y NOMBRE DE LA MISMA LÍNEA DONDE CONVIVEN
+        // 2. EXTRAER TELÉFONO Y NOMBRE (Busca la línea con el teléfono y toma el texto a su izquierda)
         var tlfEncontrado = "";
         var nombreEncontrado = "";
 
         for (var i = 0; i < lineas.length; i++) {
           var lineaActual = lineas[i];
-          // Buscar si esta línea contiene un número de teléfono móvil venezolano
           var matchTelf = lineaActual.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
           
           if (matchTelf) {
             tlfEncontrado = formatearTelefonoStrict(matchTelf[0]);
             
-            // Lo que está a la izquierda del teléfono es el nombre del destinatario
             var partes = lineaActual.split(matchTelf[0]);
             if (partes.length > 0) {
               var limpio = partes[0];
-              
-              // Cortar si hay cédulas o etiquetas tipo V- o TLF
               limpio = limpio.split(/[\s\-]+[VEJG][\s\-]*\d/i)[0];
               limpio = limpio.split(/TLF|TEL/i)[0];
-
-              // Limpiar símbolos raros o palabras de relleno iniciales
               limpio = limpio.replace(/^(DEST|DESTINATARIO|CLIENTE|SENOR|SR|SRA)[\s\:\-\.]*/i, "");
               limpio = limpio.replace(/[\s\-\,\.\_\/]+$/, "").trim();
 
@@ -134,15 +128,35 @@
                 nombreEncontrado = limpio;
               }
             }
-            break; // Encontramos la línea correcta, salimos del ciclo
+            break;
           }
         }
 
-        // Si el teléfono no estaba en la misma línea pero hay un teléfono aislado en el texto
+        // Si el teléfono estaba separado del nombre en líneas distintas en el texto copiado de Lens
         if (!tlfEncontrado) {
           var matchTelfGeneral = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
           if (matchTelfGeneral) {
             tlfEncontrado = formatearTelefonoStrict(matchTelfGeneral[0]);
+          }
+        }
+
+        // Si el nombre no se encontró en la misma línea, busca una línea limpia que parezca un nombre propio
+        if (!nombreEncontrado) {
+          for (var j = 0; j < lineas.length; j++) {
+            var lTest = lineas[j];
+            var lUp = lTest.toUpperCase();
+            if (
+              lUp.indexOf("TRACKING") === -1 &&
+              lUp.indexOf("CANT") === -1 &&
+              lUp.indexOf("ENSACADO") === -1 &&
+              lUp.indexOf("MRW") === -1 &&
+              lUp.indexOf("TEALCA") === -1 &&
+              lTest.length > 3 &&
+              /^[A-ZÁÉÍÓÚÑ\s]+$/i.test(lTest)
+            ) {
+              nombreEncontrado = lTest;
+              break;
+            }
           }
         }
 
