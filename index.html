@@ -6,7 +6,6 @@
   <title>Despacho de Envíos - Myriedesign</title>
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- Configuración App Web (PWA) -->
   <link rel="manifest" href="manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -29,18 +28,18 @@
     <form id="guiaForm" class="space-y-3">
       <div>
         <label class="block text-xs font-bold text-gray-700">Destinatario</label>
-        <input type="text" id="nombre" placeholder="Ej: DHALY GONZALEZ" required class="w-full mt-1 p-2 border rounded-lg text-sm">
+        <input type="text" id="nombre" placeholder="Ej: INGRID CAMPOS" required class="w-full mt-1 p-2 border rounded-lg text-sm">
       </div>
       
       <div>
         <label class="block text-xs font-bold text-gray-700">Teléfono (WhatsApp)</label>
-        <input type="text" id="telefono" placeholder="Ej: 584149579724" required class="w-full mt-1 p-2 border rounded-lg text-sm">
+        <input type="text" id="telefono" placeholder="Ej: 584145714707" required class="w-full mt-1 p-2 border rounded-lg text-sm">
       </div>
 
       <div class="grid grid-cols-2 gap-2">
         <div>
           <label class="block text-xs font-bold text-gray-700">N° Tracking / Guía</label>
-          <input type="text" id="tracking" placeholder="Ej: 030302303000070" required class="w-full mt-1 p-2 border rounded-lg text-sm">
+          <input type="text" id="tracking" placeholder="Ej: 031000601000211" required class="w-full mt-1 p-2 border rounded-lg text-sm">
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-700">Empresa</label>
@@ -105,6 +104,7 @@
       resultado = resultado.replace(/TLF[\s:\.]*\d+/gi, "");
       resultado = resultado.replace(/\b(?:0)?(412|424|414|416|426)\d{7}\b/g, "");
       resultado = resultado.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "");
+      resultado = resultado.replace(/\b\d+\b/g, ""); // Elimina números sueltos sobrantes (ej: 2041)
       resultado = resultado.replace(/[:\.\-]/g, "");
       return resultado.trim();
     }
@@ -150,15 +150,12 @@
 
           if (esLineaBasura(l)) continue;
 
-          // Si encontramos la línea del destinatario (DEST: o DESTINATARIO)
           if (lUpper.indexOf("DEST:") !== -1 || lUpper.indexOf("DESTINATARIO") !== -1 || lUpper.indexOf("CLIENTE") !== -1 || lUpper.indexOf("CONSIGNA") !== -1) {
             
-            // A) Buscar teléfono en esta misma línea
             var matchTelfLinea = l.match(/(?:TLF[\s:\.]*)?((?:0)?(?:412|424|414|416|426)\d{7})/i);
             if (matchTelfLinea) {
               tlfDestinatario = formatearTelefono(matchTelfLinea[1]);
             } else {
-              // B) Si no estaba en la misma línea, revisar las 2 líneas siguientes por si el TLF está justo debajo (Caso MRW)
               for (var sub = 1; sub <= 2; sub++) {
                 if (i + sub < lineas.length) {
                   var sigLinea = lineas[i + sub].trim();
@@ -179,7 +176,7 @@
           }
         }
 
-        // Respaldo por Cédula (V-XXXXX) si no halló la etiqueta DEST:
+        // Respaldo por Cédula (V-XXXXX)
         if (!nombreEncontrado) {
           for (var j = 0; j < lineas.length; j++) {
             var lj = lineas[j].trim();
@@ -210,7 +207,6 @@
         if (tlfDestinatario) {
           document.getElementById("telefono").value = tlfDestinatario;
         } else {
-          // Búsqueda general omitiendo la parte superior (remitente)
           var textoSinRemitente = text.replace(/REMITENTE[\s\S]*?ORIGEN/gi, "");
           var matchTelfs = textoSinRemitente.match(/(?:58|0)?(412|424|414|416|426)\d{7}\b/g) || [];
           if (matchTelfs.length > 0) {
