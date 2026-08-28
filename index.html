@@ -9,7 +9,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V7</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V8</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -24,7 +24,7 @@
     <form id="guiaForm" class="space-y-3">
       <div>
         <label class="block text-xs font-bold text-gray-700">Destinatario</label>
-        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium" placeholder="Escribe o verifica el nombre aquí">
+        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium" placeholder="Nombre limpio del cliente">
       </div>
       
       <div>
@@ -129,21 +129,27 @@
           document.getElementById("tracking").value = trackingEncontrado;
         }
 
-        // --- DESTINATARIO BLINDADO ANTI-ERRORES ---
-        // Para evitar que agarre ciudades o códigos postales, dejamos el campo vacío 
-        // a menos que Google Lens haya copiado claramente el nombre junto al teléfono.
+        // --- EXTRACCIÓN Y LIMPIEZA PROFUNDA DE DESTINATARIO ---
         var nombreEncontrado = "";
         for (var i = 0; i < lineas.length; i++) {
           var l = lineas[i];
           var lUp = l.toUpperCase();
-          // Ignoramos líneas que sean códigos, tracking, montos o agencias
+          
+          // Ignorar líneas técnicas
           if (lUp.indexOf("TRACKING") !== -1 || lUp.indexOf("ENSACADO") !== -1 || lUp.indexOf("CANT") !== -1 || lUp.indexOf("BS.") !== -1 || lUp.indexOf("EL TIGRITO") !== -1 || lUp.indexOf("SOCOPO") !== -1) {
             continue;
           }
-          // Si la línea tiene letras y contiene el teléfono pegado (ej: OSWALDD MAYO TLF...)
-          if (/[A-Z]/.test(lUp) && (lUp.indexOf("TLF") !== -1 || lUp.indexOf("TEL") !== -1)) {
-            var limpio = l.split(/TLF|TEL|0412|0424|0414|0416|0426/i)[0].trim();
-            limpio = limpio.replace(/[0-9]/g, "").trim();
+
+          // Buscar una línea que tenga pinta de nombre (que tenga letras)
+          if (/[A-Z]/.test(lUp)) {
+            var limpio = l;
+            // Remover prefijos molestos
+            limpio = limpio.replace(/^(DEST|DESTINATARIO|CLIENTE|SENOR|SR|SRA)[\s\:\-\.]*/i, "");
+            // Cortar si tiene teléfono pegado
+            limpio = limpio.split(/TLF|TEL|0412|0424|0414|0416|0426/i)[0].trim();
+            // Limpiar guiones, puntos o símbolos volando al final (ej: "V-")
+            limpio = limpio.replace(/[\s\-\,\.\_\/]+$/, "").trim();
+
             if (limpio.length > 2) {
               nombreEncontrado = limpio;
               break;
@@ -151,7 +157,6 @@
           }
         }
 
-        // Si no viene etiquetado ni pegado con el teléfono, se queda en blanco para ti de forma segura
         document.getElementById("nombre").value = nombreEncontrado;
 
       } catch (e) {
