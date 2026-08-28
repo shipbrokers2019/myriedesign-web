@@ -80,12 +80,11 @@
       if (t.indexOf("ENSACADO") !== -1) return true;
       if (t.indexOf("CUPONES") !== -1) return true;
       if (t.indexOf("DIRECCION") !== -1 || t.indexOf("DIRECCIÓN") !== -1) return true;
-      if (t.indexOf("REMITENTE") !== -1) return true;
+      if (t.indexOf("REMITENTE") !== -1 && t.indexOf("DESTINATARIO") === -1) return true;
       if (t.indexOf("ORIGEN") !== -1) return true;
       if (t.indexOf("COBRO EN DESTINO") !== -1) return true;
       if (t.indexOf("CONTRA REEMBOLSO") !== -1) return true;
       if (t.indexOf("DESTINO:") !== -1) return true;
-      if (t.indexOf("RIF") !== -1 || t.indexOf("R.I.F") !== -1 || t.indexOf("RLFICI") !== -1) return true;
       return false;
     }
 
@@ -101,8 +100,6 @@
       resultado = resultado.replace(/CLIENTE/gi, "");
       resultado = resultado.replace(/AGENCIA/gi, "");
       resultado = resultado.replace(/OFICINA/gi, "");
-      resultado = resultado.replace(/R\.?I\.?F\.?\/C\.?I\.?[\s:]*/gi, "");
-      resultado = resultado.replace(/RLFICI[\s:]*/gi, "");
 
       resultado = resultado.replace(/TLF[\s:\.]*\d+/gi, "");
       resultado = resultado.replace(/\b(?:0)?(412|424|414|416|426)\d{7}\b/g, "");
@@ -110,8 +107,8 @@
       resultado = resultado.replace(/\b\d+\b/g, "");
       resultado = resultado.replace(/[:\.\-]/g, "");
 
-      // Si Zoom repite el nombre dos veces ("NOMBRE - NOMBRE"), dejamos solo uno
-      var partes = resultado.split(/\s+/);
+      // Limpia duplicados típicos de Zoom ("NOMBRE - NOMBRE")
+      var partes = resultado.trim().split(/\s+/);
       if (partes.length >= 4) {
         var mitad = Math.floor(partes.length / 2);
         var p1 = partes.slice(0, mitad).join(" ");
@@ -165,7 +162,6 @@
 
           if (esLineaBasura(l)) continue;
 
-          // Regla para Zoom, MRW y otras
           if (lUpper.indexOf("DEST") !== -1 || lUpper.indexOf("DESTINATARIO") !== -1 || lUpper.indexOf("CLIENTE") !== -1 || lUpper.indexOf("CONSIGNA") !== -1) {
             
             var matchTelfLinea = l.match(/(?:TLF[\s:\.]*)?((?:0)?(?:412|424|414|416|426)\d{7})/i);
@@ -185,14 +181,14 @@
             }
 
             var limpio = depurarNombre(l);
-            if (limpio.length > 2 && !esLineaBasura(limpio)) {
+            if (limpio.length > 2) {
               nombreEncontrado = limpio;
               break;
             }
           }
         }
 
-        // Respaldo por Cédula (V-XXXXX)
+        // Respaldo por Cédula (V-XXXXX) si no enganchó por la etiqueta DESTINATARIO
         if (!nombreEncontrado) {
           for (var j = 0; j < lineas.length; j++) {
             var lj = lineas[j].trim();
@@ -207,7 +203,7 @@
               }
 
               var limpioFallback = depurarNombre(lj);
-              if (limpioFallback.length > 2 && !esLineaBasura(limpioFallback)) {
+              if (limpioFallback.length > 2) {
                 nombreEncontrado = limpioFallback;
                 break;
               }
@@ -315,7 +311,7 @@
       lista.prepend(card);
       form.reset();
       document.getElementById("rawText").value = "";
-      document.getElementById("fechaDespacho").valueAsDate = new Date();
+      document.getElementById("fecha").valueAsDate = new Date();
     });
   </script>
 </body>
