@@ -1,7 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Despacho de Envíos - Myriedesign</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#2563eb">
+</head>
+<body class="bg-gray-100 p-4 min-h-screen">
+  <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos</h2>
+    
+    <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
+      <label class="block text-xs font-bold text-blue-800 mb-1">
+        📋 Pegar texto extraído de la guía (Google Lens)
+      </label>
+      <textarea id="rawText" rows="3" placeholder="Pega aquí todo el texto copiado..." class="w-full p-2 border border-blue-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-400 outline-none"></textarea>
+      <button type="button" id="btnProcesar" onclick="procesarTextoGuia()" class="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs transition active:bg-blue-800">
+        ⚡ Procesar Texto Copiado
+      </button>
+    </div>
+
+    <form id="guiaForm" class="space-y-3">
+      <div>
+        <label class="block text-xs font-bold text-gray-700">Destinatario</label>
+        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium">
+      </div>
+      
+      <div>
+        <label class="block text-xs font-bold text-gray-700">Teléfono (WhatsApp)</label>
+        <input type="text" id="telefono" class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium">
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block text-xs font-bold text-gray-700">N° Tracking / Guía</label>
+          <input type="text" id="tracking" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700">Empresa</label>
+          <select id="empresa" class="w-full mt-1 p-2 border rounded-lg text-sm bg-white text-gray-900 font-medium">
+            <option value="MRW">MRW</option>
+            <option value="Tealca">Tealca</option>
+            <option value="Zoom">Zoom</option>
+            <option value="LAE">LAE</option>
+            <option value="Liberty Express">Liberty Express</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-gray-700">Fecha de Envío</label>
+        <input type="date" id="fecha" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium">
+      </div>
+
+      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-sm transition">
+        Generar Notificación
+      </button>
+    </form>
+
+    <hr class="my-4">
+
+    <h3 class="text-sm font-bold text-gray-800">Mensajes Listos</h3>
+    <div id="listaGuias" class="space-y-3"></div>
+  </div>
+
+  <script>
+    document.getElementById("fecha").valueAsDate = new Date();
+
+    function esLineaBasura(texto) {
+      var t = texto.toUpperCase().trim();
+      if (!t) return true;
+      if (t.indexOf("*") !== -1) return true;
+      if (/\d/.test(t) && (t.indexOf("TELEF") !== -1 || t.indexOf("TLF") !== -1 || t.indexOf("TEL") !== -1)) return true;
+      if (t === "ZOOM" || t === "GRUPO ZOOM" || t === "MRW" || t === "TEALCA" || t === "TRACKING") return true;
+      if (t.indexOf("TRACKING") !== -1 || t.indexOf("TRACKING:") !== -1) return true;
+      if (t.indexOf("CANT, CUPONES") !== -1 || t.indexOf("CUPONES:") !== -1 || t.indexOf("CANT") !== -1) return true;
+      if (t.indexOf("RETIRAR POR") !== -1 || t.indexOf("RETIRO POR") !== -1) return true;
+      if (t.indexOf("OFICIN") !== -1) return true;
+      if (t.indexOf("ENTREGAR EN AGENCIA") !== -1 || t.indexOf("ENTREGA") !== -1) return true;
+      if (t.indexOf("ENSACADO") !== -1) return true;
+      if (t.indexOf("DIRECCION") !== -1 || t.indexOf("DIRECCIÓN") !== -1) return true;
+      if (t.indexOf("CIUDAD") !== -1) return true;
+      if (t.indexOf("REMITENTE") !== -1) return true;
+      if (t.indexOf("ORIGEN") !== -1 || t.indexOf("BRIGEN") !== -1) return true;
+      if (t.indexOf("BARCELONA") !== -1 || t.indexOf("XPRESS") !== -1 || t.indexOf("BIP") !== -1) return true;
+      if (t.indexOf("COBRO EN DESTINO") !== -1) return true;
+      if (t.indexOf("CONTRA REEMBOLSO") !== -1) return true;
+      if (t.indexOf("DESTINO:") !== -1) return true;
+      if (t.indexOf("CEDULA") !== -1 || t.indexOf("CÉDULA") !== -1 || t.indexOf("DCEDULA") !== -1) return true;
+      if (t.indexOf("RIF") !== -1 || t.indexOf("R.I.F") !== -1 || t.indexOf("RLFICI") !== -1 || t.indexOf("R.L.F.I.C.I") !== -1) return true;
+      if (t.indexOf("COD.SEG") !== -1 || t.indexOf("CAD.SEY") !== -1 || t.indexOf("CAD.8NY") !== -1 || t.indexOf("BISUTERIA") !== -1 || t.indexOf("1/1") !== -1 || t.indexOf("MER") !== -1) return true;
+      return false;
+    }
+
+    function depurarNombre(txt) {
+      var resultado = txt;
+
+      if (resultado.indexOf("-") !== -1) {
+        var partesGuion = resultado.split("-");
+        if (partesGuion.length > 1 && /DEST/i.test(partesGuion[0])) {
+          resultado = partesGuion.slice(1).join("-");
+        }
+      }
 
       resultado = resultado.replace(/^[\|\/\\\,\.\-_\:\;\s\d]+/g, "");
 
-      // Eliminar prefijos comunes y sus errores OCR (Destinatario, Destinalario, etc.)
       resultado = resultado.replace(/DESTINATARIO/gi, "");
       resultado = resultado.replace(/DESTINALARIO/gi, "");
       resultado = resultado.replace(/DESTINATARI[O|A]?/gi, "");
@@ -104,12 +212,20 @@
         var lineas = text.split("\n");
         var tUpper = text.toUpperCase();
 
-        // 1. DETECTAR EMPRESA
+        // 1. DETECTAR EMPRESA (Evitando falsos positivos con MER de MRW)
         var empresaDetectada = "MRW";
-        if (tUpper.indexOf("TEALCA") !== -1) empresaDetectada = "Tealca";
-        else if (tUpper.indexOf("ZOOM") !== -1 || tUpper.indexOf("GRUPO ZOOM") !== -1) empresaDetectada = "Zoom";
-        else if (tUpper.indexOf("MRW") !== -1) empresaDetectada = "MRW";
-        else if (tUpper.indexOf("LIBERTY") !== -1) empresaDetectada = "Liberty Express";
+        if (tUpper.indexOf("TEALCA") !== -1) {
+          empresaDetectada = "Tealca";
+        } else if (tUpper.indexOf("ZOOM") !== -1 || tUpper.indexOf("GRUPO ZOOM") !== -1) {
+          empresaDetectada = "Zoom";
+        } else if (tUpper.indexOf("LIBERTY") !== -1) {
+          empresaDetectada = "Liberty Express";
+        } else if (tUpper.indexOf("MRW") !== -1) {
+          empresaDetectada = "MRW";
+        } else {
+          // Si dice MER o tiene códigos típicos de Zoom sin decir explícitamente ZOOM
+          empresaDetectada = "Zoom";
+        }
 
         document.getElementById("empresa").value = empresaDetectada;
 
@@ -178,65 +294,44 @@
           document.getElementById("nombre").value = nombreEncontrado;
         }
 
-        // 4. EXTRAER TRACKING POR BLOQUES SEGÚN EMPRESA
+        // 4. EXTRAER TRACKING INTELIGENTE (Con respaldo infalible)
         var trackingEncontrado = "";
 
         if (empresaDetectada === "MRW") {
-          // BLOQUE MRW
           var matchMrw = text.match(/TRACKING[\s:]*(\d{10,20})/i);
           if (matchMrw && matchMrw[1]) {
             trackingEncontrado = matchMrw[1];
           } else {
             var numLargoMrw = text.match(/\b\d{12,18}\b/g);
-            if (numLargoMrw && numLargoMrw.length > 0) {
-              trackingEncontrado = numLargoMrw[0];
-            }
+            if (numLargoMrw && numLargoMrw.length > 0) trackingEncontrado = numLargoMrw[0];
           }
         } 
-        else if (empresaDetectada === "Zoom") {
-          // BLOQUE ZOOM
+        else {
+          // Para Zoom / Tealca / Otros
           for (var k = 0; k < lineas.length; k++) {
             var lk = lineas[k].toUpperCase();
             if (lk.indexOf("TRACKING") !== -1 || lk.indexOf("GUIA") !== -1 || lk.indexOf("GUÍA") !== -1 || lk.indexOf("DOC") !== -1 || lk.indexOf("NRO") !== -1) {
-              var mTrackL = lineas[k].match(/\b\d{7,14}\b/);
+              var mTrackL = lineas[k].match(/\b\d{7,16}\b/);
               if (mTrackL) {
                 trackingEncontrado = mTrackL[0];
                 break;
               }
             }
           }
-          if (!trackingEncontrado) {
-            var numTelfPuro = tlfEncontrado ? tlfEncontrado.replace("58", "") : "";
-            var todosNumeros = text.match(/\b\d{8,14}\b/g) || [];
-            for (var n = 0; n < todosNumeros.length; n++) {
-              var candidate = todosNumeros[n];
-              if (numTelfPuro && candidate.indexOf(numTelfPuro) !== -1) continue;
-              if (/^(0?412|0?424|0?414|0?416|0?426)/.test(candidate)) continue;
-              trackingEncontrado = candidate;
-              break;
-            }
-          }
-        } 
-        else {
-          // BLOQUE TEALCA / OTROS
-          for (var k2 = 0; k2 < lineas.length; k2++) {
-            var lk2 = lineas[k2].toUpperCase();
-            if (lk2.indexOf("TRACKING") !== -1 || lk2.indexOf("GUIA") !== -1 || lk2.indexOf("GUÍA") !== -1 || lk2.indexOf("DOC") !== -1 || lk2.indexOf("NRO") !== -1) {
-              var mTrackL2 = lineas[k2].match(/\b\d{7,16}\b/);
-              if (mTrackL2) {
-                trackingEncontrado = mTrackL2[0];
-                break;
-              }
-            }
-          }
-          if (!trackingEncontrado) {
-            var todosNumGen = text.match(/\b\d{7,16}\b/g) || [];
-            for (var g = 0; g < todosNumGen.length; g++) {
-              if (!/^(0?412|0?424|0?414|0?416|0?426)/.test(todosNumGen[g])) {
-                trackingEncontrado = todosNumGen[g];
-                break;
-              }
-            }
+        }
+
+        // Respaldo absoluto si el tracking quedó vacío: busca cualquier número de longitud válida que no sea teléfono
+        if (!trackingEncontrado) {
+          var numTelfPuro = tlfEncontrado ? tlfEncontrado.replace("58", "") : "";
+          var todosNumeros = text.match(/\b\d{7,16}\b/g) || [];
+          for (var n = 0; n < todosNumeros.length; n++) {
+            var candidate = todosNumeros[n];
+            if (numTelfPuro && candidate.indexOf(numTelfPuro) !== -1) continue;
+            if (/^(0?412|0?424|0?414|0?416|0?426)/.test(candidate)) continue;
+            // Si es un número pequeño de 2 o 3 dígitos (como el "871" de la imagen), lo saltamos
+            if (candidate.length < 5) continue;
+            trackingEncontrado = candidate;
+            break;
           }
         }
 
