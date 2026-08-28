@@ -95,8 +95,10 @@
 
     function depurarNombre(txt) {
       var resultado = txt;
+
+      // Eliminar palabras clave y errores de OCR (como 'bestinatario')
       resultado = resultado.replace(/\bZOOM\b/gi, "");
-      resultado = resultado.replace(/DESTINATARIO[\s:]*/gi, "");
+      resultado = resultado.replace(/b?estinatario[\s:]*/gi, "");
       resultado = resultado.replace(/DESTINO:/gi, "");
       resultado = resultado.replace(/\bDEST\b[\s:]*/gi, "");
       resultado = resultado.replace(/DATOS DEL/gi, "");
@@ -113,24 +115,33 @@
       resultado = resultado.replace(/R\.?I\.?F\.?\/C\.?I\.?[\s:]*/gi, "");
       resultado = resultado.replace(/RLFICI[\s:]*/gi, "");
 
-      // Quitar teléfonos y cédulas
+      // Quitar teléfonos, cédulas y caracteres especiales
       resultado = resultado.replace(/TLF[\s:\.]*\d+/gi, "");
       resultado = resultado.replace(/\b(?:0)?(412|424|414|416|426)\d{7}\b/g, "");
       resultado = resultado.replace(/\b[VEPGJ][\-\s]?\d{5,9}\b/gi, "");
       resultado = resultado.replace(/[:\.\-]/g, " ");
 
-      // Si el nombre se repite dos veces en el OCR ("VERYGIONETT LOAIZA VERYGIONETT LOAIZA"), tomamos solo una mitad
-      var partes = resultado.trim().split(/\s+/);
-      if (partes.length >= 4) {
-        var mitad = Math.floor(partes.length / 2);
-        var p1 = partes.slice(0, mitad).join(" ");
-        var p2 = partes.slice(mitad).join(" ");
+      // Deduplicar palabras si el nombre viene repetido (ej: "VERYGIONETT LOAIZA VERYGIONETT LOAIZA")
+      var palabras = resultado.trim().split(/\s+/).filter(Boolean);
+      if (palabras.length >= 2) {
+        var mitad = Math.floor(palabras.length / 2);
+        var p1 = palabras.slice(0, mitad).join(" ");
+        var p2 = palabras.slice(mitad, mitad * 2).join(" ");
         if (p1.toUpperCase() === p2.toUpperCase()) {
-          resultado = p1;
+          palabras = palabras.slice(0, mitad);
+        } else {
+          // Remover palabras consecutivas idénticas
+          var unicas = [];
+          for (var i = 0; i < palabras.length; i++) {
+            if (i === 0 || palabras[i].toUpperCase() !== palabras[i - 1].toUpperCase()) {
+              unicas.push(palabras[i]);
+            }
+          }
+          palabras = unicas;
         }
       }
 
-      return resultado.trim();
+      return palabras.join(" ").trim();
     }
 
     function formatearTelefono(numBruto) {
@@ -175,16 +186,15 @@
           var l = lineas[i].trim();
           var lUpper = l.toUpperCase();
 
-          if (lUpper.indexOf("DESTINATARIO") !== -1 || lUpper.indexOf("DEST:") !== -1) {
+          if (lUpper.indexOf("ESTINATARIO") !== -1 || lUpper.indexOf("DEST:") !== -1) {
             
             // Probar en la misma línea
-            var textoMisma = l.substring(lUpper.indexOf("DEST") + 4).replace(/^INATARIO[\s:]*/i, "").replace(/^[\s:]*/, "");
-            var limpioMisma = depurarNombre(textoMisma);
+            var limpioMisma = depurarNombre(l);
             
             if (limpioMisma.length > 2 && !esLineaBasura(limpioMisma)) {
               nombreEncontrado = limpioMisma;
             } else {
-              // Buscar estricta y únicamente en las 2 líneas SIGUIENTES a la palabra DESTINATARIO
+              // Buscar en las siguientes 2 líneas
               for (var sub = 1; sub <= 2; sub++) {
                 if (i + sub < lineas.length) {
                   var sigLinea = lineas[i + sub].trim();
@@ -214,7 +224,7 @@
           }
         }
 
-        // Respaldo secundario para MRW y otras guías sin etiqueta DESTINATARIO explicita
+        // Respaldo secundario si no encuentra etiqueta de destinatario
         if (!nombreEncontrado) {
           for (var j = 0; j < lineas.length; j++) {
             var lj = lineas[j].trim();
