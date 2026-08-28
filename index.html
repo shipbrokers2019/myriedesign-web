@@ -9,7 +9,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V25</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V26</h2>
     
     <!-- Selector de Empresa -->
     <div>
@@ -35,7 +35,7 @@
     <form id="guiaForm" class="space-y-3">
       <div>
         <label class="block text-xs font-bold text-gray-700">Destinatario</label>
-        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium" placeholder="Escribe el nombre si no viene en el texto">
+        <input type="text" id="nombre" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium" placeholder="Escribe el nombre del cliente">
       </div>
       
       <div>
@@ -99,7 +99,7 @@
         var nombreEncontrado = "";
 
         // ========================================================
-        // 1. LÓGICA BLINDADA PARA MRW
+        // 1. LÓGICA MRW V26 (Antifraude contra "deStiNo")
         // ========================================================
         if (empresa === "MRW") {
           // A. Tracking: Buscar número de 8 a 20 dígitos
@@ -121,27 +121,23 @@
             tlfEncontrado = formatearTelefonoStrict(matchTelfGeneral[0]);
           }
 
-          // C. Destinatario ultra-seguro (Ignora basura, números y teléfonos)
+          // C. Destinatario buscando etiquetas reales (Excluyendo "Cobro en destino")
           for (var i = 0; i < lineas.length; i++) {
             var l = lineas[i];
             var lUp = l.toUpperCase();
 
-            var esBasura = 
-              lUp.indexOf("COBRO") !== -1 ||
-              lUp.indexOf("TRACKING") !== -1 ||
-              lUp.indexOf("ENSACADO") !== -1 ||
-              lUp.indexOf("CANT") !== -1 ||
-              lUp.indexOf("CUPONES") !== -1 ||
-              lUp.indexOf("B8.") !== -1 ||
-              lUp.indexOf("TLF") !== -1 ||
-              lUp.indexOf("TELEFONO") !== -1 ||
-              /^\d+$/.test(l) || // Solo números puros
-              /\d{7,}/.test(l) || // Si la línea contiene números largos (como el teléfono)
-              l.length < 3;
+            // Si la línea tiene "DEST" pero NO es la de cobro en destino
+            var esDestEtiqueta = (lUp.indexOf("DEST:") !== -1 || lUp.indexOf("DESTINATARIO") !== -1 || (lUp.indexOf("DEST") !== -1 && lUp.indexOf("COBRO") === -1));
 
-            if (!esBasura) {
-              nombreEncontrado = l;
-              break;
+            if (esDestEtiqueta) {
+              var limpio = l.replace(/DESTINATARIO[\s\:\-\.]*/i, "");
+              limpio = limpio.replace(/DEST[\s\:\-\.]*/i, "");
+              limpio = limpio.replace(/[\s\-\,\.\_\/]+$/, "").trim();
+
+              if (limpio.length > 2) {
+                nombreEncontrado = limpio;
+                break;
+              }
             }
           }
         }
@@ -170,7 +166,7 @@
         document.getElementById("tracking").value = trackingEncontrado;
         document.getElementById("telefono").value = tlfEncontrado;
         
-        // Si no encontró un nombre real, deja el campo limpio y listo para escribir
+        // Si no hay nombre explícito con etiqueta DEST, dejamos el campo limpio para ti
         if (nombreEncontrado) {
           document.getElementById("nombre").value = nombreEncontrado;
         } else {
