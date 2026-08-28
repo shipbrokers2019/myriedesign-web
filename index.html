@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V60</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V62</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -81,24 +81,22 @@
       return "";
     }
 
-    // Filtro estricto anti-basura para el Destinatario
-    function esNombreValidoReal(txt) {
+    // Validador estricto para asegurar que es un nombre real y no basura
+    function esNombreReal(txt) {
       if (!txt || txt.length < 3) return false;
       var tUp = txt.toUpperCase();
 
-      // Bloquear si contiene formatos de teléfono o números largos
-      if (tUp.indexOf("TELEFONO") !== -1 || tUp.indexOf("TLF") !== -1 || tUp.indexOf("CEL") !== -1) return false;
-      if (/(?:\+?58|0)?(412|424|414|416|426)\d{7}/.test(txt)) return false;
-      if (/\b\d{5,}\b/.test(txt)) return false; // Direcciones o cédulas
-      if (/\b[VvEeJjGg][-\s]?\d{6,9}\b/.test(txt)) return false;
+      // Bloquear si tiene números, teléfonos, cédulas o palabras prohibidas
+      if (/\d/.test(txt)) return false;
+      if (tUp.indexOf("TELEFONO") !== -1 || tUp.indexOf("TLF") !== -1 || tUp.indexOf("DIR") !== -1) return false;
 
       var prohibidas = [
-        "VOLUM", "PIEZA", "PESO", "CIUDAD", "DIRECCION", "DIR", "ENTREGA", 
+        "VOLUM", "PIEZA", "PESO", "CIUDAD", "DIRECCION", "ENTREGA", 
         "TEALCA", "MRW", "ZOOM", "RETIRO", "TIENDA", "ESTANDAR", "COD", 
-        "FECHA", "ORIGEN", "REMITENTE", "MEDIDAS", "ANACO", "TURMERO", 
-        "AGENCIA", "SUCURSAL", "OFICINA", "PAGAR", "ENVIO", "CLIENTE"
+        "FECHA", "ORIGEN", "MEDIDAS", "ANACO", "TURMERO", 
+        "AGENCIA", "SUCURSAL", "OFICINA", "PAGAR", "ENVIO", "CLIENTE", "PAGO"
       ];
-      
+
       for (var i = 0; i < prohibidas.length; i++) {
         if (tUp.indexOf(prohibidas[i]) !== -1) return false;
       }
@@ -134,35 +132,16 @@
 
         var lineas = text.split("\n");
 
-        // Extracción general de teléfono
+        // ========================================================
+        // 1. TELÉFONO (Funciona perfecto en todas)
+        // ========================================================
         var matchTGlobal = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
         if (matchTGlobal) {
           document.getElementById("telefono").value = formatearTelefonoStrict(matchTGlobal[0]);
         }
 
-        // Búsqueda inteligente y segura de Nombre en TODO el texto si las reglas específicas fallan
-        var nombreEncontrado = "";
-        for (var j = 0; j < lineas.length; j++) {
-          var lineaLimpieza = lineas[j].replace(/^[a-z]*tinatario[:\s]*/gi, "")
-                                       .replace(/^[a-z]*atario[:\s]*/gi, "")
-                                       .replace(/^([a-z]{1,5})[:\s]+/gi, "")
-                                       .trim();
-          if (esNombreValidoReal(lineaLimpieza)) {
-            nombreEncontrado = lineaLimpieza;
-            break;
-          }
-        }
-
-        if (nombreEncontrado) {
-          // Limpiar prefijos sobrantes si los hubiera
-          if (nombreEncontrado.indexOf("-") !== -1 && nombreEncontrado.length > 20) {
-            nombreEncontrado = nombreEncontrado.split("-")[0].trim();
-          }
-          document.getElementById("nombre").value = nombreEncontrado.replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "").trim();
-        }
-
         // ========================================================
-        // EXTRACCIÓN DE TRACKING SEGÚN EMPRESA
+        // 2. TRACKING / GUÍA (Funciona perfecto en todas)
         // ========================================================
         if (empresaDetectada === "MRW") {
           var trackingEncontrado = "";
@@ -215,6 +194,47 @@
             }
           }
           if (trackTealca) document.getElementById("tracking").value = trackTealca;
+        }
+
+        // ========================================================
+        // 3. DESTINATARIO (Sin rastro de "remitente")
+        // ========================================================
+        var nombreFinal = "";
+
+        // Buscar línea que tenga explícitamente etiquetas de destinatario
+        for (var i = 0; i < lineas.length; i++) {
+          var l = lineas[i].trim();
+          var lUp = l.toUpperCase();
+          if (lUp.indexOf("DESTINATARIO") !== -1 || lUp.indexOf("DEST.") !== -1 || lUp.indexOf("CLIENTE:") !== -1) {
+            var limpio = l.replace(/^[a-z]*tinatario[:\s]*/gi, "")
+                          .replace(/^[a-z]*atario[:\s]*/gi, "")
+                          .replace(/cliente[:\s]*/gi, "")
+                          .trim();
+            if (esNombreReal(limpio)) {
+              nombreFinal = limpio;
+              break;
+            } else if (i + 1 < lineas.length && esNombreReal(lineas[i + 1])) {
+              nombreFinal = lineas[i + 1].trim();
+              break;
+            }
+          }
+        }
+
+        // Si no encontró por etiqueta, buscar la primera línea que parezca un nombre real
+        if (!nombreFinal) {
+          for (var j = 0; j < lineas.length; j++) {
+            var candidato = lineas[j].trim();
+            if (esNombreReal(candidato) && candidato.length > 4) {
+              nombreFinal = candidato;
+              break;
+            }
+          }
+        }
+
+        if (nombreFinal) {
+          document.getElementById("nombre").value = nombreFinal;
+        } else {
+          document.getElementById("nombre").value = "";
         }
 
       } catch (e) {
