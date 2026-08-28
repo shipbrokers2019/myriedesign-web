@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V62</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V63</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -81,27 +81,48 @@
       return "";
     }
 
-    // Validador estricto para asegurar que es un nombre real y no basura
+    // Validador súper estricto para asegurar que es un nombre real
     function esNombreReal(txt) {
       if (!txt || txt.length < 3) return false;
       var tUp = txt.toUpperCase();
 
-      // Bloquear si tiene números, teléfonos, cédulas o palabras prohibidas
       if (/\d/.test(txt)) return false;
-      if (tUp.indexOf("TELEFONO") !== -1 || tUp.indexOf("TLF") !== -1 || tUp.indexOf("DIR") !== -1) return false;
-
-      var prohibidas = [
-        "VOLUM", "PIEZA", "PESO", "CIUDAD", "DIRECCION", "ENTREGA", 
-        "TEALCA", "MRW", "ZOOM", "RETIRO", "TIENDA", "ESTANDAR", "COD", 
-        "FECHA", "ORIGEN", "MEDIDAS", "ANACO", "TURMERO", 
-        "AGENCIA", "SUCURSAL", "OFICINA", "PAGAR", "ENVIO", "CLIENTE", "PAGO"
+      
+      // Palabras que NUNCA deben considerarse un nombre
+      var invalidas = [
+        "TRACKING", "GUIA", "GUÍA", "TELEFONO", "TLF", "DIR", "DIRECCION", 
+        "VOLUM", "PIEZA", "PESO", "CIUDAD", "ENTREGA", "TEALCA", "MRW", 
+        "ZOOM", "RETIRO", "TIENDA", "ESTANDAR", "COD", "FECHA", "ORIGEN", 
+        "MEDIDAS", "ANACO", "TURMERO", "AGENCIA", "SUCURSAL", "OFICINA", 
+        "PAGAR", "ENVIO", "CLIENTE", "PAGO", "NOMBRE", "DESTINATARIO", "DEST"
       ];
 
-      for (var i = 0; i < prohibidas.length; i++) {
-        if (tUp.indexOf(prohibidas[i]) !== -1) return false;
+      for (var i = 0; i < invalidas.length; i++) {
+        if (tUp === invalidas[i] || tUp.indexOf(invalidas[i]) === 0 && tUp.length < invalidas[i].length + 3) {
+          return false;
+        }
       }
 
       return true;
+    }
+
+    function limpiarNombreFinal(nombreSucio) {
+      if (!nombreSucio) return "";
+      var limpio = nombreSucio
+        .replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "") // Quitar símbolos iniciales
+        .replace(/(?:DESTINATARIO|DEST\.|CLIENTE|NOMBRE)[:\s]*/gi, "") // Quitar etiquetas comunes
+        .trim();
+      
+      // Si viene con guion repetido (ej: GLORIANA FLORES - GLORIA...), cortar en el primer guion si es muy largo
+      if (limpiadorTieneGuionDuplicado(limpio)) {
+        limpio = limpio.split("-")[0].trim();
+      }
+
+      return esNombreReal(limpio) ? limpio : "";
+    }
+
+    function limpiadorTieneGuionDuplicado(str) {
+      return str.indexOf("-") !== -1 && str.length > 15;
     }
 
     function procesarTextoGuia() {
@@ -133,7 +154,7 @@
         var lineas = text.split("\n");
 
         // ========================================================
-        // 1. TELÉFONO (Funciona perfecto en todas)
+        // 1. TELÉFONO
         // ========================================================
         var matchTGlobal = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
         if (matchTGlobal) {
@@ -141,7 +162,7 @@
         }
 
         // ========================================================
-        // 2. TRACKING / GUÍA (Funciona perfecto en todas)
+        // 2. TRACKING / GUÍA
         // ========================================================
         if (empresaDetectada === "MRW") {
           var trackingEncontrado = "";
@@ -197,45 +218,44 @@
         }
 
         // ========================================================
-        // 3. DESTINATARIO (Sin rastro de "remitente")
+        // 3. DESTINATARIO (Extracción inteligente y blindada)
         // ========================================================
-        var nombreFinal = "";
+        var nombreEncontrado = "";
 
-        // Buscar línea que tenga explícitamente etiquetas de destinatario
         for (var i = 0; i < lineas.length; i++) {
           var l = lineas[i].trim();
           var lUp = l.toUpperCase();
+
+          // Si la línea contiene la etiqueta explícita de destinatario o cliente
           if (lUp.indexOf("DESTINATARIO") !== -1 || lUp.indexOf("DEST.") !== -1 || lUp.indexOf("CLIENTE:") !== -1) {
-            var limpio = l.replace(/^[a-z]*tinatario[:\s]*/gi, "")
-                          .replace(/^[a-z]*atario[:\s]*/gi, "")
-                          .replace(/cliente[:\s]*/gi, "")
-                          .trim();
-            if (esNombreReal(limpio)) {
-              nombreFinal = limpio;
+            var limpioLinea = limpiarNombreFinal(l);
+            if (limpioLinea) {
+              nombreEncontrado = limpioLinea;
               break;
-            } else if (i + 1 < lineas.length && esNombreReal(lineas[i + 1])) {
-              nombreFinal = lineas[i + 1].trim();
-              break;
+            } else if (i + 1 < lineas.length) {
+              // Intentar con la línea siguiente si la etiqueta está sola
+              var limpioSiguiente = limpiarNombreFinal(lineas[i + 1]);
+              if (limpioSiguiente) {
+                nombreEncontrado = limpioSiguiente;
+                break;
+              }
             }
           }
         }
 
-        // Si no encontró por etiqueta, buscar la primera línea que parezca un nombre real
-        if (!nombreFinal) {
+        // Si no se encontró por etiqueta clara, buscar la mejor línea candidata que parezca un nombre de persona
+        if (!nombreEncontrado) {
           for (var j = 0; j < lineas.length; j++) {
-            var candidato = lineas[j].trim();
-            if (esNombreReal(candidato) && candidato.length > 4) {
-              nombreFinal = candidato;
+            var candidatoLimpio = limpiarNombreFinal(lineas[j]);
+            // Un nombre real suele tener más de 4 caracteres y no ser códigos postales ni palabras sueltas
+            if (candidatoLimpio && candidatoLimpio.length > 4) {
+              nombreEncontrado = candidatoLimpio;
               break;
             }
           }
         }
 
-        if (nombreFinal) {
-          document.getElementById("nombre").value = nombreFinal;
-        } else {
-          document.getElementById("nombre").value = "";
-        }
+        document.getElementById("nombre").value = nombreEncontrado;
 
       } catch (e) {
         alert("Error al procesar: " + e.message);
