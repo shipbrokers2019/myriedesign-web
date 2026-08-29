@@ -37,7 +37,7 @@
         <section class="bg-white shadow-xl rounded-2xl p-6 border border-slate-200">
             <h2 class="text-lg font-bold mb-3 text-indigo-600">1. Pegar Texto de Guía (Google Lens)</h2>
             
-            <textarea id="textInput" rows="6" placeholder="Pega aquí el texto bruto de la guía (MRW, Zoom, Tealca)..." 
+            <textarea id="textInput" rows="6" placeholder="Pega aquí el texto bruto de la guía..." 
                       class="w-full p-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none transition duration-150 text-sm"></textarea>
 
             <!-- Previsualización de Datos -->
@@ -121,14 +121,14 @@
                 }
                 document.getElementById('phoneInput').value = phoneFound;
 
-                // 2. Extracción de Nombre (Lógica ajustada para MRW, Zoom y Tealca)
+                // 2. Extracción Estricta del Nombre (Buscando DESTINATARIO, DESTINATARIO:, DEST, DEST:)
                 let nameFound = '';
 
-                // Buscar línea que contenga la palabra clave de destinatario (común en MRW y Zoom)
                 for (let line of lines) {
-                    if (/^(dest\.?|destinatario:?)\s*/i.test(line)) {
-                        // Quitamos la palabra "DEST:", "Destinatario:", etc.
-                        let cleaned = line.replace(/^(dest\.?|destinatario:?)\s*/i, '').trim();
+                    // Buscar si la línea arranca o contiene la etiqueta de destinatario
+                    if (/(?:destinatario|dest)[\s.:-]*/i.test(line)) {
+                        // Limpiar las palabras clave y los símbolos de separación (puntos, dos puntos)
+                        let cleaned = line.replace(/^(destinatario|dest)[\s.:-]*/i, '').trim();
                         if (cleaned.length > 2) {
                             nameFound = cleaned;
                             break;
@@ -136,42 +136,16 @@
                     }
                 }
 
-                // Si no se encontró por etiqueta directa, probamos buscar por la estructura típica de MRW (líneas de destinatario)
-                if (!nameFound) {
-                    for (let line of lines) {
-                        if (line.toUpperCase().includes("V-") || line.toUpperCase().includes("E-")) {
-                            // Si la línea tiene cédula, a veces el nombre está antes del guion de la cédula
-                            let parts = line.split(/[-–]/);
-                            if (parts[0].trim().length > 3) {
-                                nameFound = parts[0].replace(/^(dest\.?|destinatario:?)\s*/i, '').trim();
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                // Si aún no hay nombre, revisamos por posición o líneas generales limpiando palabras prohibidas
-                if (!nameFound && lines.length > 0) {
-                    const ignoreWords = /(tracking|guia|mrw|zoom|tealca|lae|fecha|remitente|origen|destino|dirección|direccion|telefono|teléfono|ci|rif|cobro|agencia|oficina|peso|piezas)/i;
-                    for (let line of lines) {
-                        let clean = line.replace(/^(dest\.?|destinatario:?|nombre:?)\s*/i, '').trim();
-                        if (clean.length >= 3 && clean.length < 40 && !/\d{4,}/.test(clean) && !ignoreWords.test(clean)) {
-                            nameFound = clean;
-                            break;
-                        }
-                    }
-                }
-
-                // Limpieza final de cédulas o duplicados (ej: "VERYGIONETT LOAIZA - VERYGIONETT LOAIZA" o "INGRID CAMPOS V-8142710")
+                // Limpieza final de nombres duplicados (como en Zoom) o cédulas pegadas (como en MRW)
                 if (nameFound) {
-                    // Si viene repetido (como en Zoom), nos quedamos con la primera parte
+                    // Si viene duplicado por guion (ej: "VERYGIONETT LOAIZA - VERYGIONETT LOAIZA")
                     if (nameFound.includes('-')) {
-                        let splitDash = nameFound.split('-');
-                        if (splitDash[0].trim() === splitDash[1].trim()) {
-                            nameFound = splitDash[0].trim();
+                        let parts = nameFound.split('-');
+                        if (parts.length >= 2 && parts[0].trim().toLowerCase() === parts[1].trim().toLowerCase()) {
+                            nameFound = parts[0].trim();
                         }
                     }
-                    // Quitar cédula si quedó pegada
+                    // Quitar cédula o RIF si quedó adjunto (ej: "INGRID CAMPOS V-8142710")
                     nameFound = nameFound.replace(/\s+(v-|e-|c[i\.]).*/i, '').trim();
                 }
 
