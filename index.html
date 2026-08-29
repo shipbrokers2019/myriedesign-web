@@ -40,7 +40,7 @@
             <textarea id="textInput" rows="6" placeholder="Pega aquí el texto bruto de la guía (MRW, Zoom, Tealca)..." 
                       class="w-full p-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none transition duration-150 text-sm"></textarea>
 
-            <!-- Previsualización de Datos (Solo Nombre y Teléfono principales) -->
+            <!-- Previsualización de Datos -->
             <div id="processingArea" class="mt-6 space-y-4">
                 <h3 class="text-md font-semibold text-slate-700 border-b pb-2">2. Datos Extraídos</h3>
                 
@@ -97,7 +97,6 @@
             const copyBtn = document.getElementById('copyBtn');
             const statusMessage = document.getElementById('statusMessage');
 
-            // Función de extracción enfocada 100% en Destinatario y Teléfono
             function processText() {
                 const text = textInput.value.trim();
                 if (!text) {
@@ -107,13 +106,14 @@
                     return;
                 }
 
-                // 1. Extracción de Teléfono (Busca patrones TLF, Tlf, o números venezolanos directos)
+                const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+                // 1. Extracción de Teléfono
                 let phoneFound = '';
                 const phoneMatchExplicit = text.match(/(?:tlf|telf|teléfono|telefono|telt)[\s.:-]*([04|02]\d{9,10}|\d{10,11})/i);
                 if (phoneMatchExplicit) {
                     phoneFound = phoneMatchExplicit[1];
                 } else {
-                    // Búsqueda general de números móviles o fijos comunes en el texto
                     const generalPhoneMatch = text.match(/\b(0?4\d{2}|0?2\d{2})[-.\s]?\d{3}[-.\s]?\d{4}\b|\b\d{10,11}\b/);
                     if (generalPhoneMatch) {
                         phoneFound = generalPhoneMatch[0];
@@ -121,37 +121,63 @@
                 }
                 document.getElementById('phoneInput').value = phoneFound;
 
-                // 2. Extracción del Nombre del Destinatario (Busca etiquetas como "DEST:", "Destinatario:", "NOMBRE:")
+                // 2. Extracción de Nombre (Lógica ajustada para MRW, Zoom y Tealca)
                 let nameFound = '';
-                const nameMatchExplicit = text.match(/(?:dest:|destinatario:|nombre:)[\s]*([A-ZÁÉÍÓÚÑ\s]+?)(?=\s*(?:v-|e-|tlf|dir|dirección|cédula|rif|-|$))/i);
-                
-                if (nameMatchExplicit && nameMatchExplicit[1].trim().length > 3) {
-                    nameFound = nameMatchExplicit[1].trim();
-                } else {
-                    // Si no tiene etiqueta clara (como en MRW a veces), buscamos líneas limpias ignorando basura
-                    const lines = text.split('\n');
-                    const ignoreWords = /(tracking|guia|mrw|zoom|tealca|lae|fecha|remitente|origen|destino|direccion|dirección|telefono|teléfono|ci|rif|cobro|agencia|oficina|peso|piezas|urb|urbanizacion|av|avenida|calle|sector)/i;
 
+                // Buscar línea que contenga la palabra clave de destinatario (común en MRW y Zoom)
+                for (let line of lines) {
+                    if (/^(dest\.?|destinatario:?)\s*/i.test(line)) {
+                        // Quitamos la palabra "DEST:", "Destinatario:", etc.
+                        let cleaned = line.replace(/^(dest\.?|destinatario:?)\s*/i, '').trim();
+                        if (cleaned.length > 2) {
+                            nameFound = cleaned;
+                            break;
+                        }
+                    }
+                }
+
+                // Si no se encontró por etiqueta directa, probamos buscar por la estructura típica de MRW (líneas de destinatario)
+                if (!nameFound) {
                     for (let line of lines) {
-                        let clean = line.trim();
-                        // Limpiar prefijos comunes si los trae pegados
-                        clean = clean.replace(/^(dest\.?|nombre:?)\s*/i, '');
-                        if (clean.length >= 4 && clean.length < 40 && !/\d{4,}/.test(clean) && !ignoreWords.test(clean)) {
+                        if (line.toUpperCase().includes("V-") || line.toUpperCase().includes("E-")) {
+                            // Si la línea tiene cédula, a veces el nombre está antes del guion de la cédula
+                            let parts = line.split(/[-–]/);
+                            if (parts[0].trim().length > 3) {
+                                nameFound = parts[0].replace(/^(dest\.?|destinatario:?)\s*/i, '').trim();
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Si aún no hay nombre, revisamos por posición o líneas generales limpiando palabras prohibidas
+                if (!nameFound && lines.length > 0) {
+                    const ignoreWords = /(tracking|guia|mrw|zoom|tealca|lae|fecha|remitente|origen|destino|dirección|direccion|telefono|teléfono|ci|rif|cobro|agencia|oficina|peso|piezas)/i;
+                    for (let line of lines) {
+                        let clean = line.replace(/^(dest\.?|destinatario:?|nombre:?)\s*/i, '').trim();
+                        if (clean.length >= 3 && clean.length < 40 && !/\d{4,}/.test(clean) && !ignoreWords.test(clean)) {
                             nameFound = clean;
                             break;
                         }
                     }
                 }
-                
-                // Limpiar guiones o cédulas pegadas al nombre (ej. "INGRID CAMPOS V-8142710" -> "INGRID CAMPOS")
+
+                // Limpieza final de cédulas o duplicados (ej: "VERYGIONETT LOAIZA - VERYGIONETT LOAIZA" o "INGRID CAMPOS V-8142710")
                 if (nameFound) {
+                    // Si viene repetido (como en Zoom), nos quedamos con la primera parte
+                    if (nameFound.includes('-')) {
+                        let splitDash = nameFound.split('-');
+                        if (splitDash[0].trim() === splitDash[1].trim()) {
+                            nameFound = splitDash[0].trim();
+                        }
+                    }
+                    // Quitar cédula si quedó pegada
                     nameFound = nameFound.replace(/\s+(v-|e-|c[i\.]).*/i, '').trim();
                 }
 
                 document.getElementById('destName').value = nameFound || '';
             }
 
-            // Generar Enlace de WhatsApp con tu plantilla exacta
             function generateWhatsAppLink() {
                 const name = document.getElementById('destName').value.trim() || 'Estimado/a cliente';
                 const phoneRaw = document.getElementById('phoneInput').value.trim();
@@ -162,14 +188,12 @@
                     return;
                 }
 
-                // Limpiar teléfono para wa.me (+58)
                 let cleanPhone = phoneRaw.replace(/\D/g, '');
                 if (cleanPhone.startsWith('0')) {
                     cleanPhone = cleanPhone.substring(1);
                 }
                 const whatsappNumber = `58${cleanPhone}`;
 
-                // Tu plantilla exacta de mensaje
                 const message = `Hola Sr./Sra. ${name}, 👋\n\nSu pedido ya fue enviado. Aquí el resumen:\n\n📅 Fecha de envío: ${shipDate}\n\nAdjunto la foto de su guía para que pueda rastrear su pedido cuando quiera.\n\nGracias por su compra! 🙏\nRecuerde que es importante darle los cuidados adecuados:\n❤️ Mantener limpias y secas.\n❤️ Alejar de agentes químicos como alcohol, perfumes, cremas y jabones.\n❤️ Colocar cuando la piel esté seca\n❤️ No mojar ni usar en playa o piscinas\n❤️ Evitar hacer ejercicios con ellas\n\nDe esta manera extenderá la vida útil y brillo de sus piezas ✨ ✨\n\nSaludos Myriedesign`;
 
                 const finalLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
@@ -186,7 +210,6 @@
                 statusMessage.classList.remove('hidden');
             }
 
-            // Copiar enlace al portapapeles
             copyBtn.addEventListener('click', () => {
                 const linkText = whatsappLinkOutput.href;
                 navigator.clipboard.writeText(linkText).then(() => {
@@ -197,7 +220,6 @@
                 });
             });
 
-            // Event Listeners
             textInput.addEventListener('input', processText);
             generateBtn.addEventListener('click', generateWhatsAppLink);
         });
