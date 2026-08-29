@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Despacho Rápido V81 - Myriedesign</title>
+  <title>Despacho Rápido V82 - Myriedesign</title>
   <script src="https://cdn.tailwindcss.com"></script>
   
   <link rel="manifest" href="manifest.json">
@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Rápido V81 - Myriedesign</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Rápido V82 - Myriedesign</h2>
     
     <!-- BLOQUE GOOGLE LENS -->
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
@@ -118,24 +118,25 @@
 
         var lineas = text.split("\n");
 
-        // 1. DETECTAR DESTINATARIO BASADO EN LA ETIQUETA CLAVE
+        // 1. BUSCAR EXACTAMENTE AL LADO O DEBAJO DE "DESTINATARIO" / "DEST" / "DEST."
         var nombreFinal = "";
         
         for (var i = 0; i < lineas.length; i++) {
           var l = lineas[i].trim();
           var lUp = l.toUpperCase();
 
-          // Buscamos si la línea contiene la palabra clave del destinatario
-          if (lUp.indexOf("DESTINATARIO") !== -1 || lUp.indexOf("DEST.") !== -1 || lUp.indexOf("DEST") !== -1) {
-            // A veces el nombre viene pegado en la misma línea después de los dos puntos o espacios (ej: "Destinatario: Juan Perez")
-            var limpioMismaLinea = l.replace(/DESTINATARIO|DEST\.|DEST/gi, "").replace(/[:\-]/g, "").trim();
+          // Verificamos si la línea contiene la palabra clave de destinatario
+          if (lUp === "DESTINATARIO" || lUp === "DEST" || lUp === "DEST." || 
+              lUp.indexOf("DESTINATARIO") !== -1 || lUp.indexOf("DEST.") !== -1 || lUp.indexOf("DEST ") !== -1) {
             
+            // Opción A: El nombre está escrito al lado en la misma línea (ej: "Dest: Maria Perez")
+            var limpioMismaLinea = l.replace(/DESTINATARIO|DEST\.|DEST/gi, "").replace(/[:\-]/g, "").trim();
             if (limpioMismaLinea.length >= 3 && !/\d/.test(limpioMismaLinea)) {
               nombreFinal = limpioMismaLinea;
               break;
-            } 
+            }
             
-            // Si no estaba en la misma línea, el nombre suele estar en la línea inmediatamente siguiente
+            // Opción B: El nombre está en la línea de al lado o inmediatamente abajo
             if (i + 1 < lineas.length) {
               var siguienteLinea = lineas[i + 1].trim();
               if (siguienteLinea.length >= 3 && !/\d/.test(siguienteLinea)) {
@@ -146,7 +147,7 @@
           }
         }
 
-        // Plan de respaldo por si la etiqueta exacta no vino en el texto de Lens pero queremos evitar al remitente
+        // Respaldo por si acaso el formato de Lens viene diferente pero limpio
         if (!nombreFinal) {
           for (var j = 0; j < lineas.length; j++) {
             var lj = lineas[j].trim();
