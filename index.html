@@ -108,14 +108,12 @@
 
                 const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
-                // 1. Extracción Estricta de Teléfono (Solo números móviles/fijos venezolanos reales que comiencen por 04 o 02)
+                // 1. Extracción Estricta de Teléfono (Celulares/fijos venezolanos 04xx o 02xx)
                 let phoneFound = '';
-                // Buscar etiquetas explícitas de teléfono primero
                 const explicitPhoneMatch = text.match(/(?:tlf|telf|teléfono|telefono|telt)[\s.:-]*([04|02]\d{9,10})/i);
                 if (explicitPhoneMatch) {
                     phoneFound = explicitPhoneMatch[1];
                 } else {
-                    // Buscar coincidencia exacta en todo el texto de un número que empiece obligatoriamente por 04 o 02
                     const strictPhoneMatch = text.match(/\b(04\d{9}|02\d{9})\b/);
                     if (strictPhoneMatch) {
                         phoneFound = strictPhoneMatch[0];
@@ -123,27 +121,23 @@
                 }
                 document.getElementById('phoneInput').value = phoneFound;
 
-                // 2. Extracción Robusta del Nombre del Destinatario
+                // 2. Extracción Protegida del Nombre del Destinatario
                 let nameFound = '';
 
+                // NIVEL A: Lógica segura y probada para MRW y Tealca (Etiquetas DEST / DESTINATARIO / NOMBRE)
                 for (let i = 0; i < lines.length; i++) {
                     let currentLine = lines[i];
 
-                    // Caso A: La línea contiene la etiqueta exacta de destinatario pero el nombre está al lado
                     if (/^(destinatario|dest)\b/i.test(currentLine)) {
-                        // Si dice "DESTINO:", lo ignoramos por completo
-                        if (/^destino/i.test(currentLine)) continue;
+                        if (/^destino/i.test(currentLine)) continue; // Evitar confundir "DESTINO:"
 
                         let cleaned = currentLine.replace(/^(destinatario|dest)[\s.:-]*/i, '').trim();
-                        // Si quedó texto limpio al lado, es el nombre
                         if (cleaned.length > 2 && !/^retirar/i.test(cleaned)) {
                             nameFound = cleaned;
                             break;
                         } 
-                        // Si la etiqueta estaba sola en la línea, miramos la siguiente línea (como en Tealca: "NOMBRE" o directo el nombre)
                         else if (i + 1 < lines.length) {
                             let nextLine = lines[i + 1];
-                            // Si la siguiente línea es la palabra "NOMBRE", saltamos a la que le sigue (i + 2)
                             if (/^nombre$/i.test(nextLine) && i + 2 < lines.length) {
                                 nameFound = lines[i + 2];
                                 break;
@@ -155,16 +149,27 @@
                     }
                 }
 
-                // Limpieza de cédulas, RIFs o nombres repetidos
+                // NIVEL B: Respaldo inteligente para Zoom (si MRW/Tealca no dispararon, buscamos líneas típicas de nombres de clientes)
+                if (!nameFound) {
+                    for (let i = 0; i < lines.length; i++) {
+                        let l = lines[i];
+                        // Ignorar líneas técnicas comunes de Zoom u otras agencias
+                        if (/^(peso|cobro|cant|tracking|ensacado|origen|destino|dir|tlf|cod|bsc|mer)/i.test(l)) continue;
+                        if (l.length > 4 && l.includes(' ')) { // Nombres por lo general tienen espacio (Nombre y Apellido) y más de 4 letras
+                            nameFound = l;
+                            break;
+                        }
+                    }
+                }
+
+                // Limpieza final de cédulas, RIFs o nombres repetidos
                 if (nameFound) {
-                    // Si viene duplicado por guion (Zoom)
                     if (nameFound.includes('-')) {
                         let parts = nameFound.split('-');
                         if (parts.length >= 2 && parts[0].trim().toLowerCase() === parts[1].trim().toLowerCase()) {
                             nameFound = parts[0].trim();
                         }
                     }
-                    // Quitar cédula o RIF si está pegado al nombre (MRW)
                     nameFound = nameFound.replace(/\s+(v-|e-|c[i\.]).*/i, '').trim();
                 }
 
