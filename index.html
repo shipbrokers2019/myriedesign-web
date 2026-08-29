@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Despacho Rápido V93 - Myriedesign</title>
+  <title>Despacho Rápido V94 - Myriedesign</title>
   <script src="https://cdn.tailwindcss.com"></script>
   
   <link rel="manifest" href="manifest.json">
@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Rápido V93 - Myriedesign</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Rápido V94 - Myriedesign</h2>
     
     <!-- BLOQUE GOOGLE LENS -->
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
@@ -95,10 +95,20 @@
       return num;
     }
 
+    function esBasuraInvalida(linea) {
+      var l = linea.toUpperCase();
+      if (!l || l.length < 3) return true;
+      if (l.indexOf("GFS:") !== -1 || l.indexOf("PQ:") !== -1 || l.indexOf("TRACKING") !== -1) return true;
+      if (l.indexOf("CANT") !== -1 || l.indexOf("CUPONES") !== -1 || l.indexOf("ENSACADO") !== -1) return true;
+      if (/^\d+[\.,]?\d*$/.test(l)) return true; // Solo números o precios
+      return false;
+    }
+
     function limpiarNombreCompleto(s) {
       if (!s) return "";
       var limpio = s
         .replace(/DESTINATARIO|DESTINATARI0|DEST\.|DEST:|DEST/gi, "")
+        .replace(/REMITENTE:[\s\S]*/gi, "")
         .replace(/REMITENTE:|REMITENTE/gi, "")
         .replace(/NOMBRE:?|N0MBRE:?|NOMBRE|N0MBRE/gi, "")
         .replace(/TLF:?\s*0?\d{10,11}/gi, "")
@@ -153,33 +163,50 @@
         var lineas = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
         var nombreFinal = "";
 
-        // 2. REGLAS EXACTAS POR EMPRESA
+        // 2. BUSCADOR INTELIGENTE POR REGLA DE EMPRESA Y FILTRO DE BASURA
         if (empresaDetectada === "MRW" && lineas.length >= 7) {
-          // MRW: Línea 7 exacta con limpieza completa
-          nombreFinal = limpiarNombreCompleto(lineas[6]);
+          var candidata = lineas[6];
+          if (!esBasuraInvalida(candidata)) {
+            nombreFinal = limpiarNombreCompleto(candidata);
+          }
         } 
         else if (empresaDetectada === "Zoom" && lineas.length >= 6) {
-          // Zoom: Línea 6 exacta, removiendo "Destinatario", "Remitente:" y duplicados
-          var lineaZoom = lineas[5]
-            .replace(/DESTINATARIO|DESTINATARI0|DEST\.|DEST:|DEST/gi, "")
-            .replace(/REMITENTE:[\s\S]*/gi, ""); // Corta todo si aparece remitente en la misma línea
-          nombreFinal = limpiarNombreCompleto(lineaZoom);
+          var candidata = lineas[5];
+          if (!esBasuraInvalida(candidata)) {
+            nombreFinal = limpiarNombreCompleto(candidata);
+          }
         } 
         else if (empresaDetectada === "Tealca" && lineas.length >= 8) {
-          // Tealca: Línea 8 exacta
-          nombreFinal = limpiarNombreCompleto(lineas[7]);
+          var candidata = lineas[7];
+          if (!esBasuraInvalida(candidata)) {
+            nombreFinal = limpiarNombreCompleto(candidata);
+          }
         }
 
-        // Respaldo dinámico si faltara alguna línea exacta
+        // Si la línea exacta era basura o falló, buscar inteligentemente la mejor línea de texto útil
         if (!nombreFinal || nombreFinal.length < 3) {
           for (var i = 0; i < lineas.length; i++) {
             var lUp = lineas[i].toUpperCase();
             if (lUp.indexOf("NOMBRE") !== -1 || lUp.indexOf("DEST") !== -1) {
               var partesNombre = lineas[i].split(/N[O0]MBRE:?|DEST\.?:?/i);
-              nombreFinal = limpiarNombreCompleto(partesNombre.length > 1 ? partesNombre[1] : "");
-              if (!nombreFinal && i + 1 < lineas.length) {
-                nombreFinal = limpiarNombreCompleto(lineas[i + 1]);
+              var limpioPart = limpiarNombreCompleto(partesNombre.length > 1 ? partesNombre[1] : "");
+              if (limpioPart && !esBasuraInvalida(limpioPart)) {
+                nombreFinal = limpioPart;
+                break;
               }
+              if (i + 1 < lineas.length && !esBasuraInvalida(lineas[i + 1])) {
+                nombreFinal = limpiarNombreCompleto(lineas[i + 1]);
+                break;
+              }
+            }
+          }
+        }
+
+        // Último recurso: buscar la primera línea que parezca un nombre real (sin números de tracking ni coordenadas)
+        if (!nombreFinal || nombreFinal.length < 3) {
+          for (var j = 0; j < lineas.length; j++) {
+            if (!esBasuraInvalida(lineas[j]) && lineas[j].split(" ").length >= 2) {
+              nombreFinal = limpiarNombreCompleto(lineas[j]);
               break;
             }
           }
