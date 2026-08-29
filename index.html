@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Despacho Híbrido V78 - Myriedesign</title>
+  <title>Despacho Rápido V79 - Myriedesign</title>
   <script src="https://cdn.tailwindcss.com"></script>
   
   <link rel="manifest" href="manifest.json">
@@ -13,8 +13,9 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Rápido V78 - Myriedesign</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Rápido V79 - Myriedesign</h2>
     
+    <!-- BLOQUE GOOGLE LENS -->
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
         📋 1. Pega aquí el texto de Google Lens de la guía
@@ -25,6 +26,7 @@
       </button>
     </div>
 
+    <!-- FORMULARIO EDITABLE -->
     <form id="guiaForm" class="space-y-3">
       <div>
         <label class="block text-xs font-bold text-gray-700">2. Destinatario (Editable o por voz)</label>
@@ -116,45 +118,33 @@
 
         var lineas = text.split("\n");
 
-        // 1. TRACKING (Para ubicar la zona del destinatario)
-        var indiceTracking = -1;
-        for (var i = 0; i < lineas.length; i++) {
-          var lineaLimpia = lineas[i].trim();
-          if (/^\d{8,15}$/.test(lineaLimpia)) {
-            if (!lineaLimpia.startsWith("412") && !lineaLimpia.startsWith("424") && !lineaLimpia.startsWith("414") && !lineaLimpia.startsWith("416") && !lineaLimpia.startsWith("426") && !lineaLimpia.startsWith("04")) {
-              indiceTracking = i;
-              break;
-            }
-          }
-        }
-
-        // 2. DESTINATARIO (Línea inmediatamente anterior al tracking)
+        // 1. DETECTAR DESTINATARIO (Buscando un nombre real y limpio)
         var nombreFinal = "";
-        if (indiceTracking > 0) {
-          var posibleNombre = lineas[indiceTracking - 1].trim();
-          posibleNombre = posibleNombre.replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "").replace(/[\|\/\\\,\.\-_]+$/g, "").trim();
-          if (posibleNombre.length >= 3 && !/\d/.test(posibleNombre)) {
-            nombreFinal = posibleNombre;
+        
+        // Buscamos líneas que parezcan nombres (que no sean etiquetas del sistema)
+        for (var i = 0; i < lineas.length; i++) {
+          var l = lineas[i].trim();
+          var lUp = l.toUpperCase();
+
+          // Ignorar palabras basura o etiquetas comunes de guías
+          if (l.length < 4 || /\d/.test(l)) continue;
+          if (lUp.indexOf("TRACKING") !== -1 || lUp.indexOf("MRW") !== -1 || lUp.indexOf("TEALCA") !== -1 || 
+              lUp.indexOf("ZOOM") !== -1 || lUp.indexOf("DIRECCION") !== -1 || lUp.indexOf("RETIRAR") !== -1 || 
+              lUp.indexOf("ENSACADO") !== -1 || lUp.indexOf("CANT") !== -1 || lUp.indexOf("BS") !== -1) {
+            continue;
+          }
+
+          // Si la línea tiene entre 2 y 4 palabras, es muy probable que sea el nombre y apellido del cliente
+          var palabras = l.split(/\s+/);
+          if (palabras.length >= 2 && palabras.length <= 4) {
+            nombreFinal = l;
+            break;
           }
         }
 
-        // Respaldo de nombre
-        if (!nombreFinal) {
-          for (var j = 0; j < lineas.length; j++) {
-            var l = lineas[j].trim();
-            var lUp = l.toUpperCase();
-            if (l.length < 4 || /\d/.test(l)) continue;
-            if (lUp.indexOf("MRW") !== -1 || lUp.indexOf("TEALCA") !== -1 || lUp.indexOf("ZOOM") !== -1 || lUp.indexOf("DIRECCION") !== -1 || lUp.indexOf("RETIRAR") !== -1) continue;
-            var palabras = l.split(/\s+/);
-            if (palabras.length >= 2 && palabras.length <= 4) {
-              nombreFinal = l;
-              break;
-            }
-          }
-        }
         document.getElementById("nombre").value = nombreFinal;
 
-        // 3. TELÉFONO DEL CLIENTE (Último número válido del texto)
+        // 2. TELÉFONO DEL CLIENTE (Último número válido del texto)
         var todosLosTelefonos = [];
         for (var t = 0; t < lineas.length; t++) {
           var matchT = lineas[t].match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
