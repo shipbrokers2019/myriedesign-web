@@ -70,13 +70,11 @@
             <div id="outputArea" class="mt-8 pt-4 border-t border-slate-200 hidden space-y-3">
                 <h3 class="text-md font-bold text-slate-800">Resultado Final</h3>
                 
-                <!-- Botón directo para abrir WhatsApp (Único botón visible) -->
+                <!-- Botón directo para abrir WhatsApp -->
                 <a id="whatsappLinkOutput" target="_blank" rel="noopener noreferrer" 
                    class="block w-full py-4 px-6 text-center bg-emerald-600 text-white font-bold text-base rounded-xl shadow-md hover:bg-emerald-700 transition flex items-center justify-center gap-2">
                     💬 Abrir Chat de WhatsApp Directo
                 </a>
-                
-                <!-- ELIMINADO: Botón de copiar enlace -->
             </div>
 
             <!-- Status Message -->
@@ -161,7 +159,6 @@
                     for (let line of lines) {
                         if (line.includes(' - ')) {
                             let parts = line.split(' - ');
-                            // Si la parte izquierda contiene un nombre y la derecha es idéntica, nos quedamos con una
                             if (parts.length === 2 && parts[0].trim().toLowerCase() === parts[1].trim().toLowerCase()) {
                                 nameFound = parts[0].trim();
                                 break;
@@ -194,7 +191,8 @@
                 }
                 const whatsappNumber = `58${cleanPhone}`;
 
-                const message = `Hola Sr./Sra. ${name}, 👋\n\nSu pedido ya fue enviado. Aquí el resumen:\n\n📅 Fecha de envío: ${shipDate}\n\nAdjunto la foto de su guía para que pueda rastrear su pedido cuando quiera.\n\nGracias por su compra! 🙏\nRecuerde que es importante darle los cuidados adecuados:\n❤️ Mantener limpias y secas.\n❤️ Alejar de agentes químicos como alcohol, perfumes, cremas y jabones.\n❤️ Colocar cuando la piel esté seca\n❤️ No mojar ni usar en playa o piscinas\n❤️ Evitar hacer ejercicios con ellas\n\nDe esta manera extenderá la vida útil y brillo de sus piezas ✨ ✨\n\nSaludos Myriedesign`;
+                // Mensaje actualizado: sin "Aquí el resumen:" y con línea en blanco tras agradecimiento
+                const message = `Hola Sr./Sra. ${name}, 👋\n\nSu pedido ya fue enviado:\n\n📅 Fecha de envío: ${shipDate}\n\nAdjunto la foto de su guía para que pueda rastrear su pedido cuando quiera.\n\nGracias por su compra! 🙏\n\nRecuerde que es importante darle los cuidados adecuados:\n❤️ Mantener limpias y secas.\n❤️ Alejar de agentes químicos como alcohol, perfumes, cremas y jabones.\n❤️ Colocar cuando la piel esté seca\n❤️ No mojar ni usar en playa o piscinas\n❤️ Evitar hacer ejercicios con ellas\n\nDe esta manera extenderá la vida útil y brillo de sus piezas ✨ ✨\n\nSaludos Myriedesign`;
 
                 const finalLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 
@@ -209,8 +207,6 @@
                 statusMessage.className = `mt-4 text-center text-sm font-medium ${className}`;
                 statusMessage.classList.remove('hidden');
             }
-
-            // ELIMINADO: Evento de clic para el botón de copiar
 
             textInput.addEventListener('input', processText);
             generateBtn.addEventListener('click', generateWhatsAppLink);
