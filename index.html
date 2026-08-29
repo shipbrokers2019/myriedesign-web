@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Despacho Rápido V84 - Myriedesign</title>
+  <title>Despacho Rápido V85 - Myriedesign</title>
   <script src="https://cdn.tailwindcss.com"></script>
   
   <link rel="manifest" href="manifest.json">
@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Rápido V84 - Myriedesign</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Rápido V85 - Myriedesign</h2>
     
     <!-- BLOQUE GOOGLE LENS -->
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
@@ -95,14 +95,32 @@
       return num;
     }
 
-    function extraerNombreLinea(linea) {
-      if (!linea) return "";
-      var limpio = linea
-        .replace(/DESTINATARIO|DESTINATARI0|DEST\.|DEST/gi, "")
+    function limpiarNombreCompleto(s) {
+      if (!s) return "";
+      var limpio = s
+        // Eliminar palabras clave iniciales/intermedias
+        .replace(/DESTINATARIO|DESTINATARI0|DEST\.|DEST:|DEST/gi, "")
+        .replace(/REMITENTE:|REMITENTE/gi, "")
+        // Eliminar cédulas tipo V-12345678 o E-12345678
+        .replace(/[VE]-?\d{6,8}/gi, "")
+        // Eliminar etiquetas de teléfono y números pegados en la misma línea
+        .replace(/TLF:?\s*0?\d{10,11}/gi, "")
+        .replace(/TEL[EÉ]FONO:?\s*0?\d{10,11}/gi, "")
+        // Limpiar símbolos de puntuación sobrantes al inicio/fin
         .replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "")
         .replace(/[\|\/\\\,\.\-_]+$/g, "")
         .trim();
-      return limpio;
+
+      // Si hay nombres duplicados consecutivos (ej. "Maria Maria"), dejar solo uno
+      var palabras = limpio.split(/\s+/);
+      var unicas = [];
+      for (var p = 0; p < palabras.length; p++) {
+        // Evitar agregar si es exactamente igual a la palabra anterior (case-insensitive)
+        if (p === 0 || palabras[p].toLowerCase() !== palabras[p - 1].toLowerCase()) {
+          unicas.push(palabras[p]);
+        }
+      }
+      return unicas.join(" ");
     }
 
     function procesarTextoGuia() {
@@ -133,12 +151,12 @@
         if (empresaDetectada === "Zoom") {
           // ZOOM: Línea 4 (índice 3 en programación)
           if (lineas.length >= 4) {
-            nombreFinal = extraerNombreLinea(lineas[3]);
+            nombreFinal = limpiarNombreCompleto(lineas[3]);
           }
         } else {
           // MRW (u otras por defecto): Línea 7 (índice 6 en programación)
           if (lineas.length >= 7) {
-            nombreFinal = extraerNombreLinea(lineas[6]);
+            nombreFinal = limpiarNombreCompleto(lineas[6]);
           }
         }
 
@@ -147,9 +165,9 @@
           for (var i = 0; i < lineas.length; i++) {
             var lUp = lineas[i].toUpperCase();
             if (lUp.indexOf("DESTINATARIO") !== -1 || lUp.indexOf("DEST") !== -1) {
-              nombreFinal = extraerNombreLinea(lineas[i]);
+              nombreFinal = limpiarNombreCompleto(lineas[i]);
               if (!nombreFinal && i + 1 < lineas.length) {
-                nombreFinal = extraerNombreLinea(lineas[i + 1]);
+                nombreFinal = limpiarNombreCompleto(lineas[i + 1]);
               }
               break;
             }
