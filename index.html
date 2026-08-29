@@ -13,37 +13,31 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V73</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Rápido - Myriedesign</h2>
     
-    <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
-      <label class="block text-xs font-bold text-blue-800 mb-1">
-        📋 Pegar texto extraído de la guía (Google Lens)
-      </label>
-      <textarea id="rawText" rows="3" placeholder="Pega aquí todo el texto copiado de la guía..." class="w-full p-2 border border-blue-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-400 outline-none"></textarea>
-      <button type="button" id="btnProcesar" onclick="procesarTextoGuia()" class="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs transition active:bg-blue-800">
-        ⚡ Procesar Texto Copiado
-      </button>
+    <div class="bg-green-50 border border-green-200 p-2.5 rounded-lg text-center">
+      <p class="text-xs text-green-800 font-medium">💡 <strong>Consejo:</strong> Usa el dictado por voz de tu teclado para llenar los campos en segundos sin escribir.</p>
     </div>
 
     <form id="guiaForm" class="space-y-3">
       <div>
-        <label class="block text-xs font-bold text-gray-700">Destinatario</label>
-        <input type="text" id="nombre" required placeholder="Nombre del cliente" class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium">
+        <label class="block text-xs font-bold text-gray-700">Destinatario (Cliente)</label>
+        <input type="text" id="nombre" required placeholder="Ej. María Pérez" class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium focus:ring-2 focus:ring-blue-400 outline-none">
       </div>
       
       <div>
         <label class="block text-xs font-bold text-gray-700">Teléfono (WhatsApp)</label>
-        <input type="text" id="telefono" class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium">
+        <input type="tel" id="telefono" required placeholder="Ej. 04121234567 o 58412..." class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium focus:ring-2 focus:ring-blue-400 outline-none">
       </div>
 
       <div class="grid grid-cols-2 gap-2">
         <div>
           <label class="block text-xs font-bold text-gray-700">N° Tracking / Guía</label>
-          <input type="text" id="tracking" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium">
+          <input type="text" id="tracking" required placeholder="Número de guía" class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium focus:ring-2 focus:ring-blue-400 outline-none">
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-700">Empresa</label>
-          <select id="empresa" class="w-full mt-1 p-2 border rounded-lg text-sm bg-white text-gray-900 font-medium">
+          <select id="empresa" class="w-full mt-1 p-2 border rounded-lg text-sm bg-white text-gray-900 font-medium focus:ring-2 focus:ring-blue-400 outline-none">
             <option value="MRW">MRW</option>
             <option value="Tealca">Tealca</option>
             <option value="Zoom">Zoom</option>
@@ -55,142 +49,39 @@
 
       <div>
         <label class="block text-xs font-bold text-gray-700">Fecha de Envío</label>
-        <input type="date" id="fecha" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium">
+        <input type="date" id="fecha" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium focus:ring-2 focus:ring-blue-400 outline-none">
       </div>
 
-      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-sm transition">
-        Generar Notificación
+      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-sm transition shadow-md">
+        🚀 Generar Notificación WhatsApp
       </button>
     </form>
 
     <hr class="my-4">
 
-    <h3 class="text-sm font-bold text-gray-800">Mensajes Listos</h3>
+    <h3 class="text-sm font-bold text-gray-800">Historial de Hoy</h3>
     <div id="listaGuias" class="space-y-3"></div>
   </div>
 
   <script>
     document.getElementById("fecha").valueAsDate = new Date();
 
-    function formatearTelefonoStrict(numBruto) {
+    function limpiarTelefono(numBruto) {
       if (!numBruto) return "";
       var num = numBruto.replace(/\D/g, "");
-      if (/^58(412|424|414|416|426)\d{7}$/.test(num)) return num;
-      if (/^0(412|424|414|416|426)\d{7}$/.test(num)) return "58" + num.substring(1);
-      if (/^(412|424|414|416|426)\d{7}$/.test(num)) return "58" + num;
-      return "";
-    }
-
-    function procesarTextoGuia() {
-      try {
-        var text = document.getElementById("rawText").value;
-        if (!text || !text.trim()) {
-          alert("Primero pega el texto en el recuadro.");
-          return;
-        }
-
-        var tUpper = text.toUpperCase();
-
-        var empresaDetectada = "MRW";
-        if (tUpper.indexOf("TEALCA") !== -1) {
-          empresaDetectada = "Tealca";
-        } else if ((tUpper.indexOf("ZOOM") !== -1 || tUpper.indexOf("MER") !== -1) && tUpper.indexOf("ENSACADO") === -1 && tUpper.indexOf("CUPONES") === -1) {
-          empresaDetectada = "Zoom";
-        } else if (tUpper.indexOf("LAE") !== -1 || tUpper.indexOf("EL DORADO") !== -1) {
-          empresaDetectada = "LAE";
-        }
-
-        document.getElementById("empresa").value = empresaDetectada;
-
-        // Limpiar campos
-        document.getElementById("nombre").value = "";
-        document.getElementById("telefono").value = "";
-        document.getElementById("tracking").value = "";
-
-        var lineas = text.split("\n");
-
-        // ========================================================
-        // 1. TRACKING
-        // ========================================================
-        var indiceTracking = -1;
-        var trackingEncontrado = "";
-
-        for (var i = 0; i < lineas.length; i++) {
-          var lineaLimpia = lineas[i].trim();
-          if (/^\d{8,15}$/.test(lineaLimpia)) {
-            if (!lineaLimpia.startsWith("412") && !lineaLimpia.startsWith("424") && !lineaLimpia.startsWith("414") && !lineaLimpia.startsWith("416") && !lineaLimpia.startsWith("426") && !lineaLimpia.startsWith("04")) {
-              trackingEncontrado = lineaLimpia;
-              indiceTracking = i;
-              break;
-            }
-          }
-        }
-
-        if (!trackingEncontrado) {
-          var matchGen = text.match(/\b\d{8,15}\b/);
-          if (matchGen) trackingEncontrado = matchGen[0];
-        }
-
-        if (trackingEncontrado) {
-          document.getElementById("tracking").value = trackingEncontrado;
-        }
-
-        // ========================================================
-        // 2. DESTINATARIO (Línea justo antes del tracking o búsqueda inteligente)
-        // ========================================================
-        var nombreFinal = "";
-
-        if (indiceTracking > 0) {
-          var posibleNombre = lineas[indiceTracking - 1].trim();
-          posibleNombre = posibleNombre.replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "").replace(/[\|\/\\\,\.\-_]+$/g, "").trim();
-          if (posibleNombre.length >= 3 && !/\d/.test(posibleNombre)) {
-            nombreFinal = posibleNombre;
-          }
-        }
-
-        // Plan de respaldo si la línea anterior al tracking no es el nombre
-        if (!nombreFinal) {
-          for (var j = 0; j < lineas.length; j++) {
-            var l = lineas[j].trim();
-            var lUp = l.toUpperCase();
-            if (l.length < 4 || /\d/.test(l)) continue;
-            if (lUp.indexOf("MRW") !== -1 || lUp.indexOf("TEALCA") !== -1 || lUp.indexOf("ZOOM") !== -1 || lUp.indexOf("DIRECCION") !== -1 || lUp.indexOf("TELEFONO") !== -1) continue;
-            
-            var palabras = l.split(/\s+/);
-            if (palabras.length >= 2 && palabras.length <= 4) {
-              nombreFinal = l;
-              break;
-            }
-          }
-        }
-
-        document.getElementById("nombre").value = nombreFinal;
-
-        // ========================================================
-        // 3. TELÉFONO DEL DESTINATARIO (Obliga a tomar el último número válido)
-        // ========================================================
-        var todosLosTelefonos = [];
-        for (var t = 0; t < lineas.length; t++) {
-          var matchT = lineas[t].match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
-          if (matchT) {
-            var tFmt = formatearTelefonoStrict(matchT[0]);
-            if (tFmt) {
-              todosLosTelefonos.push(tFmt);
-            }
-          }
-        }
-
-        var telefonoFinal = "";
-        if (todosLosTelefonos.length > 0) {
-          // El teléfono del cliente siempre suele ser el último listado en el texto de la guía
-          telefonoFinal = todosLosTelefonos[todosLosTelefonos.length - 1];
-        }
-
-        document.getElementById("telefono").value = telefonoFinal;
-
-      } catch (e) {
-        alert("Error al procesar: " + e.message);
+      // Si empieza por 0 (ej. 0412...), le quitamos el 0 y le agregamos 58
+      if (/^0(412|424|414|416|426)\d{7}$/.test(num)) {
+        return "58" + num.substring(1);
       }
+      // Si ya viene con 58 (ej. 58412...)
+      if (/^58(412|424|414|416|426)\d{7}$/.test(num)) {
+        return num;
+      }
+      // Si el usuario puso directo los 10 dígitos (ej. 4121234567)
+      if (/^(412|424|414|416|426)\d{7}$/.test(num)) {
+        return "58" + num;
+      }
+      return num; // Retorna limpio por si acaso
     }
 
     var form = document.getElementById("guiaForm");
@@ -199,7 +90,8 @@
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       var nombre = document.getElementById("nombre").value.trim();
-      var telf = document.getElementById("telefono").value.trim();
+      var telfBruto = document.getElementById("telefono").value.trim();
+      var telf = limpiarTelefono(telfBruto);
       var tracking = document.getElementById("tracking").value.trim();
       var empresa = document.getElementById("empresa").value;
       var fechaRaw = document.getElementById("fecha").value;
@@ -227,7 +119,7 @@
       var linkWa = "https://api.whatsapp.com/send?phone=" + telf + "&text=" + encodeURIComponent(textoMensaje);
 
       var card = document.createElement("div");
-      card.className = "bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2";
+      card.className = "bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2 shadow-sm";
       card.innerHTML =
         '<div class="flex justify-between items-start">' +
         "<div>" +
@@ -240,8 +132,8 @@
 
       lista.prepend(card);
       form.reset();
-      document.getElementById("rawText").value = "";
       document.getElementById("fecha").valueAsDate = new Date();
+      document.getElementById("nombre").focus();
     });
   </script>
 </body>
