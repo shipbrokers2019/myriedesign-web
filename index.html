@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Despacho Híbrido - Myriedesign</title>
+  <title>Despacho Híbrido V78 - Myriedesign</title>
   <script src="https://cdn.tailwindcss.com"></script>
   
   <link rel="manifest" href="manifest.json">
@@ -13,28 +13,26 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Híbrido V76 - Myriedesign</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Rápido V78 - Myriedesign</h2>
     
-    <!-- BLOQUE GOOGLE LENS -->
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
         📋 1. Pega aquí el texto de Google Lens de la guía
       </label>
       <textarea id="rawText" rows="3" placeholder="Pega todo el texto copiado de la guía aquí..." class="w-full p-2 border border-blue-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-400 outline-none"></textarea>
       <button type="button" id="btnProcesar" onclick="procesarTextoGuia()" class="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs transition active:bg-blue-800 shadow">
-        ⚡ Extraer Datos Automáticamente
+        ⚡ Extraer Destinatario y Teléfono
       </button>
     </div>
 
-    <!-- FORMULARIO EDITABLE (CON VOZ DISPONIBLE) -->
     <form id="guiaForm" class="space-y-3">
       <div>
-        <label class="block text-xs font-bold text-gray-700">2. Destinatario (Puedes editarlo o corregirlo por voz)</label>
+        <label class="block text-xs font-bold text-gray-700">2. Destinatario (Editable o por voz)</label>
         <input type="text" id="nombre" required placeholder="Nombre del cliente" class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium focus:ring-2 focus:ring-blue-400 outline-none bg-white">
       </div>
       
       <div>
-        <label class="block text-xs font-bold text-gray-700">3. Teléfono (Puedes corregirlo dictando con el mic del teclado)</label>
+        <label class="block text-xs font-bold text-gray-700">3. Teléfono (Editable o dictando con mic)</label>
         <input type="text" id="telefono" required placeholder="Ej. 04121234567" class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium focus:ring-2 focus:ring-blue-400 outline-none bg-white">
       </div>
 
@@ -69,7 +67,6 @@
   <script>
     document.getElementById("fecha").valueAsDate = new Date();
 
-    // Diccionario para convertir números dictados por voz en palabras a dígitos reales
     function convertirPalabrasANumeros(texto) {
       if (!texto) return "";
       var t = texto.toLowerCase();
@@ -93,7 +90,7 @@
       if (/^58(412|424|414|416|426)\d{7}$/.test(num)) return num;
       if (/^0(412|424|414|416|426)\d{7}$/.test(num)) return "58" + num.substring(1);
       if (/^(412|424|414|416|426)\d{7}$/.test(num)) return "58" + num;
-      return num; // Si escribieron otro número o lo corrigieron a mano, lo devuelve limpio
+      return num;
     }
 
     function procesarTextoGuia() {
@@ -119,39 +116,35 @@
 
         var lineas = text.split("\n");
 
-        // 1. DETECTAR DESTINATARIO (Busca etiquetas o toma la primera línea limpia de texto válido)
-        var nombreFinal = "";
-        for (var j = 0; j < lineas.length; j++) {
-          var lOriginal = lineas[j].trim();
-          var lUp = lOriginal.toUpperCase();
-
-          if (lUp.indexOf("DESTINATARIO") !== -1 || lUp.indexOf("DEST:") !== -1 || lUp.indexOf("NOMBRE") !== -1) {
-            var partes = lOriginal.split(/[:\-]/);
-            if (partes.length > 1) {
-              var posibleAlLado = partes.slice(1).join(" ").trim();
-              posibleAlLado = posibleAlLado.replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "").replace(/[\|\/\\\,\.\-_]+$/g, "").trim();
-              if (posibleAlLado.length >= 3 && !/\d/.test(posibleAlLado)) {
-                nombreFinal = posibleAlLado;
-                break;
-              }
-            }
-            if (!nombreFinal && j + 1 < lineas.length) {
-              var posibleAbajo = lineas[j + 1].trim().replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "").replace(/[\|\/\\\,\.\-_]+$/g, "").trim();
-              if (posibleAbajo.length >= 3 && !/\d/.test(posibleAbajo)) {
-                nombreFinal = posibleAbajo;
-                break;
-              }
+        // 1. TRACKING (Para ubicar la zona del destinatario)
+        var indiceTracking = -1;
+        for (var i = 0; i < lineas.length; i++) {
+          var lineaLimpia = lineas[i].trim();
+          if (/^\d{8,15}$/.test(lineaLimpia)) {
+            if (!lineaLimpia.startsWith("412") && !lineaLimpia.startsWith("424") && !lineaLimpia.startsWith("414") && !lineaLimpia.startsWith("416") && !lineaLimpia.startsWith("426") && !lineaLimpia.startsWith("04")) {
+              indiceTracking = i;
+              break;
             }
           }
         }
 
-        // Respaldo de nombre si no encontró etiquetas exactas
+        // 2. DESTINATARIO (Línea inmediatamente anterior al tracking)
+        var nombreFinal = "";
+        if (indiceTracking > 0) {
+          var posibleNombre = lineas[indiceTracking - 1].trim();
+          posibleNombre = posibleNombre.replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "").replace(/[\|\/\\\,\.\-_]+$/g, "").trim();
+          if (posibleNombre.length >= 3 && !/\d/.test(posibleNombre)) {
+            nombreFinal = posibleNombre;
+          }
+        }
+
+        // Respaldo de nombre
         if (!nombreFinal) {
-          for (var k = 0; k < lineas.length; k++) {
-            var l = lineas[k].trim();
+          for (var j = 0; j < lineas.length; j++) {
+            var l = lineas[j].trim();
             var lUp = l.toUpperCase();
             if (l.length < 4 || /\d/.test(l)) continue;
-            if (lUp.indexOf("MRW") !== -1 || lUp.indexOf("TEALCA") !== -1 || lUp.indexOf("ZOOM") !== -1 || lUp.indexOf("DIRECCION") !== -1) continue;
+            if (lUp.indexOf("MRW") !== -1 || lUp.indexOf("TEALCA") !== -1 || lUp.indexOf("ZOOM") !== -1 || lUp.indexOf("DIRECCION") !== -1 || lUp.indexOf("RETIRAR") !== -1) continue;
             var palabras = l.split(/\s+/);
             if (palabras.length >= 2 && palabras.length <= 4) {
               nombreFinal = l;
@@ -161,12 +154,12 @@
         }
         document.getElementById("nombre").value = nombreFinal;
 
-        // 2. DETECTAR TELÉFONO DEL CLIENTE (Busca todos y toma el último de abajo, que suele ser el del cliente)
+        // 3. TELÉFONO DEL CLIENTE (Último número válido del texto)
         var todosLosTelefonos = [];
         for (var t = 0; t < lineas.length; t++) {
           var matchT = lineas[t].match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
           if (matchT) {
-            var tFmt = formatearTelefonoStrict(matchT[0]);
+            var tFmt = limpiarTelefonoStrict(matchT[0]);
             if (tFmt) {
               todosLosTelefonos.push(tFmt);
             }
@@ -198,7 +191,6 @@
       var partes = fechaRaw.split("-");
       var fechaFormateada = partes[2] + "/" + partes[1] + "/" + partes[0];
 
-      // Mensaje actualizado sin tracking (eliminado de la plantilla)
       var textoMensaje =
         "Hola Sr./Sra. " + nombre + ", 👋\n\n" +
         "Su pedido ya fue enviado por " + empresa + ". Aquí el resumen:\n\n" +
