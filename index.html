@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Despacho Rápido V87 - Myriedesign</title>
+  <title>Despacho Rápido V93 - Myriedesign</title>
   <script src="https://cdn.tailwindcss.com"></script>
   
   <link rel="manifest" href="manifest.json">
@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Rápido V87 - Myriedesign</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Rápido V93 - Myriedesign</h2>
     
     <!-- BLOQUE GOOGLE LENS -->
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
@@ -98,27 +98,22 @@
     function limpiarNombreCompleto(s) {
       if (!s) return "";
       var limpio = s
-        // Eliminar palabras clave
         .replace(/DESTINATARIO|DESTINATARI0|DEST\.|DEST:|DEST/gi, "")
         .replace(/REMITENTE:|REMITENTE/gi, "")
-        // Eliminar cédulas y teléfonos pegados
-        .replace(/[VE]-?\d{6,8}/gi, "")
+        .replace(/NOMBRE:?|N0MBRE:?|NOMBRE|N0MBRE/gi, "")
         .replace(/TLF:?\s*0?\d{10,11}/gi, "")
         .replace(/TEL[EÉ]FONO:?\s*0?\d{10,11}/gi, "")
-        // Limpiar puntuación extra
+        .replace(/[VE]-?\d{6,8}/gi, "")
         .replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "")
         .replace(/[\|\/\\\,\.\-_]+$/g, "")
         .trim();
 
-      // Eliminar nombres o palabras duplicadas adyacentes de forma estricta
       var palabras = limpio.split(/\s+/);
       var unicas = [];
       for (var p = 0; p < palabras.length; p++) {
         var palabraActual = palabras[p].toLowerCase();
-        // Evita duplicados consecutivos y también previene secuencias repetidas tipo "Nombre Apellido Nombre Apellido"
         var esDuplicadoAdyacente = (p > 0 && palabraActual === palabras[p - 1].toLowerCase());
         
-        // Comprobación avanzada para bloques repetidos (ej: "Ana Perez Ana Perez")
         var esDuplicadoMitad = false;
         if (palabras.length % 2 === 0 && p >= palabras.length / 2) {
           var mitad = palabras.length / 2;
@@ -144,9 +139,9 @@
 
         var tUpper = text.toUpperCase();
 
-        // Detectar Empresa
+        // 1. Detectar Empresa
         var empresaDetectada = "MRW";
-        if (tUpper.indexOf("TEALCA") !== -1) {
+        if (tUpper.indexOf("TEALCA") !== -1 || tUpper.indexOf("TEALLA") !== -1) {
           empresaDetectada = "Tealca";
         } else if ((tUpper.indexOf("ZOOM") !== -1 || tUpper.indexOf("MER") !== -1) && tUpper.indexOf("ENSACADO") === -1) {
           empresaDetectada = "Zoom";
@@ -158,25 +153,30 @@
         var lineas = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
         var nombreFinal = "";
 
-        // REGLA ESPECÍFICA SEGÚN LA EMPRESA
-        if (empresaDetectada === "Zoom") {
-          // ZOOM: Línea 6 (índice 5 en programación)
-          if (lineas.length >= 6) {
-            nombreFinal = limpiarNombreCompleto(lineas[5]);
-          }
-        } else {
-          // MRW: Línea 7 (índice 6 en programación)
-          if (lineas.length >= 7) {
-            nombreFinal = limpiarNombreCompleto(lineas[6]);
-          }
+        // 2. REGLAS EXACTAS POR EMPRESA
+        if (empresaDetectada === "MRW" && lineas.length >= 7) {
+          // MRW: Línea 7 exacta con limpieza completa
+          nombreFinal = limpiarNombreCompleto(lineas[6]);
+        } 
+        else if (empresaDetectada === "Zoom" && lineas.length >= 6) {
+          // Zoom: Línea 6 exacta, removiendo "Destinatario", "Remitente:" y duplicados
+          var lineaZoom = lineas[5]
+            .replace(/DESTINATARIO|DESTINATARI0|DEST\.|DEST:|DEST/gi, "")
+            .replace(/REMITENTE:[\s\S]*/gi, ""); // Corta todo si aparece remitente en la misma línea
+          nombreFinal = limpiarNombreCompleto(lineaZoom);
+        } 
+        else if (empresaDetectada === "Tealca" && lineas.length >= 8) {
+          // Tealca: Línea 8 exacta
+          nombreFinal = limpiarNombreCompleto(lineas[7]);
         }
 
-        // Respaldo inteligente
+        // Respaldo dinámico si faltara alguna línea exacta
         if (!nombreFinal || nombreFinal.length < 3) {
           for (var i = 0; i < lineas.length; i++) {
             var lUp = lineas[i].toUpperCase();
-            if (lUp.indexOf("DESTINATARIO") !== -1 || lUp.indexOf("DEST") !== -1) {
-              nombreFinal = limpiarNombreCompleto(lineas[i]);
+            if (lUp.indexOf("NOMBRE") !== -1 || lUp.indexOf("DEST") !== -1) {
+              var partesNombre = lineas[i].split(/N[O0]MBRE:?|DEST\.?:?/i);
+              nombreFinal = limpiarNombreCompleto(partesNombre.length > 1 ? partesNombre[1] : "");
               if (!nombreFinal && i + 1 < lineas.length) {
                 nombreFinal = limpiarNombreCompleto(lineas[i + 1]);
               }
@@ -187,7 +187,7 @@
 
         document.getElementById("nombre").value = nombreFinal;
 
-        // 2. TELÉFONO DEL CLIENTE (Último número válido del texto)
+        // 3. TELÉFONO DEL CLIENTE (Último número válido del texto)
         var todosLosTelefonos = [];
         for (var t = 0; t < lineas.length; t++) {
           var matchT = lineas[t].match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
