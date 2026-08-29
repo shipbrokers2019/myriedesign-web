@@ -37,16 +37,16 @@
         <section class="bg-white shadow-xl rounded-2xl p-6 border border-slate-200">
             <h2 class="text-lg font-bold mb-3 text-indigo-600">1. Pegar Texto de Guía (Google Lens)</h2>
             
-            <textarea id="textInput" rows="6" placeholder="Pega aquí el texto bruto de la guía de envío (MRW, Zoom, Tealca)..." 
+            <textarea id="textInput" rows="6" placeholder="Pega aquí el texto bruto de la guía (MRW, Zoom, Tealca)..." 
                       class="w-full p-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none transition duration-150 text-sm"></textarea>
 
-            <!-- Previsualización de Datos -->
+            <!-- Previsualización de Datos (Solo Nombre y Teléfono principales) -->
             <div id="processingArea" class="mt-6 space-y-4">
-                <h3 class="text-md font-semibold text-slate-700 border-b pb-2">2. Previsualización de Datos</h3>
+                <h3 class="text-md font-semibold text-slate-700 border-b pb-2">2. Datos Extraídos</h3>
                 
                 <!-- Destinatario -->
                 <div class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
-                    <label for="destName" class="block text-xs font-bold text-indigo-700 uppercase mb-1">Destinatario</label>
+                    <label for="destName" class="block text-xs font-bold text-indigo-700 uppercase mb-1">Nombre del Destinatario</label>
                     <input id="destName" type="text" placeholder="Nombre detectado..." 
                            class="w-full p-2.5 bg-white border border-indigo-200 rounded-lg text-sm font-medium">
                 </div>
@@ -56,23 +56,6 @@
                     <label for="phoneInput" class="block text-xs font-bold text-blue-700 uppercase mb-1">Teléfono</label>
                     <input id="phoneInput" type="text" placeholder="Teléfono detectado..." 
                            class="w-full p-2.5 bg-white border border-blue-200 rounded-lg text-sm font-medium">
-                </div>
-
-                <!-- Empresa de Envío -->
-                <div class="bg-amber-50/50 p-3 rounded-xl border border-amber-100">
-                    <label for="courierSelect" class="block text-xs font-bold text-amber-700 uppercase mb-1">Empresa de Envío</label>
-                    <select id="courierSelect" class="w-full p-2.5 bg-white border border-amber-200 rounded-lg text-sm font-medium">
-                        <option value="">Seleccione la empresa...</option>
-                        <option value="MRW">MRW</option>
-                        <option value="Zoom">Zoom</option>
-                        <option value="Tealca">Tealca</option>
-                    </select>
-                </div>
-
-                <!-- Fecha de Envío -->
-                <div class="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
-                    <label for="shipDate" class="block text-xs font-bold text-emerald-700 uppercase mb-1">Fecha de Envío</label>
-                    <input id="shipDate" type="text" readonly class="w-full p-2.5 bg-emerald-100/50 border border-emerald-200 rounded-lg text-sm font-medium text-emerald-900">
                 </div>
             </div>
 
@@ -84,17 +67,19 @@
             </button>
 
             <!-- Output Area -->
-            <div id="outputArea" class="mt-8 pt-4 border-t border-slate-200 hidden">
-                <h3 class="text-md font-bold mb-2 text-slate-800">Resultado Final</h3>
-                <p class="text-xs text-slate-500 mb-2">Toca el enlace para abrir WhatsApp o cópialo:</p>
+            <div id="outputArea" class="mt-8 pt-4 border-t border-slate-200 hidden space-y-3">
+                <h3 class="text-md font-bold text-slate-800">Resultado Final</h3>
                 
+                <!-- Botón directo para abrir WhatsApp -->
                 <a id="whatsappLinkOutput" target="_blank" rel="noopener noreferrer" 
-                   class="block w-full p-4 text-center bg-emerald-600 text-white font-bold text-sm rounded-xl shadow-md hover:bg-emerald-700 transition break-all">
+                   class="block w-full py-4 px-6 text-center bg-emerald-600 text-white font-bold text-base rounded-xl shadow-md hover:bg-emerald-700 transition flex items-center justify-center gap-2">
+                    💬 Abrir Chat de WhatsApp Directo
                 </a>
                 
+                <!-- Botón para copiar enlace -->
                 <button id="copyBtn" 
-                        class="mt-3 w-full py-2.5 px-4 text-sm font-semibold text-slate-700 bg-slate-100 rounded-xl hover:bg-slate-200 transition">
-                    Copiar Enlace
+                        class="w-full py-3 px-4 text-sm font-semibold text-slate-700 bg-slate-100 rounded-xl hover:bg-slate-200 transition">
+                    📋 Copiar Enlace al Portapapeles
                 </button>
             </div>
 
@@ -112,82 +97,87 @@
             const copyBtn = document.getElementById('copyBtn');
             const statusMessage = document.getElementById('statusMessage');
 
-            // Establecer fecha actual por defecto
-            const todayStr = new Date().toLocaleDateString('es-VE', { year: 'numeric', month: '2-digit', day: '2-digit' });
-            document.getElementById('shipDate').value = todayStr;
-
-            // Función principal de procesamiento de texto con IA local (Regex mejorada)
+            // Función de extracción enfocada 100% en Destinatario y Teléfono
             function processText() {
                 const text = textInput.value.trim();
                 if (!text) {
                     document.getElementById('destName').value = '';
                     document.getElementById('phoneInput').value = '';
-                    document.getElementById('courierSelect').value = '';
                     outputArea.classList.add('hidden');
                     return;
                 }
 
-                // 1. Detección de Empresa (MRW, Zoom, Tealca)
-                const courierMatch = text.match(/(mrw|zoom|tealca)/i);
-                if (courierMatch) {
-                    document.getElementById('courierSelect').value = courierMatch[0].toUpperCase();
-                }
-
-                // 2. Detección de Teléfono (Patrones venezolanos)
-                const phoneMatch = text.match(/(?:0?4\d{2}|0?2\d{2})[-.\s]?\d{3}[-.\s]?\d{4}|\b\d{10,11}\b/);
-                if (phoneMatch) {
-                    document.getElementById('phoneInput').value = phoneMatch[0].trim();
-                }
-
-                // 3. Detección de Nombre Mejorada (Filtra palabras basura de las guías)
-                const lines = text.split('\n');
-                let foundName = '';
-                const ignoreWords = /(tracking|guia|mrw|zoom|tealca|fecha|destinatario|remitente|direccion|telefono|ci|rif|cobro|destino|agencia|oficina|peso|piezas)/i;
-
-                for (let line of lines) {
-                    let clean = line.trim();
-                    // Buscar una línea que parezca un nombre real (letras, espacios, longitud adecuada y sin números de guía)
-                    if (clean.length >= 4 && clean.length < 40 && !/\d{4,}/.test(clean) && !ignoreWords.test(clean)) {
-                        foundName = clean;
-                        break;
+                // 1. Extracción de Teléfono (Busca patrones TLF, Tlf, o números venezolanos directos)
+                let phoneFound = '';
+                const phoneMatchExplicit = text.match(/(?:tlf|telf|teléfono|telefono|telt)[\s.:-]*([04|02]\d{9,10}|\d{10,11})/i);
+                if (phoneMatchExplicit) {
+                    phoneFound = phoneMatchExplicit[1];
+                } else {
+                    // Búsqueda general de números móviles o fijos comunes en el texto
+                    const generalPhoneMatch = text.match(/\b(0?4\d{2}|0?2\d{2})[-.\s]?\d{3}[-.\s]?\d{4}\b|\b\d{10,11}\b/);
+                    if (generalPhoneMatch) {
+                        phoneFound = generalPhoneMatch[0];
                     }
                 }
-                document.getElementById('destName').value = foundName || 'Cliente';
+                document.getElementById('phoneInput').value = phoneFound;
+
+                // 2. Extracción del Nombre del Destinatario (Busca etiquetas como "DEST:", "Destinatario:", "NOMBRE:")
+                let nameFound = '';
+                const nameMatchExplicit = text.match(/(?:dest:|destinatario:|nombre:)[\s]*([A-ZÁÉÍÓÚÑ\s]+?)(?=\s*(?:v-|e-|tlf|dir|dirección|cédula|rif|-|$))/i);
+                
+                if (nameMatchExplicit && nameMatchExplicit[1].trim().length > 3) {
+                    nameFound = nameMatchExplicit[1].trim();
+                } else {
+                    // Si no tiene etiqueta clara (como en MRW a veces), buscamos líneas limpias ignorando basura
+                    const lines = text.split('\n');
+                    const ignoreWords = /(tracking|guia|mrw|zoom|tealca|lae|fecha|remitente|origen|destino|direccion|dirección|telefono|teléfono|ci|rif|cobro|agencia|oficina|peso|piezas|urb|urbanizacion|av|avenida|calle|sector)/i;
+
+                    for (let line of lines) {
+                        let clean = line.trim();
+                        // Limpiar prefijos comunes si los trae pegados
+                        clean = clean.replace(/^(dest\.?|nombre:?)\s*/i, '');
+                        if (clean.length >= 4 && clean.length < 40 && !/\d{4,}/.test(clean) && !ignoreWords.test(clean)) {
+                            nameFound = clean;
+                            break;
+                        }
+                    }
+                }
+                
+                // Limpiar guiones o cédulas pegadas al nombre (ej. "INGRID CAMPOS V-8142710" -> "INGRID CAMPOS")
+                if (nameFound) {
+                    nameFound = nameFound.replace(/\s+(v-|e-|c[i\.]).*/i, '').trim();
+                }
+
+                document.getElementById('destName').value = nameFound || '';
             }
 
-            // Generar Enlace de WhatsApp
+            // Generar Enlace de WhatsApp con tu plantilla exacta
             function generateWhatsAppLink() {
-                const name = document.getElementById('destName').value.trim() || 'Cliente';
+                const name = document.getElementById('destName').value.trim() || 'Estimado/a cliente';
                 const phoneRaw = document.getElementById('phoneInput').value.trim();
-                const courier = document.getElementById('courierSelect').value;
+                const shipDate = new Date().toLocaleDateString('es-VE', { year: 'numeric', month: '2-digit', day: '2-digit' });
 
                 if (!phoneRaw) {
-                    showStatus("⚠️ Por favor, indica o verifica el número de teléfono.", "text-amber-600");
-                    return;
-                }
-                if (!courier) {
-                    showStatus("⚠️ Por favor, selecciona la empresa de envío.", "text-amber-600");
+                    showStatus("⚠️ Por favor, verifica o ingresa el número de teléfono.", "text-amber-600");
                     return;
                 }
 
-                // Limpiar el teléfono para dejar solo dígitos
+                // Limpiar teléfono para wa.me (+58)
                 let cleanPhone = phoneRaw.replace(/\D/g, '');
                 if (cleanPhone.startsWith('0')) {
                     cleanPhone = cleanPhone.substring(1);
                 }
                 const whatsappNumber = `58${cleanPhone}`;
 
-                // Mensaje estructurado limpio con las recomendaciones de Myriedesign
-                const message = `¡Hola ${name}! 👋\n\nTu pedido de Myriedesign ya va en camino con ${courier} 📦✨.\n\nIMPORTANTE - Cuidado de tus piezas:\nPara mantener el brillo y la calidad de tu joyería, te recomendamos:\n• Evitar el contacto directo con perfumes, cremas, alcohol o químicos.\n• No usar al bañarte, hacer ejercicios o ir a la playa/piscina.\n• Guardarlas individualmente en su empaque o un lugar seco.\n\n¡Gracias por tu compra! Déjanos saber cuando lo recibas. 💛`;
+                // Tu plantilla exacta de mensaje
+                const message = `Hola Sr./Sra. ${name}, 👋\n\nSu pedido ya fue enviado. Aquí el resumen:\n\n📅 Fecha de envío: ${shipDate}\n\nAdjunto la foto de su guía para que pueda rastrear su pedido cuando quiera.\n\nGracias por su compra! 🙏\nRecuerde que es importante darle los cuidados adecuados:\n❤️ Mantener limpias y secas.\n❤️ Alejar de agentes químicos como alcohol, perfumes, cremas y jabones.\n❤️ Colocar cuando la piel esté seca\n❤️ No mojar ni usar en playa o piscinas\n❤️ Evitar hacer ejercicios con ellas\n\nDe esta manera extenderá la vida útil y brillo de sus piezas ✨ ✨\n\nSaludos Myriedesign`;
 
-                // Construir URL final
                 const finalLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 
                 whatsappLinkOutput.href = finalLink;
-                whatsappLinkOutput.textContent = finalLink;
                 outputArea.classList.remove('hidden');
 
-                showStatus("✅ ¡Enlace de WhatsApp generado con éxito!", "text-emerald-600");
+                showStatus("✅ ¡Enlace generado con éxito! Haz clic en el botón verde.", "text-emerald-600");
             }
 
             function showStatus(msg, className) {
@@ -196,13 +186,13 @@
                 statusMessage.classList.remove('hidden');
             }
 
-            // Copiar al portapapeles
+            // Copiar enlace al portapapeles
             copyBtn.addEventListener('click', () => {
                 const linkText = whatsappLinkOutput.href;
                 navigator.clipboard.writeText(linkText).then(() => {
                     copyBtn.textContent = "¡Copiado al portapapeles! 📋";
                     setTimeout(() => {
-                        copyBtn.textContent = "Copiar Enlace";
+                        copyBtn.textContent = "📋 Copiar Enlace al Portapapeles";
                     }, 2000);
                 });
             });
