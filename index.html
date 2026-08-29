@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Despacho de Envíos - Myriedesign</title>
+  <title>Despacho Híbrido - Myriedesign</title>
   <script src="https://cdn.tailwindcss.com"></script>
   
   <link rel="manifest" href="manifest.json">
@@ -13,31 +13,35 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Rápido V75 - Myriedesign</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Híbrido V76 - Myriedesign</h2>
     
-    <div class="bg-green-50 border border-green-200 p-2.5 rounded-lg text-center">
-      <p class="text-xs text-green-800 font-medium">💡 <strong>Consejo:</strong> Dicta el teléfono con confianza (ej. "cero cuatro doce..."). La app limpia las letras y los espacios sola.</p>
+    <!-- BLOQUE GOOGLE LENS -->
+    <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
+      <label class="block text-xs font-bold text-blue-800 mb-1">
+        📋 1. Pega aquí el texto de Google Lens de la guía
+      </label>
+      <textarea id="rawText" rows="3" placeholder="Pega todo el texto copiado de la guía aquí..." class="w-full p-2 border border-blue-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-400 outline-none"></textarea>
+      <button type="button" id="btnProcesar" onclick="procesarTextoGuia()" class="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs transition active:bg-blue-800 shadow">
+        ⚡ Extraer Datos Automáticamente
+      </button>
     </div>
 
+    <!-- FORMULARIO EDITABLE (CON VOZ DISPONIBLE) -->
     <form id="guiaForm" class="space-y-3">
       <div>
-        <label class="block text-xs font-bold text-gray-700">Destinatario (Cliente)</label>
-        <input type="text" id="nombre" required placeholder="Ej. María Pérez" class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium focus:ring-2 focus:ring-blue-400 outline-none">
+        <label class="block text-xs font-bold text-gray-700">2. Destinatario (Puedes editarlo o corregirlo por voz)</label>
+        <input type="text" id="nombre" required placeholder="Nombre del cliente" class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium focus:ring-2 focus:ring-blue-400 outline-none bg-white">
       </div>
       
       <div>
-        <label class="block text-xs font-bold text-gray-700">Teléfono (WhatsApp) - ¡Dictalo sin miedo!</label>
-        <input type="text" id="telefono" required placeholder="Dicta o escribe el número..." class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium focus:ring-2 focus:ring-blue-400 outline-none">
+        <label class="block text-xs font-bold text-gray-700">3. Teléfono (Puedes corregirlo dictando con el mic del teclado)</label>
+        <input type="text" id="telefono" required placeholder="Ej. 04121234567" class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium focus:ring-2 focus:ring-blue-400 outline-none bg-white">
       </div>
 
       <div class="grid grid-cols-2 gap-2">
         <div>
-          <label class="block text-xs font-bold text-gray-700">N° Tracking / Guía</label>
-          <input type="text" id="tracking" required placeholder="Número de guía" class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium focus:ring-2 focus:ring-blue-400 outline-none">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-700">Empresa</label>
-          <select id="empresa" class="w-full mt-1 p-2 border rounded-lg text-sm bg-white text-gray-900 font-medium focus:ring-2 focus:ring-blue-400 outline-none">
+          <label class="block text-xs font-bold text-gray-700">Empresa de Envío</label>
+          <select id="empresa" class="w-full mt-1 p-2 border rounded-lg text-sm bg-white text-gray-900 font-medium">
             <option value="MRW">MRW</option>
             <option value="Tealca">Tealca</option>
             <option value="Zoom">Zoom</option>
@@ -45,38 +49,35 @@
             <option value="Liberty Express">Liberty Express</option>
           </select>
         </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700">Fecha de Envío</label>
+          <input type="date" id="fecha" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium">
+        </div>
       </div>
 
-      <div>
-        <label class="block text-xs font-bold text-gray-700">Fecha de Envío</label>
-        <input type="date" id="fecha" required class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium focus:ring-2 focus:ring-blue-400 outline-none">
-      </div>
-
-      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-sm transition shadow-md">
+      <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-lg text-sm transition shadow-md">
         🚀 Generar Notificación WhatsApp
       </button>
     </form>
 
     <hr class="my-4">
 
-    <h3 class="text-sm font-bold text-gray-800">Historial de Hoy</h3>
+    <h3 class="text-sm font-bold text-gray-800">Mensajes Listos</h3>
     <div id="listaGuias" class="space-y-3"></div>
   </div>
 
   <script>
     document.getElementById("fecha").valueAsDate = new Date();
 
-    // Diccionario para convertir números dictados en palabras a dígitos reales automáticamente
+    // Diccionario para convertir números dictados por voz en palabras a dígitos reales
     function convertirPalabrasANumeros(texto) {
       if (!texto) return "";
       var t = texto.toLowerCase();
       var mapa = {
         'cero': '0', 'uno': '1', 'un': '1', 'dos': '2', 'tres': '3', 
         'cuatro': '4', 'cinco': '5', 'seis': '6', 'siete': '7', 
-        'ocho': '8', 'nueve': '9', 'nuebes': '9'
+        'ocho': '8', 'nueve': '9'
       };
-      
-      // Si el texto tiene palabras, intentamos traducirlas
       for (var palabra in mapa) {
         var regex = new RegExp('\\b' + palabra + '\\b', 'g');
         t = t.replace(regex, mapa[palabra]);
@@ -84,30 +85,103 @@
       return t;
     }
 
-    function limpiarTelefonoInteligente(inputBruto) {
-      if (!inputBruto) return "";
-      
-      // Primero traducimos si dictó en palabras (ej. "cero cuatro doce...")
-      var traducido = convertirPalabrasANumeros(inputBruto);
-      
-      // Extraemos solo los dígitos numéricos del texto resultante
+    function limpiarTelefonoStrict(numBruto) {
+      if (!numBruto) return "";
+      var traducido = convertirPalabrasANumeros(numBruto);
       var num = traducido.replace(/\D/g, "");
-
-      // Ajustes automáticos para Venezuela
-      // Si empieza por 0 y tiene 11 dígitos (ej: 04121234567)
-      if (/^0(412|424|414|416|426)\d{7}$/.test(num)) {
-        return "58" + num.substring(1);
-      }
-      // Si ya viene con 58 y 12 dígitos (ej: 584121234567)
-      if (/^58(412|424|414|416|426)\d{7}$/.test(num)) {
-        return num;
-      }
-      // Si dictó directo los 10 dígitos sin el 0 (ej: 4121234567)
-      if (/^(412|424|414|416|426)\d{7}$/.test(num)) {
-        return "58" + num;
-      }
       
-      return num; // Devuelve los números limpios en cualquier otro caso
+      if (/^58(412|424|414|416|426)\d{7}$/.test(num)) return num;
+      if (/^0(412|424|414|416|426)\d{7}$/.test(num)) return "58" + num.substring(1);
+      if (/^(412|424|414|416|426)\d{7}$/.test(num)) return "58" + num;
+      return num; // Si escribieron otro número o lo corrigieron a mano, lo devuelve limpio
+    }
+
+    function procesarTextoGuia() {
+      try {
+        var text = document.getElementById("rawText").value;
+        if (!text || !text.trim()) {
+          alert("Primero pega el texto extraído por Google Lens.");
+          return;
+        }
+
+        var tUpper = text.toUpperCase();
+
+        // Detectar Empresa
+        var empresaDetectada = "MRW";
+        if (tUpper.indexOf("TEALCA") !== -1) {
+          empresaDetectada = "Tealca";
+        } else if ((tUpper.indexOf("ZOOM") !== -1 || tUpper.indexOf("MER") !== -1) && tUpper.indexOf("ENSACADO") === -1) {
+          empresaDetectada = "Zoom";
+        } else if (tUpper.indexOf("LAE") !== -1 || tUpper.indexOf("EL DORADO") !== -1) {
+          empresaDetectada = "LAE";
+        }
+        document.getElementById("empresa").value = empresaDetectada;
+
+        var lineas = text.split("\n");
+
+        // 1. DETECTAR DESTINATARIO (Busca etiquetas o toma la primera línea limpia de texto válido)
+        var nombreFinal = "";
+        for (var j = 0; j < lineas.length; j++) {
+          var lOriginal = lineas[j].trim();
+          var lUp = lOriginal.toUpperCase();
+
+          if (lUp.indexOf("DESTINATARIO") !== -1 || lUp.indexOf("DEST:") !== -1 || lUp.indexOf("NOMBRE") !== -1) {
+            var partes = lOriginal.split(/[:\-]/);
+            if (partes.length > 1) {
+              var posibleAlLado = partes.slice(1).join(" ").trim();
+              posibleAlLado = posibleAlLado.replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "").replace(/[\|\/\\\,\.\-_]+$/g, "").trim();
+              if (posibleAlLado.length >= 3 && !/\d/.test(posibleAlLado)) {
+                nombreFinal = posibleAlLado;
+                break;
+              }
+            }
+            if (!nombreFinal && j + 1 < lineas.length) {
+              var posibleAbajo = lineas[j + 1].trim().replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "").replace(/[\|\/\\\,\.\-_]+$/g, "").trim();
+              if (posibleAbajo.length >= 3 && !/\d/.test(posibleAbajo)) {
+                nombreFinal = posibleAbajo;
+                break;
+              }
+            }
+          }
+        }
+
+        // Respaldo de nombre si no encontró etiquetas exactas
+        if (!nombreFinal) {
+          for (var k = 0; k < lineas.length; k++) {
+            var l = lineas[k].trim();
+            var lUp = l.toUpperCase();
+            if (l.length < 4 || /\d/.test(l)) continue;
+            if (lUp.indexOf("MRW") !== -1 || lUp.indexOf("TEALCA") !== -1 || lUp.indexOf("ZOOM") !== -1 || lUp.indexOf("DIRECCION") !== -1) continue;
+            var palabras = l.split(/\s+/);
+            if (palabras.length >= 2 && palabras.length <= 4) {
+              nombreFinal = l;
+              break;
+            }
+          }
+        }
+        document.getElementById("nombre").value = nombreFinal;
+
+        // 2. DETECTAR TELÉFONO DEL CLIENTE (Busca todos y toma el último de abajo, que suele ser el del cliente)
+        var todosLosTelefonos = [];
+        for (var t = 0; t < lineas.length; t++) {
+          var matchT = lineas[t].match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
+          if (matchT) {
+            var tFmt = formatearTelefonoStrict(matchT[0]);
+            if (tFmt) {
+              todosLosTelefonos.push(tFmt);
+            }
+          }
+        }
+
+        if (todosLosTelefonos.length > 0) {
+          document.getElementById("telefono").value = todosLosTelefonos[todosLosTelefonos.length - 1];
+        } else {
+          document.getElementById("telefono").value = "";
+        }
+
+      } catch (e) {
+        alert("Error al procesar: " + e.message);
+      }
     }
 
     var form = document.getElementById("guiaForm");
@@ -116,20 +190,18 @@
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       var nombre = document.getElementById("nombre").value.trim();
-      var telfBruto = document.getElementById("telefono").value;
-      var telf = limpiarTelefonoInteligente(telfBruto);
-      var tracking = document.getElementById("tracking").value.trim();
+      var telfBruto = document.getElementById("telefono").value.trim();
+      var telf = limpiarTelefonoStrict(telfBruto);
       var empresa = document.getElementById("empresa").value;
       var fechaRaw = document.getElementById("fecha").value;
 
       var partes = fechaRaw.split("-");
       var fechaFormateada = partes[2] + "/" + partes[1] + "/" + partes[0];
 
+      // Mensaje actualizado sin tracking (eliminado de la plantilla)
       var textoMensaje =
         "Hola Sr./Sra. " + nombre + ", 👋\n\n" +
-        "Su pedido ya fue enviado. Aquí el resumen:\n\n" +
-        "📦 Empresa: " + empresa + "\n" +
-        "🔢 Tracking: " + tracking + "\n" +
+        "Su pedido ya fue enviado por " + empresa + ". Aquí el resumen:\n\n" +
         "📅 Fecha de envío: " + fechaFormateada + "\n\n" +
         "Adjunto la foto de su guía para que pueda rastrear su pedido cuando quiera.\n\n" +
         "Gracias por su compra! 🙏\n" +
@@ -150,7 +222,7 @@
         '<div class="flex justify-between items-start">' +
         "<div>" +
         '<p class="font-bold text-gray-800 text-sm">' + nombre + "</p>" +
-        '<p class="text-xs text-gray-500">' + empresa + " - Guía: " + tracking + " | 📱 " + telf + "</p>" +
+        '<p class="text-xs text-gray-500">' + empresa + " | 📱 " + telf + "</p>" +
         '<p class="text-xs text-gray-400">📅 ' + fechaFormateada + "</p>" +
         "</div>" +
         '<a href="' + linkWa + '" target="_blank" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold py-2 px-3 rounded-lg shadow inline-flex items-center gap-1">WhatsApp</a>' +
@@ -158,8 +230,8 @@
 
       lista.prepend(card);
       form.reset();
+      document.getElementById("rawText").value = "";
       document.getElementById("fecha").valueAsDate = new Date();
-      document.getElementById("nombre").focus();
     });
   </script>
 </body>
