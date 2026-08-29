@@ -121,15 +121,15 @@
                 }
                 document.getElementById('phoneInput').value = phoneFound;
 
-                // 2. Extracción Protegida del Nombre del Destinatario
+                // 2. Extracción del Nombre del Destinatario
                 let nameFound = '';
 
-                // NIVEL A: Lógica segura y probada para MRW y Tealca (Etiquetas DEST / DESTINATARIO / NOMBRE)
+                // PASO A: Lógica intacta y exacta para MRW y Tealca (buscando DESTINATARIO o DEST)
                 for (let i = 0; i < lines.length; i++) {
                     let currentLine = lines[i];
 
                     if (/^(destinatario|dest)\b/i.test(currentLine)) {
-                        if (/^destino/i.test(currentLine)) continue; // Evitar confundir "DESTINO:"
+                        if (/^destino/i.test(currentLine)) continue; // Evitar "DESTINO:"
 
                         let cleaned = currentLine.replace(/^(destinatario|dest)[\s.:-]*/i, '').trim();
                         if (cleaned.length > 2 && !/^retirar/i.test(cleaned)) {
@@ -149,20 +149,25 @@
                     }
                 }
 
-                // NIVEL B: Respaldo inteligente para Zoom (si MRW/Tealca no dispararon, buscamos líneas típicas de nombres de clientes)
+                // PASO B: Lógica específica para Zoom (Busca la línea "ORIGEN" y toma la línea inmediatamente posterior)
                 if (!nameFound) {
                     for (let i = 0; i < lines.length; i++) {
-                        let l = lines[i];
-                        // Ignorar líneas técnicas comunes de Zoom u otras agencias
-                        if (/^(peso|cobro|cant|tracking|ensacado|origen|destino|dir|tlf|cod|bsc|mer)/i.test(l)) continue;
-                        if (l.length > 4 && l.includes(' ')) { // Nombres por lo general tienen espacio (Nombre y Apellido) y más de 4 letras
-                            nameFound = l;
-                            break;
+                        let currentLine = lines[i];
+                        if (/^origen\b/i.test(currentLine)) {
+                            // Si encontramos "ORIGEN", el nombre del destinatario está en la línea siguiente (i + 1)
+                            if (i + 1 < lines.length) {
+                                let potentialName = lines[i + 1];
+                                // Validar que la línea siguiente no sea un código u otra etiqueta técnica
+                                if (!/^(peso|cobro|cant|tracking|ensacado|destino|dir|tlf|cod|bsc|mer|f|bcd|\d)/i.test(potentialName) && potentialName.length > 2) {
+                                    nameFound = potentialName;
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
 
-                // Limpieza final de cédulas, RIFs o nombres repetidos
+                // Limpieza final común (nombres repetidos o cédulas pegadas)
                 if (nameFound) {
                     if (nameFound.includes('-')) {
                         let parts = nameFound.split('-');
