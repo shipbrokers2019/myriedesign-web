@@ -13,10 +13,10 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Rápido - Myriedesign</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Rápido V75 - Myriedesign</h2>
     
     <div class="bg-green-50 border border-green-200 p-2.5 rounded-lg text-center">
-      <p class="text-xs text-green-800 font-medium">💡 <strong>Consejo:</strong> Usa el dictado por voz de tu teclado para llenar los campos en segundos sin escribir.</p>
+      <p class="text-xs text-green-800 font-medium">💡 <strong>Consejo:</strong> Dicta el teléfono con confianza (ej. "cero cuatro doce..."). La app limpia las letras y los espacios sola.</p>
     </div>
 
     <form id="guiaForm" class="space-y-3">
@@ -26,8 +26,8 @@
       </div>
       
       <div>
-        <label class="block text-xs font-bold text-gray-700">Teléfono (WhatsApp)</label>
-        <input type="tel" id="telefono" required placeholder="Ej. 04121234567 o 58412..." class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium focus:ring-2 focus:ring-blue-400 outline-none">
+        <label class="block text-xs font-bold text-gray-700">Teléfono (WhatsApp) - ¡Dictalo sin miedo!</label>
+        <input type="text" id="telefono" required placeholder="Dicta o escribe el número..." class="w-full mt-1 p-2 border rounded-lg text-sm text-gray-900 font-medium focus:ring-2 focus:ring-blue-400 outline-none">
       </div>
 
       <div class="grid grid-cols-2 gap-2">
@@ -66,22 +66,48 @@
   <script>
     document.getElementById("fecha").valueAsDate = new Date();
 
-    function limpiarTelefono(numBruto) {
-      if (!numBruto) return "";
-      var num = numBruto.replace(/\D/g, "");
-      // Si empieza por 0 (ej. 0412...), le quitamos el 0 y le agregamos 58
+    // Diccionario para convertir números dictados en palabras a dígitos reales automáticamente
+    function convertirPalabrasANumeros(texto) {
+      if (!texto) return "";
+      var t = texto.toLowerCase();
+      var mapa = {
+        'cero': '0', 'uno': '1', 'un': '1', 'dos': '2', 'tres': '3', 
+        'cuatro': '4', 'cinco': '5', 'seis': '6', 'siete': '7', 
+        'ocho': '8', 'nueve': '9', 'nuebes': '9'
+      };
+      
+      // Si el texto tiene palabras, intentamos traducirlas
+      for (var palabra in mapa) {
+        var regex = new RegExp('\\b' + palabra + '\\b', 'g');
+        t = t.replace(regex, mapa[palabra]);
+      }
+      return t;
+    }
+
+    function limpiarTelefonoInteligente(inputBruto) {
+      if (!inputBruto) return "";
+      
+      // Primero traducimos si dictó en palabras (ej. "cero cuatro doce...")
+      var traducido = convertirPalabrasANumeros(inputBruto);
+      
+      // Extraemos solo los dígitos numéricos del texto resultante
+      var num = traducido.replace(/\D/g, "");
+
+      // Ajustes automáticos para Venezuela
+      // Si empieza por 0 y tiene 11 dígitos (ej: 04121234567)
       if (/^0(412|424|414|416|426)\d{7}$/.test(num)) {
         return "58" + num.substring(1);
       }
-      // Si ya viene con 58 (ej. 58412...)
+      // Si ya viene con 58 y 12 dígitos (ej: 584121234567)
       if (/^58(412|424|414|416|426)\d{7}$/.test(num)) {
         return num;
       }
-      // Si el usuario puso directo los 10 dígitos (ej. 4121234567)
+      // Si dictó directo los 10 dígitos sin el 0 (ej: 4121234567)
       if (/^(412|424|414|416|426)\d{7}$/.test(num)) {
         return "58" + num;
       }
-      return num; // Retorna limpio por si acaso
+      
+      return num; // Devuelve los números limpios en cualquier otro caso
     }
 
     var form = document.getElementById("guiaForm");
@@ -90,8 +116,8 @@
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       var nombre = document.getElementById("nombre").value.trim();
-      var telfBruto = document.getElementById("telefono").value.trim();
-      var telf = limpiarTelefono(telfBruto);
+      var telfBruto = document.getElementById("telefono").value;
+      var telf = limpiarTelefonoInteligente(telfBruto);
       var tracking = document.getElementById("tracking").value.trim();
       var empresa = document.getElementById("empresa").value;
       var fechaRaw = document.getElementById("fecha").value;
@@ -124,7 +150,7 @@
         '<div class="flex justify-between items-start">' +
         "<div>" +
         '<p class="font-bold text-gray-800 text-sm">' + nombre + "</p>" +
-        '<p class="text-xs text-gray-500">' + empresa + " - Guía: " + tracking + "</p>" +
+        '<p class="text-xs text-gray-500">' + empresa + " - Guía: " + tracking + " | 📱 " + telf + "</p>" +
         '<p class="text-xs text-gray-400">📅 ' + fechaFormateada + "</p>" +
         "</div>" +
         '<a href="' + linkWa + '" target="_blank" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold py-2 px-3 rounded-lg shadow inline-flex items-center gap-1">WhatsApp</a>' +
