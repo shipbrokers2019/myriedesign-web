@@ -70,17 +70,13 @@
             <div id="outputArea" class="mt-8 pt-4 border-t border-slate-200 hidden space-y-3">
                 <h3 class="text-md font-bold text-slate-800">Resultado Final</h3>
                 
-                <!-- Botón directo para abrir WhatsApp -->
+                <!-- Botón directo para abrir WhatsApp (Único botón visible) -->
                 <a id="whatsappLinkOutput" target="_blank" rel="noopener noreferrer" 
                    class="block w-full py-4 px-6 text-center bg-emerald-600 text-white font-bold text-base rounded-xl shadow-md hover:bg-emerald-700 transition flex items-center justify-center gap-2">
                     💬 Abrir Chat de WhatsApp Directo
                 </a>
                 
-                <!-- Botón para copiar enlace -->
-                <button id="copyBtn" 
-                        class="w-full py-3 px-4 text-sm font-semibold text-slate-700 bg-slate-100 rounded-xl hover:bg-slate-200 transition">
-                    📋 Copiar Enlace al Portapapeles
-                </button>
+                <!-- ELIMINADO: Botón de copiar enlace -->
             </div>
 
             <!-- Status Message -->
@@ -94,7 +90,6 @@
             const generateBtn = document.getElementById('generateBtn');
             const outputArea = document.getElementById('outputArea');
             const whatsappLinkOutput = document.getElementById('whatsappLinkOutput');
-            const copyBtn = document.getElementById('copyBtn');
             const statusMessage = document.getElementById('statusMessage');
 
             function processText() {
@@ -215,15 +210,7 @@
                 statusMessage.classList.remove('hidden');
             }
 
-            copyBtn.addEventListener('click', () => {
-                const linkText = whatsappLinkOutput.href;
-                navigator.clipboard.writeText(linkText).then(() => {
-                    copyBtn.textContent = "¡Copiado al portapapeles! 📋";
-                    setTimeout(() => {
-                        copyBtn.textContent = "📋 Copiar Enlace al Portapapeles";
-                    }, 2000);
-                });
-            });
+            // ELIMINADO: Evento de clic para el botón de copiar
 
             textInput.addEventListener('input', processText);
             generateBtn.addEventListener('click', generateWhatsAppLink);
