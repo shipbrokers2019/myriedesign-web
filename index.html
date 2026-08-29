@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Despacho Rápido V90 - Myriedesign</title>
+  <title>Despacho Rápido V91 - Myriedesign</title>
   <script src="https://cdn.tailwindcss.com"></script>
   
   <link rel="manifest" href="manifest.json">
@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Rápido V90 - Myriedesign</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Rápido V91 - Myriedesign</h2>
     
     <!-- BLOQUE GOOGLE LENS -->
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
@@ -153,39 +153,34 @@
         var lineas = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
         var nombreFinal = "";
 
-        // 2. REGLA INTELIGENTE POR PALABRA CLAVE (Independiente del número de línea)
-        for (var i = 0; i < lineas.length; i++) {
-          var lUp = lineas[i].toUpperCase();
-          if (lUp.indexOf("NOMBRE") !== -1 || lUp.indexOf("N0MBRE") !== -1) {
-            // Extrae lo que esté en la misma línea después de la palabra NOMBRE
-            var partesNombre = lineas[i].split(/N[O0]MBRE:?/i);
-            nombreFinal = limpiarNombreCompleto(partesNombre.length > 1 ? partesNombre[1] : "");
-            
-            // Si estaba sola en la línea, toma la siguiente
-            if (!nombreFinal && i + 1 < lineas.length) {
-              nombreFinal = limpiarNombreCompleto(lineas[i + 1]);
+        // 2. REGLA ESPECÍFICA PARA TEALCA (Línea 8 o búsqueda por palabra clave)
+        if (empresaDetectada === "Tealca" && lineas.length >= 8) {
+          var lineaNombre = lineas[7]; // Índice 7 es la línea 8 exacta
+          var partesNombre = lineaNombre.split(/N[O0]MBRE:?/i);
+          nombreFinal = limpiarNombreCompleto(partesNombre.length > 1 ? partesNombre[1] : lineaNombre);
+        }
+
+        // Si no se llenó con la línea 8 fija, busca dinámicamente por la palabra NOMBRE en cualquier línea
+        if (!nombreFinal || nombreFinal.length < 3) {
+          for (var i = 0; i < lineas.length; i++) {
+            var lUp = lineas[i].toUpperCase();
+            if (lUp.indexOf("NOMBRE") !== -1 || lUp.indexOf("N0MBRE") !== -1) {
+              var partesNombre = lineas[i].split(/N[O0]MBRE:?/i);
+              nombreFinal = limpiarNombreCompleto(partesNombre.length > 1 ? partesNombre[1] : "");
+              if (!nombreFinal && i + 1 < lineas.length) {
+                nombreFinal = limpiarNombreCompleto(lineas[i + 1]);
+              }
+              break;
             }
-            break;
           }
         }
 
-        // Respaldo secundario por si usa DESTINATARIO
+        // Respaldo final si no encuentra "NOMBRE"
         if (!nombreFinal || nombreFinal.length < 3) {
           if (empresaDetectada === "Zoom" && lineas.length >= 6) {
             nombreFinal = limpiarNombreCompleto(lineas[5]);
           } else if (empresaDetectada === "MRW" && lineas.length >= 7) {
             nombreFinal = limpiarNombreCompleto(lineas[6]);
-          } else {
-            for (var i = 0; i < lineas.length; i++) {
-              var lUp = lineas[i].toUpperCase();
-              if (lUp.indexOf("DESTINATARIO") !== -1 || lUp.indexOf("DEST") !== -1) {
-                nombreFinal = limpiarNombreCompleto(lineas[i]);
-                if (!nombreFinal && i + 1 < lineas.length) {
-                  nombreFinal = limpiarNombreCompleto(lineas[i + 1]);
-                }
-                break;
-              }
-            }
           }
         }
 
