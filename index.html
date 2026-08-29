@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V68</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V69</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -139,7 +139,7 @@
         }
 
         // ========================================================
-        // 3. DESTINATARIO (Basado estrictamente en DEST:, DESTINATARIO, Destinatario:)
+        // 3. DESTINATARIO (Basado en DEST:, DESTINATARIO o NOMBRE)
         // ========================================================
         var nombreFinal = "";
 
@@ -147,10 +147,10 @@
           var lOriginal = lineas[j].trim();
           var lUp = lOriginal.toUpperCase();
 
-          // Verificar si la línea contiene las palabras clave
-          if (lUp.indexOf("DESTINATARIO") !== -1 || lUp.indexOf("DEST:") !== -1) {
+          // Verificar si la línea contiene las palabras clave ampliadas
+          if (lUp.indexOf("DESTINATARIO") !== -1 || lUp.indexOf("DEST:") !== -1 || lUp.indexOf("NOMBRE") !== -1) {
             
-            // CASO A: El nombre está al lado en la misma línea después de los dos puntos o la palabra clave
+            // CASO A: El nombre está al lado en la misma línea después de los dos puntos o guion
             var partes = lOriginal.split(/[:\-]/);
             if (partes.length > 1) {
               var posibleAlLado = partes.slice(1).join(" ").trim();
