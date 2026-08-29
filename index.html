@@ -108,7 +108,7 @@
 
                 const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
-                // 1. Extracción Estricta de Teléfono (Celulares/fijos venezolanos 04xx o 02xx)
+                // 1. Extracción Estricta de Teléfono
                 let phoneFound = '';
                 const explicitPhoneMatch = text.match(/(?:tlf|telf|teléfono|telefono|telt)[\s.:-]*([04|02]\d{9,10})/i);
                 if (explicitPhoneMatch) {
@@ -121,22 +121,19 @@
                 }
                 document.getElementById('phoneInput').value = phoneFound;
 
-                // 2. Extracción del Nombre del Destinatario
+                // 2. Extracción Robusta del Nombre del Destinatario
                 let nameFound = '';
 
-                // PASO A: Lógica intacta y exacta para MRW y Tealca (buscando DESTINATARIO o DEST)
+                // NIVEL A: Lógica inalterable para MRW y Tealca (buscando etiquetas como DEST)
                 for (let i = 0; i < lines.length; i++) {
                     let currentLine = lines[i];
-
                     if (/^(destinatario|dest)\b/i.test(currentLine)) {
-                        if (/^destino/i.test(currentLine)) continue; // Evitar "DESTINO:"
-
+                        if (/^destino/i.test(currentLine)) continue;
                         let cleaned = currentLine.replace(/^(destinatario|dest)[\s.:-]*/i, '').trim();
                         if (cleaned.length > 2 && !/^retirar/i.test(cleaned)) {
                             nameFound = cleaned;
                             break;
-                        } 
-                        else if (i + 1 < lines.length) {
+                        } else if (i + 1 < lines.length) {
                             let nextLine = lines[i + 1];
                             if (/^nombre$/i.test(nextLine) && i + 2 < lines.length) {
                                 nameFound = lines[i + 2];
@@ -149,16 +146,13 @@
                     }
                 }
 
-                // PASO B: Lógica específica para Zoom (Busca la línea "ORIGEN" y toma la línea inmediatamente posterior)
+                // NIVEL B: Respaldo inteligente para Zoom (busca etiqueta "REMITENTE" y toma la línea anterior)
                 if (!nameFound) {
                     for (let i = 0; i < lines.length; i++) {
-                        let currentLine = lines[i];
-                        if (/^origen\b/i.test(currentLine)) {
-                            // Si encontramos "ORIGEN", el nombre del destinatario está en la línea siguiente (i + 1)
-                            if (i + 1 < lines.length) {
-                                let potentialName = lines[i + 1];
-                                // Validar que la línea siguiente no sea un código u otra etiqueta técnica
-                                if (!/^(peso|cobro|cant|tracking|ensacado|destino|dir|tlf|cod|bsc|mer|f|bcd|\d)/i.test(potentialName) && potentialName.length > 2) {
+                        if (/^remitente\b/i.test(lines[i])) {
+                            if (i - 1 >= 0) {
+                                let potentialName = lines[i - 1];
+                                if (!/^(peso|cobro|cant|tracking|ensacado|origen|destino|dir|tlf|cod|bsc|mer|f|bcd|rl\.?fic)/i.test(potentialName) && potentialName.length > 2) {
                                     nameFound = potentialName;
                                     break;
                                 }
@@ -167,14 +161,22 @@
                     }
                 }
 
-                // Limpieza final común (nombres repetidos o cédulas pegadas)
-                if (nameFound) {
-                    if (nameFound.includes('-')) {
-                        let parts = nameFound.split('-');
-                        if (parts.length >= 2 && parts[0].trim().toLowerCase() === parts[1].trim().toLowerCase()) {
-                            nameFound = parts[0].trim();
+                // NIVEL C: Respaldo adicional específico para Zoom (captura si está duplicado en una misma línea)
+                if (!nameFound) {
+                    for (let line of lines) {
+                        if (line.includes(' - ')) {
+                            let parts = line.split(' - ');
+                            // Si la parte izquierda contiene un nombre y la derecha es idéntica, nos quedamos con una
+                            if (parts.length === 2 && parts[0].trim().toLowerCase() === parts[1].trim().toLowerCase()) {
+                                nameFound = parts[0].trim();
+                                break;
+                            }
                         }
                     }
+                }
+
+                // Limpieza final común (quita cédulas o RIFs pegados)
+                if (nameFound) {
                     nameFound = nameFound.replace(/\s+(v-|e-|c[i\.]).*/i, '').trim();
                 }
 
