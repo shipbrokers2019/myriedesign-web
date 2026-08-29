@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Despacho Rápido V85 - Myriedesign</title>
+  <title>Despacho Rápido V86 - Myriedesign</title>
   <script src="https://cdn.tailwindcss.com"></script>
   
   <link rel="manifest" href="manifest.json">
@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Rápido V85 - Myriedesign</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Rápido V86 - Myriedesign</h2>
     
     <!-- BLOQUE GOOGLE LENS -->
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
@@ -115,7 +115,6 @@
       var palabras = limpio.split(/\s+/);
       var unicas = [];
       for (var p = 0; p < palabras.length; p++) {
-        // Evitar agregar si es exactamente igual a la palabra anterior (case-insensitive)
         if (p === 0 || palabras[p].toLowerCase() !== palabras[p - 1].toLowerCase()) {
           unicas.push(palabras[p]);
         }
@@ -149,9 +148,9 @@
 
         // REGLA ESPECÍFICA SEGÚN LA EMPRESA
         if (empresaDetectada === "Zoom") {
-          // ZOOM: Línea 4 (índice 3 en programación)
-          if (lineas.length >= 4) {
-            nombreFinal = limpiarNombreCompleto(lineas[3]);
+          // ZOOM: Línea 6 (índice 5 en programación)
+          if (lineas.length >= 6) {
+            nombreFinal = limpiarNombreCompleto(lineas[5]);
           }
         } else {
           // MRW (u otras por defecto): Línea 7 (índice 6 en programación)
