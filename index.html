@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V67</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V70</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -110,15 +110,7 @@
         var lineas = text.split("\n");
 
         // ========================================================
-        // 1. TELÉFONO
-        // ========================================================
-        var matchTGlobal = text.match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
-        if (matchTGlobal) {
-          document.getElementById("telefono").value = formatearTelefonoStrict(matchTGlobal[0]);
-        }
-
-        // ========================================================
-        // 2. TRACKING
+        // 1. TRACKING (V67)
         // ========================================================
         var indiceTracking = -1;
         var trackingEncontrado = "";
@@ -144,7 +136,7 @@
         }
 
         // ========================================================
-        // 3. DESTINATARIO
+        // 2. DESTINATARIO (V67)
         // ========================================================
         var nombreFinal = "";
 
@@ -179,6 +171,30 @@
         }
 
         document.getElementById("nombre").value = nombreFinal;
+
+        // ========================================================
+        // 3. TELÉFONO (Antifraude: Busca desde la mitad del texto hacia abajo o el último teléfono válido)
+        // ========================================================
+        var telefonoFinal = "";
+        
+        // Recorremos todas las líneas buscando teléfonos móviles venezolanos válidos
+        var todosLosTelefonos = [];
+        for (var t = 0; t < lineas.length; t++) {
+          var matchT = lineas[t].match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
+          if (matchT) {
+            var tFmt = formatearTelefonoStrict(matchT[0]);
+            if (tFmt) {
+              todosLosTelefonos.push(tFmt);
+            }
+          }
+        }
+
+        // Si hay más de un teléfono (remitente y destinatario), por lo general el del cliente es el último de la lista en la guía
+        if (todosLosTelefonos.length > 0) {
+          telefonoFinal = todosLosTelefonos[todosLosTelefonos.length - 1];
+        }
+
+        document.getElementById("telefono").value = telefonoFinal;
 
       } catch (e) {
         alert("Error al procesar: " + e.message);
