@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V68</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho de Envíos V67</h2>
     
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
       <label class="block text-xs font-bold text-blue-800 mb-1">
@@ -120,54 +120,60 @@
         // ========================================================
         // 2. TRACKING
         // ========================================================
+        var indiceTracking = -1;
         var trackingEncontrado = "";
+
         for (var i = 0; i < lineas.length; i++) {
           var lineaLimpia = lineas[i].trim();
           if (/^\d{8,15}$/.test(lineaLimpia)) {
             if (!lineaLimpia.startsWith("412") && !lineaLimpia.startsWith("424") && !lineaLimpia.startsWith("414") && !lineaLimpia.startsWith("416") && !lineaLimpia.startsWith("426") && !lineaLimpia.startsWith("04")) {
               trackingEncontrado = lineaLimpia;
+              indiceTracking = i;
               break;
             }
           }
         }
+
         if (!trackingEncontrado) {
           var matchGen = text.match(/\b\d{8,15}\b/);
           if (matchGen) trackingEncontrado = matchGen[0];
         }
+
         if (trackingEncontrado) {
           document.getElementById("tracking").value = trackingEncontrado;
         }
 
         // ========================================================
-        // 3. DESTINATARIO (Basado estrictamente en DEST: o DESTINATARIO)
+        // 3. DESTINATARIO
         // ========================================================
         var nombreFinal = "";
 
-        for (var j = 0; j < lineas.length; j++) {
-          var lOriginal = lineas[j].trim();
-          var lUp = lOriginal.toUpperCase();
+        if (indiceTracking > 0) {
+          var posibleNombre = lineas[indiceTracking - 1].trim();
+          posibleNombre = posibleNombre.replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "").replace(/[\|\/\\\,\.\-_]+$/g, "").trim();
+          if (posibleNombre.length >= 4 && !/\d/.test(posibleNombre)) {
+            nombreFinal = posibleNombre;
+          }
+        }
 
-          if (lUp.indexOf("DESTINATARIO") !== -1 || lUp.indexOf("DEST:") !== -1) {
+        if (!nombreFinal) {
+          var palabrasBasura = ["TRACKING", "GUIA", "GUÍA", "TELEFONO", "TLF", "DIRECCION", "DIR", "MRW", "TEALCA", "ZOOM", "LAE", "PAGAR", "ENVIO", "CLIENTE", "PAGO", "DESTINATARIO", "DEST", "SUCURSAL", "OFICINA", "AGENCIA"];
+          
+          for (var j = 0; j < lineas.length; j++) {
+            var l = lineas[j].trim();
+            var lUp = l.toUpperCase();
+            if (l.length < 5 || /\d/.test(l)) continue;
             
-            // CASO A: Al lado en la misma línea
-            var partes = lOriginal.split(/[:\-]/);
-            if (partes.length > 1) {
-              var posibleAlLado = partes.slice(1).join(" ").trim();
-              posibleAlLado = posibleAlLado.replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "").replace(/[\|\/\\\,\.\-_]+$/g, "").trim();
-              if (posibleAlLado.length >= 3 && !/\d/.test(posibleAlLado)) {
-                nombreFinal = posibleAlLado;
-                break;
-              }
+            var esBasura = false;
+            for (var b = 0; b < palabrasBasura.length; b++) {
+              if (lUp.indexOf(palabrasBasura[b]) !== -1) { esBasura = true; break; }
             }
+            if (esBasura) continue;
 
-            // CASO B: En la línea de abajo
-            if (!nombreFinal && j + 1 < lineas.length) {
-              var posibleAbajo = lineas[j + 1].trim();
-              posibleAbajo = posibleAbajo.replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "").replace(/[\|\/\\\,\.\-_]+$/g, "").trim();
-              if (posibleAbajo.length >= 3 && !/\d/.test(posibleAbajo)) {
-                nombreFinal = posibleAbajo;
-                break;
-              }
+            var palabras = l.split(/\s+/);
+            if (palabras.length >= 2 && palabras.length <= 4) {
+              nombreFinal = l;
+              break;
             }
           }
         }
