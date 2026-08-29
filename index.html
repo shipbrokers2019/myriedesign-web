@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Despacho Rápido V95 - Myriedesign</title>
+  <title>Despacho Rápido - Myriedesign</title>
   <script src="https://cdn.tailwindcss.com"></script>
   
+  <!-- PWA Manifest -->
   <link rel="manifest" href="manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,7 +14,7 @@
 </head>
 <body class="bg-gray-100 p-4 min-h-screen">
   <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Rápido V95 - Myriedesign</h2>
+    <h2 class="text-xl font-bold text-gray-800 text-center">Despacho Rápido - Myriedesign</h2>
     
     <!-- BLOQUE GOOGLE LENS -->
     <div class="bg-blue-50 border-2 border-dashed border-blue-300 p-3 rounded-xl">
@@ -67,135 +68,36 @@
   </div>
 
   <script>
+    // Establecer fecha de hoy por defecto
     document.getElementById("fecha").valueAsDate = new Date();
 
-    function convertirPalabrasANumeros(texto) {
-      if (!texto) return "";
-      var t = texto.toLowerCase();
-      var mapa = {
-        'cero': '0', 'uno': '1', 'un': '1', 'dos': '2', 'tres': '3', 
-        'cuatro': '4', 'cinco': '5', 'seis': '6', 'siete': '7', 
-        'ocho': '8', 'nueve': '9'
-      };
-      for (var palabra in mapa) {
-        var regex = new RegExp('\\b' + palabra + '\\b', 'g');
-        t = t.replace(regex, mapa[palabra]);
+    function limpiarTelefono(num) {
+      var limpio = num.replace(/\D/g, "");
+      if (limpio.startsWith("0")) {
+        limpio = "58" + limpio.substring(1);
+      } else if (!limpio.startsWith("58") && limpio.length === 10) {
+        limpio = "58" + limpio;
       }
-      return t;
-    }
-
-    function limpiarTelefonoStrict(numBruto) {
-      if (!numBruto) return "";
-      var traducido = convertirPalabrasANumeros(numBruto);
-      var num = traducido.replace(/\D/g, "");
-      
-      if (/^58(412|424|414|416|426)\d{7}$/.test(num)) return num;
-      if (/^0(412|424|414|416|426)\d{7}$/.test(num)) return "58" + num.substring(1);
-      if (/^(412|424|414|416|426)\d{7}$/.test(num)) return "58" + num;
-      return num;
-    }
-
-    function limpiarNombreCompleto(s) {
-      if (!s) return "";
-      var limpio = s
-        .replace(/DESTINATARIO|DESTINATARI0|DEST\.|DEST:|DEST/gi, "")
-        .replace(/REMITENTE:[\s\S]*/gi, "")
-        .replace(/REMITENTE:|REMITENTE/gi, "")
-        .replace(/NOMBRE:?|N0MBRE:?|NOMBRE|N0MBRE/gi, "")
-        .replace(/TLF:?\s*0?\d{10,11}/gi, "")
-        .replace(/TEL[EÉ]FONO:?\s*0?\d{10,11}/gi, "")
-        .replace(/[VE]-?\d{6,8}/gi, "")
-        .replace(/^[\|\/\\\,\.\-_\:\;\s]+/g, "")
-        .replace(/[\|\/\\\,\.\-_]+$/g, "")
-        .trim();
-
-      var palabras = limpio.split(/\s+/);
-      var unicas = [];
-      for (var p = 0; p < palabras.length; p++) {
-        var palabraActual = palabras[p].toLowerCase();
-        var esDuplicadoAdyacente = (p > 0 && palabraActual === palabras[p - 1].toLowerCase());
-        
-        var esDuplicadoMitad = false;
-        if (palabras.length % 2 === 0 && p >= palabras.length / 2) {
-          var mitad = palabras.length / 2;
-          if (palabras[p].toLowerCase() === palabras[p - mitad].toLowerCase()) {
-            esDuplicadoMitad = true;
-          }
-        }
-
-        if (!esDuplicadoAdyacente && !esDuplicadoMitad) {
-          unicas.push(palabras[p]);
-        }
-      }
-      return unicas.join(" ");
+      return limpio;
     }
 
     function procesarTextoGuia() {
-      try {
-        var text = document.getElementById("rawText").value;
-        if (!text || !text.trim()) {
-          alert("Primero pega el texto extraído por Google Lens.");
-          return;
+      var text = document.getElementById("rawText").value;
+      if (!text.trim()) return;
+
+      var lineas = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+      
+      // Lógica inicial básica de extracción
+      if (lineas.length > 0) {
+        document.getElementById("nombre").value = lineas[0];
+      }
+
+      for (var i = 0; i < lineas.length; i++) {
+        var linea = lineas[i];
+        if (linea.match(/04\d{2}[\s-]?\d{7}/) || linea.length >= 10 && !isNaN(linea.replace(/\D/g, ""))) {
+          document.getElementById("telefono").value = limpiarTelefono(linea);
+          break;
         }
-
-        var tUpper = text.toUpperCase();
-
-        // 1. Detectar Empresa
-        var empresaDetectada = "MRW";
-        if (tUpper.indexOf("TEALCA") !== -1 || tUpper.indexOf("TEALLA") !== -1) {
-          empresaDetectada = "Tealca";
-        } else if ((tUpper.indexOf("ZOOM") !== -1 || tUpper.indexOf("MER") !== -1) && tUpper.indexOf("ENSACADO") === -1) {
-          empresaDetectada = "Zoom";
-        } else if (tUpper.indexOf("LAE") !== -1 || tUpper.indexOf("EL DORADO") !== -1) {
-          empresaDetectada = "LAE";
-        }
-        document.getElementById("empresa").value = empresaDetectada;
-
-        var lineas = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
-        var nombreFinal = "";
-
-        // 2. REGLA FIJA EN LÍNEA 7 (Índice 6) PARA TODAS O SEGÚN NECESIDAD
-        if (lineas.length >= 7) {
-          nombreFinal = limpiarNombreCompleto(lineas[6]); // Línea 7 exacta
-        }
-
-        // Respaldo por si acaso hay menos líneas
-        if (!nombreFinal || nombreFinal.length < 3) {
-          for (var i = 0; i < lineas.length; i++) {
-            var lUp = lineas[i].toUpperCase();
-            if (lUp.indexOf("NOMBRE") !== -1 || lUp.indexOf("DEST") !== -1) {
-              var partesNombre = lineas[i].split(/N[O0]MBRE:?|DEST\.?:?/i);
-              nombreFinal = limpiarNombreCompleto(partesNombre.length > 1 ? partesNombre[1] : "");
-              if (!nombreFinal && i + 1 < lineas.length) {
-                nombreFinal = limpiarNombreCompleto(lineas[i + 1]);
-              }
-              break;
-            }
-          }
-        }
-
-        document.getElementById("nombre").value = nombreFinal;
-
-        // 3. TELÉFONO DEL CLIENTE (Último número válido del texto)
-        var todosLosTelefonos = [];
-        for (var t = 0; t < lineas.length; t++) {
-          var matchT = lineas[t].match(/(?:\+?58|0)?[\s\.-]*?(412|424|414|416|426)[\s\.-]*?\d{3}[\s\.-]*?\d{4}\b/);
-          if (matchT) {
-            var tFmt = limpiarTelefonoStrict(matchT[0]);
-            if (tFmt) {
-              todosLosTelefonos.push(tFmt);
-            }
-          }
-        }
-
-        if (todosLosTelefonos.length > 0) {
-          document.getElementById("telefono").value = todosLosTelefonos[todosLosTelefonos.length - 1];
-        } else {
-          document.getElementById("telefono").value = "";
-        }
-
-      } catch (e) {
-        alert("Error al procesar: " + e.message);
       }
     }
 
@@ -205,15 +107,14 @@
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       var nombre = document.getElementById("nombre").value.trim();
-      var telfBruto = document.getElementById("telefono").value.trim();
-      var telf = limpiarTelefonoStrict(telfBruto);
+      var telf = limpiarTelefono(document.getElementById("telefono").value.trim());
       var empresa = document.getElementById("empresa").value;
       var fechaRaw = document.getElementById("fecha").value;
 
       var partes = fechaRaw.split("-");
       var fechaFormateada = partes[2] + "/" + partes[1] + "/" + partes[0];
 
-      var textoMensaje =
+      var textoMensaje = 
         "Hola Sr./Sra. " + nombre + ", 👋\n\n" +
         "Su pedido ya fue enviado por " + empresa + ". Aquí el resumen:\n\n" +
         "📅 Fecha de envío: " + fechaFormateada + "\n\n" +
@@ -232,15 +133,15 @@
 
       var card = document.createElement("div");
       card.className = "bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2 shadow-sm";
-      card.innerHTML =
+      card.innerHTML = 
         '<div class="flex justify-between items-start">' +
-        "<div>" +
-        '<p class="font-bold text-gray-800 text-sm">' + nombre + "</p>" +
-        '<p class="text-xs text-gray-500">' + empresa + " | 📱 " + telf + "</p>" +
-        '<p class="text-xs text-gray-400">📅 ' + fechaFormateada + "</p>" +
-        "</div>" +
-        '<a href="' + linkWa + '" target="_blank" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold py-2 px-3 rounded-lg shadow inline-flex items-center gap-1">WhatsApp</a>' +
-        "</div>";
+          '<div>' +
+            '<p class="font-bold text-gray-800 text-sm">' + nombre + '</p>' +
+            '<p class="text-xs text-gray-500">' + empresa + ' | 📱 ' + telf + '</p>' +
+            '<p class="text-xs text-gray-400">📅 ' + fechaFormateada + '</p>' +
+          '</div>' +
+          '<a href="' + linkWa + '" target="_blank" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold py-2 px-3 rounded-lg shadow inline-flex items-center gap-1">WhatsApp</a>' +
+        '</div>';
 
       lista.prepend(card);
       form.reset();
