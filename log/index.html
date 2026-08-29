@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Myriedesign | Generador WhatsApp de Envío</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --color-primary: #1e3a8a;
+            --color-secondary: #f8fafc;
+            --color-text: #1e293b;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-secondary);
+        }
+        .container-app {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body class="p-0 antialiased text-slate-900">
+    <div id="app" class="container-app">
+        <!-- Header -->
+        <header class="text-center my-6">
+            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">
+                📦 MyriedesignLog
+            </h1>
+            <p class="text-sm text-slate-500 mt-1">Generador Rápido de Enlaces WhatsApp</p>
+        </header>
+
+        <!-- Main Input Area -->
+        <section class="bg-white shadow-xl rounded-2xl p-6 border border-slate-200">
+            <h2 class="text-lg font-bold mb-3 text-indigo-600">1. Pegar Texto de Guía (Google Lens)</h2>
+            
+            <textarea id="textInput" rows="6" placeholder="Pega aquí el texto bruto de la guía..." 
+                      class="w-full p-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none transition duration-150 text-sm"></textarea>
+
+            <!-- Previsualización de Datos -->
+            <div id="processingArea" class="mt-6 space-y-4">
+                <h3 class="text-md font-semibold text-slate-700 border-b pb-2">2. Datos Extraídos</h3>
+                
+                <!-- Destinatario -->
+                <div class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
+                    <label for="destName" class="block text-xs font-bold text-indigo-700 uppercase mb-1">Nombre del Destinatario</label>
+                    <input id="destName" type="text" placeholder="Nombre detectado..." 
+                           class="w-full p-2.5 bg-white border border-indigo-200 rounded-lg text-sm font-medium">
+                </div>
+
+                <!-- Teléfono -->
+                <div class="bg-blue-50/50 p-3 rounded-xl border border-blue-100">
+                    <label for="phoneInput" class="block text-xs font-bold text-blue-700 uppercase mb-1">Teléfono</label>
+                    <input id="phoneInput" type="text" placeholder="Teléfono detectado..." 
+                           class="w-full p-2.5 bg-white border border-blue-200 rounded-lg text-sm font-medium">
+                </div>
+            </div>
+
+            <!-- Generate Button -->
+            <button id="generateBtn"
+                    class="w-full mt-6 py-3.5 px-6 text-base font-bold text-white bg-indigo-600 rounded-xl shadow-lg hover:bg-indigo-700 
+                           active:scale-[0.99] transition duration-200 uppercase tracking-wider">
+                Generar Enlace de WhatsApp 📲
+            </button>
+
+            <!-- Output Area -->
+            <div id="outputArea" class="mt-8 pt-4 border-t border-slate-200 hidden space-y-3">
+                <h3 class="text-md font-bold text-slate-800">Resultado Final</h3>
+                
+                <!-- Botón directo para abrir WhatsApp -->
+                <a id="whatsappLinkOutput" target="_blank" rel="noopener noreferrer" 
+                   class="block w-full py-4 px-6 text-center bg-emerald-600 text-white font-bold text-base rounded-xl shadow-md hover:bg-emerald-700 transition flex items-center justify-center gap-2">
+                    💬 Abrir Chat de WhatsApp Directo
+                </a>
+            </div>
+
+            <!-- Status Message -->
+            <div id="statusMessage" class="mt-4 text-center text-sm font-medium hidden"></div>
+        </section>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const textInput = document.getElementById('textInput');
+            const generateBtn = document.getElementById('generateBtn');
+            const outputArea = document.getElementById('outputArea');
+            const whatsappLinkOutput = document.getElementById('whatsappLinkOutput');
+            const statusMessage = document.getElementById('statusMessage');
+
+            function processText() {
+                const text = textInput.value.trim();
+                if (!text) {
+                    document.getElementById('destName').value = '';
+                    document.getElementById('phoneInput').value = '';
+                    outputArea.classList.add('hidden');
+                    return;
+                }
+
+                const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+                // 1. Extracción Estricta de Teléfono
+                let phoneFound = '';
+                const explicitPhoneMatch = text.match(/(?:tlf|telf|teléfono|telefono|telt)[\s.:-]*([04|02]\d{9,10})/i);
+                if (explicitPhoneMatch) {
+                    phoneFound = explicitPhoneMatch[1];
+                } else {
+                    const strictPhoneMatch = text.match(/\b(04\d{9}|02\d{9})\b/);
+                    if (strictPhoneMatch) {
+                        phoneFound = strictPhoneMatch[0];
+                    }
+                }
+                document.getElementById('phoneInput').value = phoneFound;
+
+                // 2. Extracción Robusta del Nombre del Destinatario
+                let nameFound = '';
+
+                // NIVEL A: Lógica inalterable para MRW y Tealca (buscando etiquetas como DEST)
+                for (let i = 0; i < lines.length; i++) {
+                    let currentLine = lines[i];
+                    if (/^(destinatario|dest)\b/i.test(currentLine)) {
+                        if (/^destino/i.test(currentLine)) continue;
+                        let cleaned = currentLine.replace(/^(destinatario|dest)[\s.:-]*/i, '').trim();
+                        if (cleaned.length > 2 && !/^retirar/i.test(cleaned)) {
+                            nameFound = cleaned;
+                            break;
+                        } else if (i + 1 < lines.length) {
+                            let nextLine = lines[i + 1];
+                            if (/^nombre$/i.test(nextLine) && i + 2 < lines.length) {
+                                nameFound = lines[i + 2];
+                                break;
+                            } else if (!/^(dir|direccion|ciudad|tlf)/i.test(nextLine)) {
+                                nameFound = nextLine;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // NIVEL B: Respaldo inteligente para Zoom (busca etiqueta "REMITENTE" y toma la línea anterior)
+                if (!nameFound) {
+                    for (let i = 0; i < lines.length; i++) {
+                        if (/^remitente\b/i.test(lines[i])) {
+                            if (i - 1 >= 0) {
+                                let potentialName = lines[i - 1];
+                                if (!/^(peso|cobro|cant|tracking|ensacado|origen|destino|dir|tlf|cod|bsc|mer|f|bcd|rl\.?fic)/i.test(potentialName) && potentialName.length > 2) {
+                                    nameFound = potentialName;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // NIVEL C: Respaldo adicional específico para Zoom (captura si está duplicado en una misma línea)
+                if (!nameFound) {
+                    for (let line of lines) {
+                        if (line.includes(' - ')) {
+                            let parts = line.split(' - ');
+                            if (parts.length === 2 && parts[0].trim().toLowerCase() === parts[1].trim().toLowerCase()) {
+                                nameFound = parts[0].trim();
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Limpieza final común (quita cédulas o RIFs pegados)
+                if (nameFound) {
+                    nameFound = nameFound.replace(/\s+(v-|e-|c[i\.]).*/i, '').trim();
+                }
+
+                document.getElementById('destName').value = nameFound || '';
+            }
+
+            function generateWhatsAppLink() {
+                const name = document.getElementById('destName').value.trim() || 'Estimado/a cliente';
+                const phoneRaw = document.getElementById('phoneInput').value.trim();
+                const shipDate = new Date().toLocaleDateString('es-VE', { year: 'numeric', month: '2-digit', day: '2-digit' });
+
+                if (!phoneRaw) {
+                    showStatus("⚠️ Por favor, verifica o ingresa el número de teléfono.", "text-amber-600");
+                    return;
+                }
+
+                let cleanPhone = phoneRaw.replace(/\D/g, '');
+                if (cleanPhone.startsWith('0')) {
+                    cleanPhone = cleanPhone.substring(1);
+                }
+                const whatsappNumber = `58${cleanPhone}`;
+
+                // Mensaje actualizado: sin "Aquí el resumen:" y con línea en blanco tras agradecimiento
+                const message = `Hola Sr./Sra. ${name}, 👋\n\nSu pedido ya fue enviado:\n\n📅 Fecha de envío: ${shipDate}\n\nAdjunto la foto de su guía para que pueda rastrear su pedido cuando quiera.\n\nGracias por su compra! 🙏\n\nRecuerde que es importante darle los cuidados adecuados:\n❤️ Mantener limpias y secas.\n❤️ Alejar de agentes químicos como alcohol, perfumes, cremas y jabones.\n❤️ Colocar cuando la piel esté seca\n❤️ No mojar ni usar en playa o piscinas\n❤️ Evitar hacer ejercicios con ellas\n\nDe esta manera extenderá la vida útil y brillo de sus piezas ✨ ✨\n\nSaludos Myriedesign`;
+
+                const finalLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+
+                whatsappLinkOutput.href = finalLink;
+                outputArea.classList.remove('hidden');
+
+                showStatus("✅ ¡Enlace generado con éxito! Haz clic en el botón verde.", "text-emerald-600");
+            }
+
+            function showStatus(msg, className) {
+                statusMessage.textContent = msg;
+                statusMessage.className = `mt-4 text-center text-sm font-medium ${className}`;
+                statusMessage.classList.remove('hidden');
+            }
+
+            textInput.addEventListener('input', processText);
+            generateBtn.addEventListener('click', generateWhatsAppLink);
+        });
+    </script>
+</body>
+</html>

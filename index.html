@@ -1,216 +1,824 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Myriedesign | Generador WhatsApp de Envío</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        :root {
-            --color-primary: #1e3a8a;
-            --color-secondary: #f8fafc;
-            --color-text: #1e293b;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--color-secondary);
-        }
-        .container-app {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 1rem;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Myriedesign | Bisutería personalizada bañada en oro y grabado láser</title>
+<meta name="description" content="Myriedesign: cadenas con nombres personalizados bañadas en oro, dijes bañados en oro, fotograbados en láser, pulseras y esclavas grabadas en láser. Pide la tuya por WhatsApp.">
+<meta name="keywords" content="bisuteria, cadenas personalizadas, dijes bañados en oro, fotograbado laser, pulseras grabadas, esclavas grabadas, joyeria de fantasia, Myriedesign">
+<meta property="og:title" content="Myriedesign | Bisutería personalizada">
+<meta property="og:description" content="Cadenas, dijes, fotograbados y pulseras personalizadas bañadas en oro y grabadas en láser. Pide la tuya por WhatsApp.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="images/hero/kimberly-aime.jpg">
+<meta name="color-scheme" content="light">
+<style>
+  :root {
+    color-scheme: light;
+    --black: #14100f;
+    --pink: #f2b8c6;
+    --pink-deep: #e394a8;
+    --gold: #c9a24b;
+    --white: #ffffff;
+    --gray: #6f6f6f;
+    --bg-soft: #f4f1ee;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { overflow-x: hidden; }
+  body {
+    font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--white);
+    color: var(--black);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* FLOATING HEADER */
+  .header-wrap { padding: 18px 24px 0; }
+  header {
+    max-width: 1160px;
+    margin: 0 auto;
+    background: var(--white);
+    border-radius: 60px;
+    padding: 14px 14px 14px 26px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 8px 30px rgba(20,16,15,0.08);
+  }
+  .logo {
+    font-size: 18px;
+    letter-spacing: 3px;
+    font-weight: 700;
+    color: var(--black);
+    text-transform: uppercase;
+  }
+  .logo span { color: var(--gold); }
+  nav { display: flex; align-items: center; }
+  nav a {
+    position: relative;
+    color: var(--black);
+    text-decoration: none;
+    margin-left: 30px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  nav a.active { color: var(--pink-deep); }
+  nav a.active::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -6px;
+    height: 2px;
+    background: var(--pink-deep);
+    border-radius: 2px;
+  }
+
+  .header-services {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    color: var(--gray);
+    white-space: nowrap;
+    padding: 0 16px;
+  }
+  .header-services .dot { color: var(--gold); }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+
+  .nav-toggle {
+    display: none;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: var(--bg-soft);
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .nav-toggle svg { width: 18px; height: 18px; stroke: var(--black); stroke-width: 2; }
+  .nav-toggle svg .icon-close { display: none; }
+  .nav-toggle[aria-expanded="true"] svg .icon-open { display: none; }
+  .nav-toggle[aria-expanded="true"] svg .icon-close { display: block; }
+
+  /* HERO - light chic */
+  .hero {
+    background: var(--bg-soft);
+    padding: 70px 24px 90px;
+  }
+  .hero-grid {
+    max-width: 1160px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: center;
+  }
+  .hero-text h1 {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1.15;
+    color: var(--black);
+    margin-bottom: 22px;
+    letter-spacing: -1px;
+  }
+  .hero-text h1 span { color: var(--pink-deep); }
+  .hero-text p {
+    font-size: 15px;
+    color: var(--gray);
+    max-width: 420px;
+    margin-bottom: 32px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--gold);
+    color: var(--black);
+    padding: 16px 36px;
+    border-radius: 100px;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    border: none;
+    transition: opacity 0.15s ease;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-outline {
+    background: transparent;
+    color: var(--black);
+    border: 1.5px solid var(--black);
+    padding: 14px 32px;
+  }
+  .btn-outline:hover { background: var(--black); color: var(--white); opacity: 1; }
+
+  .hero-art { position: relative; display: flex; align-items: center; justify-content: center; min-height: 440px; }
+  .hero-photo-frame {
+    position: relative;
+    width: 300px;
+    max-width: 88%;
+  }
+  .hero-photo-frame img {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    display: block;
+    border-radius: 26px;
+    box-shadow: 0 25px 55px rgba(20,16,15,0.35);
+  }
+
+
+  /* Painterly brush strokes, à la reference: irregular tapered swipes behind
+     the photo, plus a couple of pale streaks crossing over its edges */
+  .stroke {
+    position: absolute;
+    z-index: 1;
+  }
+  .shape-a { clip-path: polygon(2% 45%, 25% 4%, 78% 0%, 100% 35%, 85% 78%, 45% 100%, 10% 82%); }
+  .shape-b { clip-path: polygon(0% 30%, 30% 0%, 100% 20%, 90% 60%, 55% 100%, 15% 75%); }
+  .shape-c { clip-path: polygon(0% 50%, 40% 0%, 100% 15%, 95% 55%, 60% 100%, 5% 85%); }
+
+  .stroke-1 { width: 220px; height: 110px; background: var(--pink); top: -70px; left: -80px; transform: rotate(-28deg); opacity: 0.9; }
+  .stroke-2 { width: 160px; height: 90px; background: var(--gold); top: -30px; left: -110px; transform: rotate(-12deg); opacity: 0.85; }
+  .stroke-3 { width: 130px; height: 70px; background: var(--pink-deep); top: 40px; left: -120px; transform: rotate(20deg); opacity: 0.8; }
+  .stroke-4 { width: 230px; height: 115px; background: var(--gold); bottom: -75px; right: -85px; transform: rotate(152deg); opacity: 0.92; }
+  .stroke-5 { width: 150px; height: 80px; background: var(--pink); bottom: -20px; right: -110px; transform: rotate(165deg); opacity: 0.8; }
+  .stroke-6 { width: 120px; height: 60px; background: var(--black); bottom: 60px; right: -90px; transform: rotate(200deg); opacity: 0.12; }
+
+  /* pale streaks that cross OVER the photo edges, like the reference */
+  .stroke-front {
+    position: absolute;
+    z-index: 3;
+    background: linear-gradient(120deg, rgba(255,255,255,0.98) 0%, rgba(249,214,150,0.55) 60%, rgba(249,214,150,0) 100%);
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+  .stroke-7 { width: 230px; height: 62px; top: -24px; left: -4px; transform: rotate(-16deg); clip-path: polygon(0% 40%, 30% 0%, 100% 15%, 92% 60%, 55% 100%, 8% 80%); opacity: 0.95; }
+  .stroke-8 { width: 190px; height: 54px; bottom: 4px; right: -18px; transform: rotate(-18deg); clip-path: polygon(2% 45%, 25% 4%, 78% 0%, 100% 35%, 85% 78%, 45% 100%, 10% 82%); opacity: 0.85; }
+
+  /* PRODUCTOS */
+  .features {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 80px 24px;
+  }
+  .icon-circle {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: var(--bg-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 18px;
+  }
+  .icon-circle svg { width: 34px; height: 34px; stroke: var(--black); fill: none; stroke-width: 1.6; }
+
+  .product-category { margin-top: 64px; }
+  .product-category:first-child { margin-top: 44px; }
+  .category-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .category-head .icon-circle {
+    width: 46px;
+    height: 46px;
+    margin: 0;
+    flex-shrink: 0;
+  }
+  .category-head .icon-circle svg { width: 20px; height: 20px; }
+  .category-head h3 {
+    font-size: 17px;
+    font-weight: 700;
+    text-align: left;
+  }
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 20px;
+  }
+  .product-card {
+    background: var(--white);
+    border: 1px solid #ececec;
+    border-radius: 18px;
+    overflow: hidden;
+    text-align: left;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+  }
+  .product-card:hover { box-shadow: 0 14px 30px rgba(20,16,15,0.10); transform: translateY(-2px); }
+  .product-thumb {
+    aspect-ratio: 1 / 1;
+    background: var(--bg-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray);
+    font-size: 12px;
+    text-align: center;
+    padding: 12px;
+  }
+  .product-thumb svg { width: 30px; height: 30px; stroke: var(--gold); fill: none; stroke-width: 1.4; margin-bottom: 6px; display: block; margin-left: auto; margin-right: auto; }
+  .product-thumb.has-photo { padding: 0; }
+  .product-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .product-thumb img.pos-bottom { object-position: center bottom; }
+  .product-info { padding: 16px; }
+  .product-info h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; color: var(--black); }
+  .product-info .product-price { font-size: 13px; color: var(--gold); font-weight: 700; margin-bottom: 12px; }
+  .mini-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    background: var(--black);
+    color: var(--white);
+    text-decoration: none;
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 10px;
+    border-radius: 40px;
+  }
+  .mini-btn:hover { background: var(--gold); color: var(--black); }
+
+  section {
+    padding: 60px 24px;
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+  .section-head { text-align: center; margin-bottom: 40px; }
+  .section-head .eyebrow {
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    display: block;
+    margin-bottom: 10px;
+  }
+  .section-head h2 { font-size: 26px; font-weight: 700; }
+
+  /* SPLIT ABOUT SECTION */
+  .split-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+  }
+  .split-text { text-align: left; }
+  .eyebrow-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--pink-deep);
+    font-weight: 700;
+    margin-bottom: 18px;
+  }
+  .eyebrow-line .line { width: 34px; height: 1.5px; background: var(--gold); display: inline-block; }
+  .split-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 34px;
+    line-height: 1.25;
+    margin-bottom: 20px;
+    color: var(--black);
+  }
+  .split-title em { color: var(--pink-deep); font-style: italic; }
+  .split-text p {
+    font-size: 15px;
+    color: var(--gray);
+    max-width: 420px;
+    margin-bottom: 28px;
+  }
+  .split-art { display: flex; justify-content: center; }
+  .split-art svg { width: 100%; max-width: 340px; height: auto; }
+
+  .cta {
+    text-align: center;
+    padding: 90px 24px;
+    background: linear-gradient(to right, rgba(244,241,238,0) 0%, var(--bg-soft) 15%, var(--bg-soft) 85%, rgba(244,241,238,0) 100%);
+    border-radius: 24px;
+  }
+  .cta .eyebrow { color: var(--gold); }
+  .cta h2 { font-size: 28px; font-weight: 700; margin-bottom: 12px; }
+  .cta p { color: var(--gray); margin-bottom: 32px; font-size: 15px; }
+  .cta .btn { background: var(--pink-deep); color: var(--black); }
+  .cta .btn:hover { opacity: 0.9; }
+  .cta-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .cta-actions .btn-outline {
+    border-color: var(--black);
+    padding: 14.5px 30px;
+  }
+
+  footer {
+    text-align: center;
+    padding: 40px 20px 90px;
+    color: var(--gray);
+    font-size: 13px;
+  }
+  footer .logo { display: block; margin-bottom: 10px; font-size: 15px; }
+  footer a { color: var(--black); text-decoration: none; font-weight: 600; }
+  footer a:hover { color: var(--gold); }
+  footer .footer-links { display: inline-flex; align-items: center; gap: 8px; }
+  footer .dot { color: var(--gray); }
+
+  /* Floating WhatsApp button */
+  .float-wa {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: var(--black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    z-index: 200;
+  }
+  .float-wa svg { width: 26px; height: 26px; fill: var(--gold); }
+
+  @media (max-width: 980px) {
+    .header-services { display: none; }
+  }
+
+  @media (max-width: 760px) {
+    .nav-toggle { display: flex; }
+    nav {
+      display: none;
+      position: absolute;
+      top: calc(100% + 10px);
+      left: 0;
+      right: 0;
+      flex-direction: column;
+      align-items: stretch;
+      background: var(--white);
+      border-radius: 24px;
+      padding: 10px;
+      box-shadow: 0 12px 30px rgba(20,16,15,0.12);
+    }
+    nav.is-open { display: flex; }
+    nav a {
+      margin-left: 0;
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-size: 14px;
+    }
+    nav a.active::after { display: none; }
+    nav a.active { background: var(--bg-soft); }
+    header { border-radius: 30px; padding: 14px 18px; position: relative; flex-wrap: wrap; row-gap: 10px; }
+    .header-services {
+      display: flex;
+      order: 3;
+      width: 100%;
+      flex: none;
+      flex-wrap: wrap;
+      white-space: normal;
+      justify-content: center;
+      gap: 5px 8px;
+      font-size: 10.5px;
+      padding: 10px 0 0;
+      margin: 0;
+      border-top: 1px solid var(--bg-soft);
+    }
+    .hero-grid { grid-template-columns: 1fr; text-align: center; }
+    .hero-text p { margin-left: auto; margin-right: auto; }
+    .hero-text h1 { font-size: 32px; }
+    .hero-photo-frame { width: 220px; margin-top: 40px; }
+    .cta { border-radius: 16px; padding: 50px 20px; }
+    .split-grid { grid-template-columns: 1fr; gap: 40px; text-align: center; }
+    .split-text { text-align: center; }
+    .eyebrow-line { justify-content: center; }
+    .split-text p { margin-left: auto; margin-right: auto; }
+  }
+</style>
 </head>
-<body class="p-0 antialiased text-slate-900">
-    <div id="app" class="container-app">
-        <!-- Header -->
-        <header class="text-center my-6">
-            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">
-                📦 MyriedesignLog
-            </h1>
-            <p class="text-sm text-slate-500 mt-1">Generador Rápido de Enlaces WhatsApp</p>
-        </header>
+<body>
 
-        <!-- Main Input Area -->
-        <section class="bg-white shadow-xl rounded-2xl p-6 border border-slate-200">
-            <h2 class="text-lg font-bold mb-3 text-indigo-600">1. Pegar Texto de Guía (Google Lens)</h2>
-            
-            <textarea id="textInput" rows="6" placeholder="Pega aquí el texto bruto de la guía..." 
-                      class="w-full p-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none transition duration-150 text-sm"></textarea>
-
-            <!-- Previsualización de Datos -->
-            <div id="processingArea" class="mt-6 space-y-4">
-                <h3 class="text-md font-semibold text-slate-700 border-b pb-2">2. Datos Extraídos</h3>
-                
-                <!-- Destinatario -->
-                <div class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
-                    <label for="destName" class="block text-xs font-bold text-indigo-700 uppercase mb-1">Nombre del Destinatario</label>
-                    <input id="destName" type="text" placeholder="Nombre detectado..." 
-                           class="w-full p-2.5 bg-white border border-indigo-200 rounded-lg text-sm font-medium">
-                </div>
-
-                <!-- Teléfono -->
-                <div class="bg-blue-50/50 p-3 rounded-xl border border-blue-100">
-                    <label for="phoneInput" class="block text-xs font-bold text-blue-700 uppercase mb-1">Teléfono</label>
-                    <input id="phoneInput" type="text" placeholder="Teléfono detectado..." 
-                           class="w-full p-2.5 bg-white border border-blue-200 rounded-lg text-sm font-medium">
-                </div>
-            </div>
-
-            <!-- Generate Button -->
-            <button id="generateBtn"
-                    class="w-full mt-6 py-3.5 px-6 text-base font-bold text-white bg-indigo-600 rounded-xl shadow-lg hover:bg-indigo-700 
-                           active:scale-[0.99] transition duration-200 uppercase tracking-wider">
-                Generar Enlace de WhatsApp 📲
-            </button>
-
-            <!-- Output Area -->
-            <div id="outputArea" class="mt-8 pt-4 border-t border-slate-200 hidden space-y-3">
-                <h3 class="text-md font-bold text-slate-800">Resultado Final</h3>
-                
-                <!-- Botón directo para abrir WhatsApp -->
-                <a id="whatsappLinkOutput" target="_blank" rel="noopener noreferrer" 
-                   class="block w-full py-4 px-6 text-center bg-emerald-600 text-white font-bold text-base rounded-xl shadow-md hover:bg-emerald-700 transition flex items-center justify-center gap-2">
-                    💬 Abrir Chat de WhatsApp Directo
-                </a>
-            </div>
-
-            <!-- Status Message -->
-            <div id="statusMessage" class="mt-4 text-center text-sm font-medium hidden"></div>
-        </section>
+<div class="header-wrap">
+  <header>
+    <div class="logo">MYRIE<span>DESIGN</span></div>
+    <div class="header-services">
+      <span>Cadenas y dijes personalizados</span>
+      <span class="dot">·</span>
+      <span>Fotograbados en láser</span>
+      <span class="dot">·</span>
+      <span>Pulseras y esclavas grabadas</span>
     </div>
+    <div class="header-right">
+      <nav id="site-nav">
+        <a href="#" class="active">Inicio</a>
+        <a href="#productos">Productos</a>
+        <a href="#nosotros">Nosotros</a>
+        <a href="#contacto">Contacto</a>
+      </nav>
+      <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Abrir menú">
+        <svg viewBox="0 0 24 24" fill="none">
+          <g class="icon-open"><path d="M3 6h18" stroke-linecap="round"/><path d="M3 12h18" stroke-linecap="round"/><path d="M3 18h18" stroke-linecap="round"/></g>
+          <g class="icon-close"><path d="M5 5l14 14" stroke-linecap="round"/><path d="M19 5L5 19" stroke-linecap="round"/></g>
+        </svg>
+      </button>
+    </div>
+  </header>
+</div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const textInput = document.getElementById('textInput');
-            const generateBtn = document.getElementById('generateBtn');
-            const outputArea = document.getElementById('outputArea');
-            const whatsappLinkOutput = document.getElementById('whatsappLinkOutput');
-            const statusMessage = document.getElementById('statusMessage');
+<div class="hero">
+  <div class="hero-grid">
+    <div class="hero-text">
+      <h1>Bisutería con estilo,<br>hecha <span>para ti</span></h1>
+      <p>Lleva tu historia siempre contigo. Joyas únicas bañadas en oro, diseñadas exclusivamente para ti.</p>
+      <a class="btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20informaci%C3%B3n%20sobre%20sus%20piezas" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+    </div>
+    <div class="hero-art">
+      <div class="hero-photo-frame">
+        <span class="stroke shape-a stroke-1"></span>
+        <span class="stroke shape-b stroke-2"></span>
+        <span class="stroke shape-c stroke-3"></span>
+        <span class="stroke shape-a stroke-4"></span>
+        <span class="stroke shape-b stroke-5"></span>
+        <span class="stroke shape-c stroke-6"></span>
+        <img src="images/hero/kimberly-aime.jpg" alt="Cadena personalizada bañada en oro, Myriedesign">
+        <span class="stroke-front stroke-7"></span>
+        <span class="stroke-front stroke-8"></span>
+      </div>
+    </div>
+  </div>
+</div>
 
-            function processText() {
-                const text = textInput.value.trim();
-                if (!text) {
-                    document.getElementById('destName').value = '';
-                    document.getElementById('phoneInput').value = '';
-                    outputArea.classList.add('hidden');
-                    return;
-                }
+<div class="features" id="productos">
+  <div class="section-head">
+    <span class="eyebrow">Catálogo</span>
+    <h2>Nuestros productos</h2>
+  </div>
 
-                const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  <!-- CADENAS PERSONALIZADAS -->
+  <div class="product-category">
+    <div class="category-head">
+      <div class="icon-circle">
+        <svg viewBox="0 0 24 24"><path d="M8 12a4 4 0 1 1 4-4"/><path d="M16 12a4 4 0 1 1-4 4"/></svg>
+      </div>
+      <h3>Cadenas personalizadas</h3>
+    </div>
+    <div class="product-grid">
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/cadena-gucci-lesbia-del-valle-corona.jpg" alt="Cadena Gucci doble nombre bañada en oro con dije corona" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Cadena Gucci doble nombre + dije corona</h4>
+          <div class="product-price">$42</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20la%20cadena%20Gucci%20doble%20nombre%20con%20dije%20corona" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/cadena-cubana-corona-danicha.jpg" alt="Cadena cubana 4mm bañada en oro con nombre y corona" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Cubana 4mm con nombre y corona</h4>
+          <div class="product-price">$29</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20la%20cadena%20cubana%20con%20nombre%20y%20corona" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/cadena-balines-dylan.jpg" alt="Cadena de balines intercalados con nombre y dije, bañada en oro" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Balines intercalados + 1 dije</h4>
+          <div class="product-price">$29</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20la%20cadena%20de%20balines%20intercalados%20con%20dije" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/cadena-balines-jemmy.jpg" alt="Cadena de balines intercalados con nombre, bañada en oro" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Cadena balines intercalados</h4>
+          <div class="product-price">$25</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20la%20cadena%20de%20balines%20intercalados" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </div>
 
-                // 1. Extracción Estricta de Teléfono
-                let phoneFound = '';
-                const explicitPhoneMatch = text.match(/(?:tlf|telf|teléfono|telefono|telt)[\s.:-]*([04|02]\d{9,10})/i);
-                if (explicitPhoneMatch) {
-                    phoneFound = explicitPhoneMatch[1];
-                } else {
-                    const strictPhoneMatch = text.match(/\b(04\d{9}|02\d{9})\b/);
-                    if (strictPhoneMatch) {
-                        phoneFound = strictPhoneMatch[0];
-                    }
-                }
-                document.getElementById('phoneInput').value = phoneFound;
+  <!-- DIJES BAÑADOS EN ORO -->
+  <div class="product-category">
+    <div class="category-head">
+      <div class="icon-circle">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"/><path d="M12 13v8"/><path d="M9 21h6"/></svg>
+      </div>
+      <h3>Dijes bañados en oro</h3>
+    </div>
+    <div class="product-grid">
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/cadena-infinito-balines-2-nombres.jpg" alt="Cadena de balines con infinito y 2 nombres, bañada en oro" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Balines intercalados con infinito, 2 nombres</h4>
+          <div class="product-price">$35</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20la%20cadena%20de%20infinito%20con%202%20nombres" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/colgante-corazon-calado-yeli.jpg" alt="Dije corazón calado con nombre grabado en láser, bañado en oro" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Corazón calado interno con nombre grabado láser</h4>
+          <div class="product-price">$22</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20el%20dije%20de%20coraz%C3%B3n%20calado" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/colgante-corazon-javier-gabriel.jpg" alt="Dije corazón de corazones con 2 nombres, bañado en oro" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Corazón de corazones, 2 nombres</h4>
+          <div class="product-price">$28</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20el%20dije%20coraz%C3%B3n%20de%20corazones" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/colgante-estetoscopio-enfermera.jpg" alt="Dije corazón con estetoscopio y nombre, bañado en oro" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Corazón con estetoscopio y nombre</h4>
+          <div class="product-price">$26</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20el%20dije%20de%20estetoscopio" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/dije-profesion-peluqueria-tania.jpg" alt="Dije de profesión peluquería con nombre grabado, bañado en oro" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Dije de profesión con nombre grabado</h4>
+          <div class="product-price">$26</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20el%20dije%20de%20profesi%C3%B3n" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </div>
 
-                // 2. Extracción Robusta del Nombre del Destinatario
-                let nameFound = '';
+  <!-- FOTOGRABADOS EN LÁSER -->
+  <div class="product-category">
+    <div class="category-head">
+      <div class="icon-circle">
+        <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 7l1.5-3h5L16 7"/></svg>
+      </div>
+      <h3>Fotograbados en láser</h3>
+    </div>
+    <div class="product-grid">
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/colgante-fotograbado-corazon-nina.jpg" alt="Dije corazón con fotograbado láser en cadena convencional" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Corazón fotograbado, cadena convencional</h4>
+          <div class="product-price">$25 · con mensaje $28</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20un%20fotograbado%20de%20coraz%C3%B3n" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/colgante-fotograbado-familia-cadena-redonda.jpg" alt="Fotograbado rectangular con cadena redonda, bañado en oro" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Fotograbado con cadena redonda</h4>
+          <div class="product-price">$30 · con mensaje $33</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20un%20fotograbado%20con%20cadena%20redonda" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/colgante-medalla-fotograbada-joven.jpg" alt="Medalla fotograbada en acero, bañada en oro" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Medalla fotograbada</h4>
+          <div class="product-price">$30 · con mensaje $33</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20una%20medalla%20fotograbada" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/colgante-medalla-rectangular-fotograbada.jpg" alt="Medalla rectangular fotograbada con cadena tejido redondo, bañada en oro" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Medalla rectangular, cadena tejido redondo</h4>
+          <div class="product-price">$30 · con mensaje $33</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20la%20medalla%20rectangular%20con%20cadena%20tejido%20redondo" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/colgante-rectangular-fotomirada-mano.jpg" alt="Dije rectangular fotomirada, bañado en oro" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Fotograbado rectangular fotomirada</h4>
+          <div class="product-price">$26</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20un%20fotograbado%20rectangular%20fotomirada" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </div>
 
-                // NIVEL A: Lógica inalterable para MRW y Tealca (buscando etiquetas como DEST)
-                for (let i = 0; i < lines.length; i++) {
-                    let currentLine = lines[i];
-                    if (/^(destinatario|dest)\b/i.test(currentLine)) {
-                        if (/^destino/i.test(currentLine)) continue;
-                        let cleaned = currentLine.replace(/^(destinatario|dest)[\s.:-]*/i, '').trim();
-                        if (cleaned.length > 2 && !/^retirar/i.test(cleaned)) {
-                            nameFound = cleaned;
-                            break;
-                        } else if (i + 1 < lines.length) {
-                            let nextLine = lines[i + 1];
-                            if (/^nombre$/i.test(nextLine) && i + 2 < lines.length) {
-                                nameFound = lines[i + 2];
-                                break;
-                            } else if (!/^(dir|direccion|ciudad|tlf)/i.test(nextLine)) {
-                                nameFound = nextLine;
-                                break;
-                            }
-                        }
-                    }
-                }
+  <!-- PULSERAS Y ESCLAVAS -->
+  <div class="product-category">
+    <div class="category-head">
+      <div class="icon-circle">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/></svg>
+      </div>
+      <h3>Pulseras y esclavas grabadas</h3>
+    </div>
+    <div class="product-grid">
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/esclavas-nicolas-jenny.jpg" alt="Esclavas de acero con nombre grabado, bañadas en oro" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Esclava con nombre grabado</h4>
+          <div class="product-price">Caballero $25 · Dama $22</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20la%20esclava%20con%20nombre%20grabado" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/pulsera-esclava-fotomirada-ojos.jpg" alt="Esclava con fotomirada grabada, bañada en oro" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Esclava con fotomirada</h4>
+          <div class="product-price">Dama $25 · Caballero $28</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20la%20esclava%20con%20fotomirada" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-thumb has-photo">
+          <img src="images/productos/pulsera-grabada-tesoro-familia.jpg" alt="Pulsera de cuero grabada con foto y mensaje" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4>Pulsera de cuero grabada con foto y mensaje</h4>
+          <div class="product-price">$30</div>
+          <a class="mini-btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20me%20interesa%20la%20pulsera%20de%20cuero%20grabada" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-                // NIVEL B: Respaldo inteligente para Zoom (busca etiqueta "REMITENTE" y toma la línea anterior)
-                if (!nameFound) {
-                    for (let i = 0; i < lines.length; i++) {
-                        if (/^remitente\b/i.test(lines[i])) {
-                            if (i - 1 >= 0) {
-                                let potentialName = lines[i - 1];
-                                if (!/^(peso|cobro|cant|tracking|ensacado|origen|destino|dir|tlf|cod|bsc|mer|f|bcd|rl\.?fic)/i.test(potentialName) && potentialName.length > 2) {
-                                    nameFound = potentialName;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
+<section id="nosotros">
+  <div class="split-grid">
+    <div class="split-text">
+      <div class="eyebrow-line"><span class="line"></span> Sobre nosotros</div>
+      <h2 class="split-title">Tu brillo, <em>hecho a mano</em></h2>
+      <p>Negocio venezolano de bisutería personalizada, hecho desde casa con dedicación. Cada pieza se trabaja a pedido, con acabado en baño de oro y grabado láser de calidad.</p>
+      <a class="btn btn-outline" href="#contacto">Conócenos</a>
+    </div>
+    <div class="split-art">
+      <svg viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg">
+        <path d="M40 60 C 140 10, 260 30, 340 90 C 300 160, 320 250, 260 320 C 200 390, 100 400, 60 340 C 20 280, 60 220, 30 150 C 10 110, 10 80, 40 60 Z" fill="var(--pink)" opacity="0.55"/>
+        <path d="M80 380 C 160 420, 280 410, 340 350 C 380 310, 360 250, 330 210 C 300 250, 250 260, 220 300 C 180 350, 130 360, 80 380 Z" fill="var(--gold)" opacity="0.5"/>
+        <path d="M60 120 C 130 70, 250 60, 320 130 C 260 140, 200 120, 150 160 C 110 190, 100 240, 60 260 C 30 220, 30 160, 60 120 Z" fill="var(--black)" opacity="0.08"/>
 
-                // NIVEL C: Respaldo adicional específico para Zoom (captura si está duplicado en una misma línea)
-                if (!nameFound) {
-                    for (let line of lines) {
-                        if (line.includes(' - ')) {
-                            let parts = line.split(' - ');
-                            if (parts.length === 2 && parts[0].trim().toLowerCase() === parts[1].trim().toLowerCase()) {
-                                nameFound = parts[0].trim();
-                                break;
-                            }
-                        }
-                    }
-                }
+        <g transform="translate(200,220)">
+          <ellipse cx="0" cy="-60" rx="46" ry="46" fill="none" stroke="var(--gold)" stroke-width="2.5"/>
+          <path d="M -46 -20 C -30 20, 30 20, 46 -20" fill="none" stroke="var(--gold)" stroke-width="2.5"/>
+          <circle cx="0" cy="-14" r="4" fill="var(--black)"/>
+          <line x1="0" y1="-10" x2="0" y2="20" stroke="var(--gold)" stroke-width="2"/>
+          <g fill="var(--gold)" opacity="0.9">
+            <circle cx="0" cy="20" r="14"/>
+            <circle cx="-13" cy="32" r="14"/>
+            <circle cx="13" cy="32" r="14"/>
+            <circle cx="0" cy="44" r="14"/>
+          </g>
+          <g fill="none" stroke="var(--black)" stroke-width="1.2" opacity="0.35">
+            <circle cx="0" cy="20" r="14"/>
+            <circle cx="-13" cy="32" r="14"/>
+            <circle cx="13" cy="32" r="14"/>
+            <circle cx="0" cy="44" r="14"/>
+          </g>
+          <line x1="0" y1="52" x2="0" y2="68" stroke="var(--gold)" stroke-width="2.5"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
 
-                // Limpieza final común (quita cédulas o RIFs pegados)
-                if (nameFound) {
-                    nameFound = nameFound.replace(/\s+(v-|e-|c[i\.]).*/i, '').trim();
-                }
+<section id="contacto">
+  <div class="cta">
+    <span class="eyebrow">Contacto</span>
+    <h2>¿Lista para tu pieza personalizada?</h2>
+    <p>Escríbenos por WhatsApp o síguenos en Instagram para ver nuestras piezas.</p>
+    <div class="cta-actions">
+      <a class="btn" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20informaci%C3%B3n%20sobre%20sus%20piezas" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+      <a class="btn btn-outline" href="https://instagram.com/Myriedesign_" target="_blank" rel="noopener">@Myriedesign_</a>
+    </div>
+  </div>
+</section>
 
-                document.getElementById('destName').value = nameFound || '';
-            }
+<footer>
+  <div class="logo">MYRIE<span style="color:var(--gold)">DESIGN</span></div>
+  <div class="footer-links">
+    <a href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20informaci%C3%B3n%20sobre%20sus%20piezas" target="_blank" rel="noopener">WhatsApp</a>
+    <span class="dot">·</span>
+    <a href="https://instagram.com/Myriedesign_" target="_blank" rel="noopener">@Myriedesign_</a>
+  </div>
+</footer>
 
-            function generateWhatsAppLink() {
-                const name = document.getElementById('destName').value.trim() || 'Estimado/a cliente';
-                const phoneRaw = document.getElementById('phoneInput').value.trim();
-                const shipDate = new Date().toLocaleDateString('es-VE', { year: 'numeric', month: '2-digit', day: '2-digit' });
+<a class="float-wa" href="https://wa.me/584143939905?text=Hola%20Myriedesign%2C%20quiero%20informaci%C3%B3n%20sobre%20sus%20piezas" target="_blank" rel="noopener" aria-label="WhatsApp">
+  <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.9.5 3.6 1.4 5.1L2 22l5.1-1.3C8.6 21.5 10.3 22 12 22c5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18c-1.5 0-2.9-.4-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3C4.4 14.9 4 13.5 4 12c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8z"/></svg>
+</a>
 
-                if (!phoneRaw) {
-                    showStatus("⚠️ Por favor, verifica o ingresa el número de teléfono.", "text-amber-600");
-                    return;
-                }
+<script>
+  (function () {
+    var toggle = document.getElementById('nav-toggle');
+    var nav = document.getElementById('site-nav');
 
-                let cleanPhone = phoneRaw.replace(/\D/g, '');
-                if (cleanPhone.startsWith('0')) {
-                    cleanPhone = cleanPhone.substring(1);
-                }
-                const whatsappNumber = `58${cleanPhone}`;
+    function closeNav() {
+      nav.classList.remove('is-open');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
 
-                // Mensaje actualizado: sin "Aquí el resumen:" y con línea en blanco tras agradecimiento
-                const message = `Hola Sr./Sra. ${name}, 👋\n\nSu pedido ya fue enviado:\n\n📅 Fecha de envío: ${shipDate}\n\nAdjunto la foto de su guía para que pueda rastrear su pedido cuando quiera.\n\nGracias por su compra! 🙏\n\nRecuerde que es importante darle los cuidados adecuados:\n❤️ Mantener limpias y secas.\n❤️ Alejar de agentes químicos como alcohol, perfumes, cremas y jabones.\n❤️ Colocar cuando la piel esté seca\n❤️ No mojar ni usar en playa o piscinas\n❤️ Evitar hacer ejercicios con ellas\n\nDe esta manera extenderá la vida útil y brillo de sus piezas ✨ ✨\n\nSaludos Myriedesign`;
+    toggle.addEventListener('click', function () {
+      var open = nav.classList.toggle('is-open');
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
 
-                const finalLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+    nav.addEventListener('click', function (e) {
+      if (e.target.tagName === 'A') closeNav();
+    });
 
-                whatsappLinkOutput.href = finalLink;
-                outputArea.classList.remove('hidden');
+    document.addEventListener('click', function (e) {
+      if (!nav.contains(e.target) && !toggle.contains(e.target)) closeNav();
+    });
 
-                showStatus("✅ ¡Enlace generado con éxito! Haz clic en el botón verde.", "text-emerald-600");
-            }
+    window.addEventListener('resize', function () {
+      if (window.innerWidth > 760) closeNav();
+    });
+  })();
+</script>
 
-            function showStatus(msg, className) {
-                statusMessage.textContent = msg;
-                statusMessage.className = `mt-4 text-center text-sm font-medium ${className}`;
-                statusMessage.classList.remove('hidden');
-            }
-
-            textInput.addEventListener('input', processText);
-            generateBtn.addEventListener('click', generateWhatsAppLink);
-        });
-    </script>
 </body>
 </html>
