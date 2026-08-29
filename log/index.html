@@ -117,12 +117,14 @@
                 // 2. Extracción Robusta del Nombre del Destinatario
                 let nameFound = '';
 
-                // NIVEL A: Lógica inalterable para MRW y Tealca (buscando etiquetas como DEST)
+                // NIVEL A: Lógica para MRW, Tealca y Zoom (buscando etiquetas como DEST/DESTINATARIO)
+                // Nota: se busca "estinatario" (sin la primera letra) porque Google Lens a veces
+                // lee mal la "D" inicial (ej. "bestinatario" en vez de "Destinatario").
                 for (let i = 0; i < lines.length; i++) {
                     let currentLine = lines[i];
-                    if (/^(destinatario|dest)\b/i.test(currentLine)) {
-                        if (/^destino/i.test(currentLine)) continue;
-                        let cleaned = currentLine.replace(/^(destinatario|dest)[\s.:-]*/i, '').trim();
+                    if (/estinatario\b/i.test(currentLine) || /^dest\b/i.test(currentLine)) {
+                        if (/^destino\b/i.test(currentLine)) continue;
+                        let cleaned = currentLine.replace(/^.*?(estinatario|^dest)[\s.:-]*/i, '').trim();
                         if (cleaned.length > 2 && !/^retirar/i.test(cleaned)) {
                             nameFound = cleaned;
                             break;
@@ -170,6 +172,14 @@
                 // Limpieza final común (quita cédulas o RIFs pegados)
                 if (nameFound) {
                     nameFound = nameFound.replace(/\s+(v-|e-|c[i\.]).*/i, '').trim();
+
+                    // Deduplica nombre repetido ("NOMBRE - NOMBRE")
+                    if (nameFound.includes(' - ')) {
+                        let parts = nameFound.split(' - ').map(p => p.trim());
+                        if (parts.length === 2 && parts[0].toLowerCase() === parts[1].toLowerCase()) {
+                            nameFound = parts[0];
+                        }
+                    }
                 }
 
                 document.getElementById('destName').value = nameFound || '';
