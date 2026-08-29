@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Myriedesign | Generador WhatsApp de Envío</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -24,6 +25,7 @@
 </head>
 <body class="p-0 antialiased text-slate-900">
     <div id="app" class="container-app">
+        <!-- Header -->
         <header class="text-center my-6">
             <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">
                 📦 MyriedesignLog
@@ -31,27 +33,32 @@
             <p class="text-sm text-slate-500 mt-1">Generador Rápido de Enlaces WhatsApp</p>
         </header>
 
+        <!-- Main Input Area -->
         <section class="bg-white shadow-xl rounded-2xl p-6 border border-slate-200">
             <h2 class="text-lg font-bold mb-3 text-indigo-600">1. Pegar Texto de Guía (Google Lens)</h2>
             
             <textarea id="textInput" rows="6" placeholder="Pega aquí el texto bruto de la guía de envío (MRW, Zoom, Tealca)..." 
                       class="w-full p-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none transition duration-150 text-sm"></textarea>
 
+            <!-- Previsualización de Datos -->
             <div id="processingArea" class="mt-6 space-y-4">
                 <h3 class="text-md font-semibold text-slate-700 border-b pb-2">2. Previsualización de Datos</h3>
                 
+                <!-- Destinatario -->
                 <div class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
                     <label for="destName" class="block text-xs font-bold text-indigo-700 uppercase mb-1">Destinatario</label>
                     <input id="destName" type="text" placeholder="Nombre detectado..." 
                            class="w-full p-2.5 bg-white border border-indigo-200 rounded-lg text-sm font-medium">
                 </div>
 
+                <!-- Teléfono -->
                 <div class="bg-blue-50/50 p-3 rounded-xl border border-blue-100">
                     <label for="phoneInput" class="block text-xs font-bold text-blue-700 uppercase mb-1">Teléfono</label>
                     <input id="phoneInput" type="text" placeholder="Teléfono detectado..." 
                            class="w-full p-2.5 bg-white border border-blue-200 rounded-lg text-sm font-medium">
                 </div>
 
+                <!-- Empresa de Envío -->
                 <div class="bg-amber-50/50 p-3 rounded-xl border border-amber-100">
                     <label for="courierSelect" class="block text-xs font-bold text-amber-700 uppercase mb-1">Empresa de Envío</label>
                     <select id="courierSelect" class="w-full p-2.5 bg-white border border-amber-200 rounded-lg text-sm font-medium">
@@ -62,18 +69,21 @@
                     </select>
                 </div>
 
+                <!-- Fecha de Envío -->
                 <div class="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
                     <label for="shipDate" class="block text-xs font-bold text-emerald-700 uppercase mb-1">Fecha de Envío</label>
                     <input id="shipDate" type="text" readonly class="w-full p-2.5 bg-emerald-100/50 border border-emerald-200 rounded-lg text-sm font-medium text-emerald-900">
                 </div>
             </div>
 
+            <!-- Generate Button -->
             <button id="generateBtn"
                     class="w-full mt-6 py-3.5 px-6 text-base font-bold text-white bg-indigo-600 rounded-xl shadow-lg hover:bg-indigo-700 
                            active:scale-[0.99] transition duration-200 uppercase tracking-wider">
                 Generar Enlace de WhatsApp 📲
             </button>
 
+            <!-- Output Area -->
             <div id="outputArea" class="mt-8 pt-4 border-t border-slate-200 hidden">
                 <h3 class="text-md font-bold mb-2 text-slate-800">Resultado Final</h3>
                 <p class="text-xs text-slate-500 mb-2">Toca el enlace para abrir WhatsApp o cópialo:</p>
@@ -88,6 +98,7 @@
                 </button>
             </div>
 
+            <!-- Status Message -->
             <div id="statusMessage" class="mt-4 text-center text-sm font-medium hidden"></div>
         </section>
     </div>
@@ -105,7 +116,7 @@
             const todayStr = new Date().toLocaleDateString('es-VE', { year: 'numeric', month: '2-digit', day: '2-digit' });
             document.getElementById('shipDate').value = todayStr;
 
-            // Función principal de procesamiento de texto con IA local (Regex)
+            // Función principal de procesamiento de texto con IA local (Regex mejorada)
             function processText() {
                 const text = textInput.value.trim();
                 if (!text) {
@@ -122,19 +133,21 @@
                     document.getElementById('courierSelect').value = courierMatch[0].toUpperCase();
                 }
 
-                // 2. Detección de Teléfono (Busca patrones de números móviles/fijos venezolanos)
+                // 2. Detección de Teléfono (Patrones venezolanos)
                 const phoneMatch = text.match(/(?:0?4\d{2}|0?2\d{2})[-.\s]?\d{3}[-.\s]?\d{4}|\b\d{10,11}\b/);
                 if (phoneMatch) {
                     document.getElementById('phoneInput').value = phoneMatch[0].trim();
                 }
 
-                // 3. Detección de Nombre (heurística simple para extraer líneas de nombres comunes)
+                // 3. Detección de Nombre Mejorada (Filtra palabras basura de las guías)
                 const lines = text.split('\n');
                 let foundName = '';
+                const ignoreWords = /(tracking|guia|mrw|zoom|tealca|fecha|destinatario|remitente|direccion|telefono|ci|rif|cobro|destino|agencia|oficina|peso|piezas)/i;
+
                 for (let line of lines) {
                     let clean = line.trim();
-                    // Si la línea tiene un formato de nombre y no contiene números de guía típicos
-                    if (clean.length > 3 && clean.length < 35 && !/\d{5,}/.test(clean) && !/(mrw|zoom|tealca|fecha|destinatario|remitente|direccion)/i.test(clean)) {
+                    // Buscar una línea que parezca un nombre real (letras, espacios, longitud adecuada y sin números de guía)
+                    if (clean.length >= 4 && clean.length < 40 && !/\d{4,}/.test(clean) && !ignoreWords.test(clean)) {
                         foundName = clean;
                         break;
                     }
@@ -160,12 +173,12 @@
                 // Limpiar el teléfono para dejar solo dígitos
                 let cleanPhone = phoneRaw.replace(/\D/g, '');
                 if (cleanPhone.startsWith('0')) {
-                    cleanPhone = cleanPhone.substring(1); // Quitar el 0 inicial si existe
+                    cleanPhone = cleanPhone.substring(1);
                 }
                 const whatsappNumber = `58${cleanPhone}`;
 
-                // Mensaje estructurado con las recomendaciones de Myriedesign
-                const message = `¡Hola ${name}! 👋\n\nTu pedido de *Myriedesign* ya va en camino con *${courier}* 📦✨.\n\n💍 *IMPORTANTE - Cuidado de tus piezas:*\nPara mantener el brillo y la calidad de tu joyería, te recomendamos:\n• Evitar el contacto directo con perfumes, cremas, alcohol o químicos.\n• No usar al bañarte, hacer ejercicios o ir a la playa/piscina.\n• Guardarlas individualmente en su empaque o un lugar seco.\n\n¡Gracias por tu compra! Déjanos saber cuando lo recibas. 💛`;
+                // Mensaje estructurado limpio con las recomendaciones de Myriedesign
+                const message = `¡Hola ${name}! 👋\n\nTu pedido de Myriedesign ya va en camino con ${courier} 📦✨.\n\nIMPORTANTE - Cuidado de tus piezas:\nPara mantener el brillo y la calidad de tu joyería, te recomendamos:\n• Evitar el contacto directo con perfumes, cremas, alcohol o químicos.\n• No usar al bañarte, hacer ejercicios o ir a la playa/piscina.\n• Guardarlas individualmente en su empaque o un lugar seco.\n\n¡Gracias por tu compra! Déjanos saber cuando lo recibas. 💛`;
 
                 // Construir URL final
                 const finalLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
