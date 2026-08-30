@@ -103,11 +103,11 @@
 
                 // 1. Extracción Estricta de Teléfono
                 let phoneFound = '';
-                const explicitPhoneMatch = text.match(/(?:tlf|telf|teléfono|telefono|telt)[\s.:-]*([04|02]\d{9,10})/i);
+                const explicitPhoneMatch = text.match(/(?:tlf|telf|tel[eé]fono?|telt)[\s.:-]*(0[24]\d{9})/i);
                 if (explicitPhoneMatch) {
                     phoneFound = explicitPhoneMatch[1];
                 } else {
-                    const strictPhoneMatch = text.match(/\b(04\d{9}|02\d{9})\b/);
+                    const strictPhoneMatch = text.match(/\b(0[24]\d{9})\b/);
                     if (strictPhoneMatch) {
                         phoneFound = strictPhoneMatch[0];
                     }
@@ -117,22 +117,43 @@
                 // 2. Extracción Robusta del Nombre del Destinatario
                 let nameFound = '';
 
-                // NIVEL A: Lógica inalterable para MRW y Tealca (buscando etiquetas como DEST)
+                // NIVEL A: "Destinatario"/"DEST" en la misma línea (Zoom, MRW).
+                // Se busca "estinatario" (sin la primera letra) porque Google Lens a veces
+                // lee mal la "D" inicial o antepone un "|" de borde de tabla.
                 for (let i = 0; i < lines.length; i++) {
                     let currentLine = lines[i];
-                    if (/^(destinatario|dest)\b/i.test(currentLine)) {
-                        if (/^destino/i.test(currentLine)) continue;
-                        let cleaned = currentLine.replace(/^(destinatario|dest)[\s.:-]*/i, '').trim();
-                        if (cleaned.length > 2 && !/^retirar/i.test(cleaned)) {
+                    let hasEstinatario = /estinatario\b/i.test(currentLine);
+                    let hasDest = /^dest\b/i.test(currentLine);
+                    if (hasEstinatario || hasDest) {
+                        if (/^destino\b/i.test(currentLine)) continue;
+                        let cleaned = hasEstinatario
+                            ? currentLine.replace(/^.*?estinatario[\s.:;,-]*/i, '').trim()
+                            : currentLine.replace(/^dest[\s.:;,-]*/i, '').trim();
+                        // En Tealca "DESTINATARIO" va seguido de la cédula, no del nombre
+                        let isMetadata = /^(cedula|c\.?i\.?|rif|r\.?i\.?f|tlf|telf|telefon\w*|nombre)\b/i.test(cleaned);
+                        if (cleaned.length > 2 && !/^retirar/i.test(cleaned) && !isMetadata) {
                             nameFound = cleaned;
                             break;
-                        } else if (i + 1 < lines.length) {
+                        } else if (!isMetadata && i + 1 < lines.length) {
                             let nextLine = lines[i + 1];
                             if (/^nombre$/i.test(nextLine) && i + 2 < lines.length) {
                                 nameFound = lines[i + 2];
                                 break;
                             } else if (!/^(dir|direccion|ciudad|tlf)/i.test(nextLine)) {
                                 nameFound = nextLine;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // NIVEL Tealca: el nombre está en la línea ANTERIOR a la etiqueta "NOMBRE"
+                if (!nameFound) {
+                    for (let i = 0; i < lines.length; i++) {
+                        if (/^nombre$/i.test(lines[i]) && i - 1 >= 0) {
+                            let potentialName = lines[i - 1];
+                            if (!/^(peso|cantidad|piezas|medidas|ciudad|direccion|entrega|telefon\w*|cedula|destinatario|remitente)/i.test(potentialName) && potentialName.length > 2) {
+                                nameFound = potentialName;
                                 break;
                             }
                         }
@@ -167,9 +188,15 @@
                     }
                 }
 
-                // Limpieza final común (quita cédulas o RIFs pegados)
+                // Limpieza final común (quita cédulas o RIFs pegados, y nombres duplicados "NOMBRE - NOMBRE")
                 if (nameFound) {
                     nameFound = nameFound.replace(/\s+(v-|e-|c[i\.]).*/i, '').trim();
+                    if (nameFound.includes(' - ')) {
+                        let parts = nameFound.split(' - ').map(p => p.trim());
+                        if (parts.length === 2 && parts[0].toLowerCase() === parts[1].toLowerCase()) {
+                            nameFound = parts[0];
+                        }
+                    }
                 }
 
                 document.getElementById('destName').value = nameFound || '';
